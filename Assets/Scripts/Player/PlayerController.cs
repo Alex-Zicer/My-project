@@ -44,12 +44,6 @@ public class PlayerController : MonoBehaviour
         inputActions.Player.Jump.performed -= OnJumpPerformed;
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -70,6 +64,10 @@ public class PlayerController : MonoBehaviour
         rb.velocity = new Vector2(newX, rb.velocity.y);
     }
 
+    /// <summary>
+    /// 实现玩家跳跃功能的方法，当玩家按下跳跃键时被调用。它通过设置刚体的垂直速度来实现跳跃效果。
+    /// </summary>
+    /// <param name="context">用来实现事件系统的参数</param>
     private void OnJumpPerformed(InputAction.CallbackContext context)
     {
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
