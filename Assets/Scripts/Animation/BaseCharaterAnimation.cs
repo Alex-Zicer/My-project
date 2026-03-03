@@ -5,7 +5,8 @@ using UnityEngine;
 public class BaseCharaterAnimation : MonoBehaviour
 {
     protected Animator anim;
-    protected ICharaterController controller;
+    protected ICharacterController controller;
+
 
     // Start is called before the first frame update
     void Start()

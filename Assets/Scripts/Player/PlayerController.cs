@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
 {
     [Header("移动设置")]
     [Tooltip("玩家的移动速度，单位为每秒的单位距离。")]
@@ -14,6 +15,25 @@ public class PlayerController : MonoBehaviour
     [Header("跳跃设置")]
     [Tooltip("玩家跳跃的力度")]
     public float jumpForce = 12f;
+    [Tooltip("地面层，用于检测玩家是否站在地面上")]
+    public LayerMask groundLayer;
+    [Tooltip("放置一个空物体，地面检测点")]
+    public Transform groundCheck;
+
+    //用于ICharacterController接口的事件，其他系统可以订阅这些事件来响应玩家的跳跃和着陆行为
+    public event Action OnJump;
+    public event Action OnLand;
+
+    //用于IBaseEntity接口的属性
+    public float HorizontalSpeed => Mathf.Abs(rb.velocity.x);
+    public float VerticalSpeed => Mathf.Abs(rb.velocity.y);
+
+    public float FacingDirection => moveInput.x; //面朝的方向，小于0表示向左，大于0表示向右，根据玩家输入的水平移动方向来确定
+
+    public bool IsDead => false; //玩家是否死亡
+    public bool IsGrounded { get; private set; } //玩家是否在地面上,内部自动更新
+
+    private bool lastGrounded; //用于判断落地那一瞬间
 
     private Rigidbody2D rb;
     private PlayerControls inputActions;
@@ -49,6 +69,8 @@ public class PlayerController : MonoBehaviour
     {
         // 获取玩家的输入，更新移动向量
         moveInput = inputActions.Player.Move.ReadValue<Vector2>();
+
+        CheckGroundStatus();
     }
 
     private void FixedUpdate()
@@ -64,6 +86,28 @@ public class PlayerController : MonoBehaviour
         rb.velocity = new Vector2(newX, rb.velocity.y);
     }
 
+    [Header("地面检测设置")]
+    [Tooltip("地面检测的范围大小")]
+    public Vector2 groundCheckSize = new Vector2(0.5f, 0.1f);
+    [Tooltip("相对于中心点的偏移，确保检测点位于玩家脚下")]
+    public float groundCheckOffset = 0.1f;
+
+    /// <summary>
+    /// 检测人物是否站在地面上
+    /// </summary>
+    private void CheckGroundStatus()
+    {
+        Vector2 checkPosition = (Vector2)transform.position + new Vector2(0, groundCheckOffset);
+
+        //使用OverlapBox检测玩家是否在地面上，groundCheck是一个空物体，放置在玩家脚下，检测范围为0.2f，检测的层为groundLayer
+        IsGrounded = Physics2D.OverlapBox(groundCheck.position, groundCheckSize, 0f, groundLayer);
+
+        if(IsGrounded && !lastGrounded)
+        {
+            OnLand?.Invoke(); //触发着陆事件
+        }
+    }
+
     /// <summary>
     /// 实现玩家跳跃功能的方法，当玩家按下跳跃键时被调用。它通过设置刚体的垂直速度来实现跳跃效果。
     /// </summary>
@@ -71,7 +115,7 @@ public class PlayerController : MonoBehaviour
     private void OnJumpPerformed(InputAction.CallbackContext context)
     {
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-
+        OnJump?.Invoke(); //触发跳跃事件
         Debug.Log("跳跃！");
     }
 }
