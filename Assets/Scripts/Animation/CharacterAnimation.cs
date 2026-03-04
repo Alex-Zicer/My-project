@@ -24,7 +24,7 @@ public class CharacterAnimation : MonoBehaviour
         {
             actionsEvent.OnJump += HandleJump;
             actionsEvent.OnLand += HandleLand;
-
+            actionsEvent.OnAttack += HandleAttack;
         }
     }
 
@@ -34,11 +34,14 @@ public class CharacterAnimation : MonoBehaviour
         {
             actionsEvent.OnJump -= HandleJump;
             actionsEvent.OnLand -= HandleLand;
+            actionsEvent.OnAttack -= HandleAttack;
         }
     }
 
     private void HandleJump() => anim.SetTrigger("Jump");
     private void HandleLand() => anim.SetTrigger("Land");
+
+    private void HandleAttack() => anim.SetTrigger("Attack");
 
     private void Update()
     {
@@ -50,7 +53,6 @@ public class CharacterAnimation : MonoBehaviour
 
         //设置水平速度参数，动画控制器可以根据这个参数来切换不同的动画状态，例如从站立到跑步
         float hSpeed = entityData.HorizontalSpeed;
-        Debug.Log($"逻辑层速度: {hSpeed}");
         anim.SetFloat("HorizontalSpeed", hSpeed > 0.01 ? hSpeed : 0f);
 
         //设置垂直速度参数，动画控制器可以根据这个参数来切换不同的动画状态，例如从跳跃到下落

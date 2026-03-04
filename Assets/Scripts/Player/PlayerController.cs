@@ -23,10 +23,12 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
     //用于ICharacterController接口的事件，其他系统可以订阅这些事件来响应玩家的跳跃和着陆行为
     public event Action OnJump;
     public event Action OnLand;
+    public event Action OnAttack;
 
+    #region 接口属性的实现
     //用于IBaseEntity接口的属性
     public float HorizontalSpeed => Mathf.Abs(rb.velocity.x);
-    public float VerticalSpeed => Mathf.Abs(rb.velocity.y);
+    public float VerticalSpeed => rb.velocity.y;
 
     public float FacingDirection => moveInput.x; //面朝的方向，小于0表示向左，大于0表示向右，根据玩家输入的水平移动方向来确定
 
@@ -35,8 +37,10 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
 
     private bool lastGrounded; //用于判断落地那一瞬间
 
+    #endregion
+
     private Rigidbody2D rb;
-    private PlayerControls inputActions;
+    private PlayerControls inputActions;//玩家输入系统的引用，使用Unity的新输入系统来处理玩家的输入
     private Vector2 moveInput;
 
     private void Awake()
@@ -54,6 +58,8 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
 
         //订阅跳跃事件，当玩家按下跳跃键时调用OnJumpPerformed方法
         inputActions.Player.Jump.performed += OnJumpPerformed;
+        //订阅攻击事件，当玩家按下攻击键时调用OnAttackPerformed方法
+        inputActions.Player.Attack.performed += OnAttackPerformed;
     }
 
     private void OnDisable()
@@ -62,6 +68,8 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
 
         //取消订阅跳跃事件，防止内存泄漏
         inputActions.Player.Jump.performed -= OnJumpPerformed;
+        //取消订阅攻击事件，防止内存泄漏
+        inputActions.Player.Attack.performed -= OnAttackPerformed;
     }
 
     // Update is called once per frame
@@ -117,5 +125,11 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         OnJump?.Invoke(); //触发跳跃事件
         Debug.Log("跳跃！");
+    }
+
+    private void OnAttackPerformed(InputAction.CallbackContext context)
+    {
+        OnAttack?.Invoke();
+        Debug.Log("攻击！");
     }
 }
