@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SmallBee_Controller
+  m_Controller: {fileID: 9100000, guid: 8f996aec725edc9459e035932e4698fa, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: db3a744772cc70d4f95e33e592a818f1, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 713ab4af25a4d104c828a6423eb716a5, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: ad68101aae5cfdb45af95690e5cd8be1, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: ad68101aae5cfdb45af95690e5cd8be1, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 078500c55b9de3242adde155e76a17fd, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 078500c55b9de3242adde155e76a17fd, type: 2}

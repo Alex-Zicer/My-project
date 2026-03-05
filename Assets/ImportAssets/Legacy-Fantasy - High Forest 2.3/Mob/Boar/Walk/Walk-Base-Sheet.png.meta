@@ -152,34 +152,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Walk-Base-Sheet_2
-      rect:
-        serializedVersion: 2
-        x: 96
-        y: 7
-        width: 4
-        height: 5
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 6457ca2606d6c03409e05c8f3a98ee45
-      internalID: -2064876691
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Walk-Base-Sheet_3
       rect:
         serializedVersion: 2
-        x: 101
+        x: 95
         y: 0
-        width: 38
-        height: 27
+        width: 44
+        height: 28
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
