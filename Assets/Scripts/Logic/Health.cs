@@ -7,6 +7,8 @@ public class Health : MonoBehaviour
     [Header("生命值设置")]
     public float maxHealth;
     public float currentHealth;
+    
+    public  System.Action<float, float> OnHealthChanged;
 
     /// <summary>
     /// 更新血量
@@ -21,6 +23,12 @@ public class Health : MonoBehaviour
         else
         {
             currentHealth -= amount;
+        }
+
+        //如果是玩家就更新血条
+        if (gameObject.CompareTag("Player"))
+        {
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
         }
 
         if (currentHealth == 0)

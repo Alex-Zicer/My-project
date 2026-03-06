@@ -47,7 +47,10 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
 
         rb.freezeRotation = true; // 冻结旋转，确保玩家不会因为物理碰撞而旋转
 
+        //初始化玩家血量
         health = GetComponent<Health>();
+        health.maxHealth = playerData.maxHealth;
+        health.currentHealth = health.maxHealth;
     }
 
     private void OnEnable()
@@ -77,6 +80,11 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
         moveInput = inputActions.Player.Move.ReadValue<Vector2>();
 
         CheckGroundStatus();
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            TakeDamage(10);
+        }
     }
 
     private void FixedUpdate()
