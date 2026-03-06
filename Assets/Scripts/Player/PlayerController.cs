@@ -4,13 +4,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 
-public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
+public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController, IDamageable
 {
-    [Header("移动设置")]
-    [Tooltip("玩家的移动速度，单位为每秒的单位距离。")]
-    public float moveSpeed = 8f;
-    //玩家的加速度，起步时的加速度，以便人物看起来更丝滑
-    public float acceleration = 50f;
+    public PlayerData playerData;
+    private Health health;
 
     [Header("跳跃设置")]
     [Tooltip("玩家跳跃的力度")]
@@ -50,6 +47,7 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
 
         rb.freezeRotation = true; // 冻结旋转，确保玩家不会因为物理碰撞而旋转
 
+        health = GetComponent<Health>();
     }
 
     private void OnEnable()
@@ -84,11 +82,11 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
     private void FixedUpdate()
     {
         //计算目标水平速度
-        float targetXVelocity = moveInput.x * moveSpeed;
+        float targetXVelocity = moveInput.x * playerData.moveSpeed;
 
         //使用MoveTowards使速度更丝滑，不会出现瞬间变向
         float currentX = rb.velocity.x;
-        float newX = Mathf.MoveTowards(currentX, targetXVelocity, acceleration * Time.fixedDeltaTime);
+        float newX = Mathf.MoveTowards(currentX, targetXVelocity, playerData.moveSpeedMultiplier * Time.fixedDeltaTime);
 
         //应用速度，保持垂直速度不变
         rb.velocity = new Vector2(newX, rb.velocity.y);
@@ -131,5 +129,15 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
     {
         OnAttack?.Invoke();
         Debug.Log("攻击！");
+    }
+
+    /// <summary>
+    /// 计算受到的伤害
+    /// </summary>
+    /// <param name="rawDamage">受到的原始伤害</param>
+    public void TakeDamage(float rawDamage)
+    {
+        float finalDamage = Mathf.Max(rawDamage - playerData.defence, 0);
+        health.UpdateHealth(finalDamage);
     }
 }
