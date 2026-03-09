@@ -3,8 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum PanelType
+{
+    Default,
+    Pop,
+    Tab
+}
+
 public class UIPage : MonoBehaviour
 {
+    [Tooltip("页面类型")]
+    public PanelType type;
     [Tooltip("默认选中的UI选项")]
     public GameObject defaultSelected;
 
@@ -18,5 +27,15 @@ public class UIPage : MonoBehaviour
             UIManager.Instance.eventSystem.SetSelectedGameObject(null);
             UIManager.Instance.eventSystem.SetSelectedGameObject(defaultSelected);
         }
+    }
+
+    public void Open()
+    {
+        gameObject.SetActive(true);
+    }
+
+    public void Close()
+    {
+        gameObject.SetActive(false);
     }
 }
