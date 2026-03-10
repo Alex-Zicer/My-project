@@ -9,35 +9,35 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
     public PlayerData playerData;
     private Health health;
 
-    [Header("ÌøÔ¾ÉèÖÃ")]
-    [Tooltip("Íæ¼ÒÌøÔ¾µÄÁ¦¶È")]
+    [Header("è·³è·ƒè®¾ç½®")]
+    [Tooltip("ç©å®¶è·³è·ƒçš„åŠ›åº¦")]
     public float jumpForce = 12f;
-    [Tooltip("µØÃæ²ã£¬ÓÃÓÚ¼ì²âÍæ¼ÒÊÇ·ñÕ¾ÔÚµØÃæÉÏ")]
+    [Tooltip("åœ°é¢å±‚ï¼Œç”¨äºæ£€æµ‹ç©å®¶æ˜¯å¦ç«™åœ¨åœ°é¢ä¸Š")]
     public LayerMask groundLayer;
-    [Tooltip("·ÅÖÃÒ»¸ö¿ÕÎïÌå£¬µØÃæ¼ì²âµã")]
+    [Tooltip("æ”¾ç½®ä¸€ä¸ªç©ºç‰©ä½“ï¼Œåœ°é¢æ£€æµ‹ç‚¹")]
     public Transform groundCheck;
 
-    //ÓÃÓÚICharacterController½Ó¿ÚµÄÊÂ¼ş£¬ÆäËûÏµÍ³¿ÉÒÔ¶©ÔÄÕâĞ©ÊÂ¼şÀ´ÏìÓ¦Íæ¼ÒµÄÌøÔ¾ºÍ×ÅÂ½ĞĞÎª
+    //ç”¨äºICharacterControlleræ¥å£çš„äº‹ä»¶ï¼Œå…¶ä»–ç³»ç»Ÿå¯ä»¥è®¢é˜…è¿™äº›äº‹ä»¶æ¥å“åº”ç©å®¶çš„è·³è·ƒå’Œç€é™†è¡Œä¸º
     public event Action OnJump;
     public event Action OnLand;
     public event Action OnAttack;
 
-    #region ½Ó¿ÚÊôĞÔµÄÊµÏÖ
-    //ÓÃÓÚIBaseEntity½Ó¿ÚµÄÊôĞÔ
+    #region æ¥å£å±æ€§çš„å®ç°
+    //ç”¨äºIBaseEntityæ¥å£çš„å±æ€§
     public float HorizontalSpeed => Mathf.Abs(rb.velocity.x);
     public float VerticalSpeed => rb.velocity.y;
 
-    public float FacingDirection => moveInput.x; //Ãæ³¯µÄ·½Ïò£¬Ğ¡ÓÚ0±íÊ¾Ïò×ó£¬´óÓÚ0±íÊ¾ÏòÓÒ£¬¸ù¾İÍæ¼ÒÊäÈëµÄË®Æ½ÒÆ¶¯·½ÏòÀ´È·¶¨
+    public float FacingDirection => moveInput.x; //é¢æœçš„æ–¹å‘ï¼Œå°äº0è¡¨ç¤ºå‘å·¦ï¼Œå¤§äº0è¡¨ç¤ºå‘å³ï¼Œæ ¹æ®ç©å®¶è¾“å…¥çš„æ°´å¹³ç§»åŠ¨æ–¹å‘æ¥ç¡®å®š
 
-    public bool IsDead => false; //Íæ¼ÒÊÇ·ñËÀÍö
-    public bool IsGrounded { get; private set; } //Íæ¼ÒÊÇ·ñÔÚµØÃæÉÏ,ÄÚ²¿×Ô¶¯¸üĞÂ
+    public bool IsDead => false; //ç©å®¶æ˜¯å¦æ­»äº¡
+    public bool IsGrounded { get; private set; } //ç©å®¶æ˜¯å¦åœ¨åœ°é¢ä¸Š,å†…éƒ¨è‡ªåŠ¨æ›´æ–°
 
-    private bool lastGrounded; //ÓÃÓÚÅĞ¶ÏÂäµØÄÇÒ»Ë²¼ä
+    private bool lastGrounded; //ç”¨äºåˆ¤æ–­è½åœ°é‚£ä¸€ç¬é—´
 
     #endregion
 
     private Rigidbody2D rb;
-    private PlayerControls inputActions;//Íæ¼ÒÊäÈëÏµÍ³µÄÒıÓÃ£¬Ê¹ÓÃUnityµÄĞÂÊäÈëÏµÍ³À´´¦ÀíÍæ¼ÒµÄÊäÈë
+    private PlayerControls inputActions;//ç©å®¶è¾“å…¥ç³»ç»Ÿçš„å¼•ç”¨ï¼Œä½¿ç”¨Unityçš„æ–°è¾“å…¥ç³»ç»Ÿæ¥å¤„ç†ç©å®¶çš„è¾“å…¥
     private Vector2 moveInput;
 
     private void Awake()
@@ -45,9 +45,9 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
         rb = GetComponent<Rigidbody2D>();
         inputActions = new PlayerControls();
 
-        rb.freezeRotation = true; // ¶³½áĞı×ª£¬È·±£Íæ¼Ò²»»áÒòÎªÎïÀíÅö×²¶øĞı×ª
+        rb.freezeRotation = true; // å†»ç»“æ—‹è½¬ï¼Œç¡®ä¿ç©å®¶ä¸ä¼šå› ä¸ºç‰©ç†ç¢°æ’è€Œæ—‹è½¬
 
-        //³õÊ¼»¯Íæ¼ÒÑªÁ¿
+        //åˆå§‹åŒ–ç©å®¶è¡€é‡
         health = GetComponent<Health>();
         health.maxHealth = playerData.maxHealth;
         health.currentHealth = health.maxHealth;
@@ -57,9 +57,9 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
     {
         inputActions.Player.Enable();
 
-        //¶©ÔÄÌøÔ¾ÊÂ¼ş£¬µ±Íæ¼Ò°´ÏÂÌøÔ¾¼üÊ±µ÷ÓÃOnJumpPerformed·½·¨
+        //è®¢é˜…è·³è·ƒäº‹ä»¶ï¼Œå½“ç©å®¶æŒ‰ä¸‹è·³è·ƒé”®æ—¶è°ƒç”¨OnJumpPerformedæ–¹æ³•
         inputActions.Player.Jump.performed += OnJumpPerformed;
-        //¶©ÔÄ¹¥»÷ÊÂ¼ş£¬µ±Íæ¼Ò°´ÏÂ¹¥»÷¼üÊ±µ÷ÓÃOnAttackPerformed·½·¨
+        //è®¢é˜…æ”»å‡»äº‹ä»¶ï¼Œå½“ç©å®¶æŒ‰ä¸‹æ”»å‡»é”®æ—¶è°ƒç”¨OnAttackPerformedæ–¹æ³•
         inputActions.Player.Attack.performed += OnAttackPerformed;
     }
 
@@ -67,16 +67,16 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
     {
         inputActions.Player.Disable();
 
-        //È¡Ïû¶©ÔÄÌøÔ¾ÊÂ¼ş£¬·ÀÖ¹ÄÚ´æĞ¹Â©
+        //å–æ¶ˆè®¢é˜…è·³è·ƒäº‹ä»¶ï¼Œé˜²æ­¢å†…å­˜æ³„æ¼
         inputActions.Player.Jump.performed -= OnJumpPerformed;
-        //È¡Ïû¶©ÔÄ¹¥»÷ÊÂ¼ş£¬·ÀÖ¹ÄÚ´æĞ¹Â©
+        //å–æ¶ˆè®¢é˜…æ”»å‡»äº‹ä»¶ï¼Œé˜²æ­¢å†…å­˜æ³„æ¼
         inputActions.Player.Attack.performed -= OnAttackPerformed;
     }
 
     // Update is called once per frame
     void Update()
     {
-        // »ñÈ¡Íæ¼ÒµÄÊäÈë£¬¸üĞÂÒÆ¶¯ÏòÁ¿
+        // è·å–ç©å®¶çš„è¾“å…¥ï¼Œæ›´æ–°ç§»åŠ¨å‘é‡
         moveInput = inputActions.Player.Move.ReadValue<Vector2>();
 
         CheckGroundStatus();
@@ -89,63 +89,64 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
 
     private void FixedUpdate()
     {
-        //¼ÆËãÄ¿±êË®Æ½ËÙ¶È
+        //è®¡ç®—ç›®æ ‡æ°´å¹³é€Ÿåº¦
         float targetXVelocity = moveInput.x * playerData.moveSpeed;
 
-        //Ê¹ÓÃMoveTowardsÊ¹ËÙ¶È¸üË¿»¬£¬²»»á³öÏÖË²¼ä±äÏò
+        //ä½¿ç”¨MoveTowardsä½¿é€Ÿåº¦æ›´ä¸æ»‘ï¼Œä¸ä¼šå‡ºç°ç¬é—´å˜å‘
         float currentX = rb.velocity.x;
         float newX = Mathf.MoveTowards(currentX, targetXVelocity, playerData.moveSpeedMultiplier * Time.fixedDeltaTime);
 
-        //Ó¦ÓÃËÙ¶È£¬±£³Ö´¹Ö±ËÙ¶È²»±ä
+        //åº”ç”¨é€Ÿåº¦ï¼Œä¿æŒå‚ç›´é€Ÿåº¦ä¸å˜
         rb.velocity = new Vector2(newX, rb.velocity.y);
     }
 
-    [Header("µØÃæ¼ì²âÉèÖÃ")]
-    [Tooltip("µØÃæ¼ì²âµÄ·¶Î§´óĞ¡")]
+    [Header("åœ°é¢æ£€æµ‹è®¾ç½®")]
+    [Tooltip("åœ°é¢æ£€æµ‹çš„èŒƒå›´å¤§å°")]
     public Vector2 groundCheckSize = new Vector2(0.5f, 0.1f);
-    [Tooltip("Ïà¶ÔÓÚÖĞĞÄµãµÄÆ«ÒÆ£¬È·±£¼ì²âµãÎ»ÓÚÍæ¼Ò½ÅÏÂ")]
+    [Tooltip("ç›¸å¯¹äºä¸­å¿ƒç‚¹çš„åç§»ï¼Œç¡®ä¿æ£€æµ‹ç‚¹ä½äºç©å®¶è„šä¸‹")]
     public float groundCheckOffset = 0.1f;
 
     /// <summary>
-    /// ¼ì²âÈËÎïÊÇ·ñÕ¾ÔÚµØÃæÉÏ
+    /// æ£€æµ‹äººç‰©æ˜¯å¦ç«™åœ¨åœ°é¢ä¸Š
     /// </summary>
     private void CheckGroundStatus()
     {
         Vector2 checkPosition = (Vector2)transform.position + new Vector2(0, groundCheckOffset);
 
-        //Ê¹ÓÃOverlapBox¼ì²âÍæ¼ÒÊÇ·ñÔÚµØÃæÉÏ£¬groundCheckÊÇÒ»¸ö¿ÕÎïÌå£¬·ÅÖÃÔÚÍæ¼Ò½ÅÏÂ£¬¼ì²â·¶Î§Îª0.2f£¬¼ì²âµÄ²ãÎªgroundLayer
+        //ä½¿ç”¨OverlapBoxæ£€æµ‹ç©å®¶æ˜¯å¦åœ¨åœ°é¢ä¸Šï¼ŒgroundCheckæ˜¯ä¸€ä¸ªç©ºç‰©ä½“ï¼Œæ”¾ç½®åœ¨ç©å®¶è„šä¸‹ï¼Œæ£€æµ‹èŒƒå›´ä¸º0.2fï¼Œæ£€æµ‹çš„å±‚ä¸ºgroundLayer
         IsGrounded = Physics2D.OverlapBox(groundCheck.position, groundCheckSize, 0f, groundLayer);
 
         if(IsGrounded && !lastGrounded)
         {
-            OnLand?.Invoke(); //´¥·¢×ÅÂ½ÊÂ¼ş
+            OnLand?.Invoke(); //è§¦å‘ç€é™†äº‹ä»¶
         }
     }
 
     /// <summary>
-    /// ÊµÏÖÍæ¼ÒÌøÔ¾¹¦ÄÜµÄ·½·¨£¬µ±Íæ¼Ò°´ÏÂÌøÔ¾¼üÊ±±»µ÷ÓÃ¡£ËüÍ¨¹ıÉèÖÃ¸ÕÌåµÄ´¹Ö±ËÙ¶ÈÀ´ÊµÏÖÌøÔ¾Ğ§¹û¡£
+    /// å®ç°ç©å®¶è·³è·ƒåŠŸèƒ½çš„æ–¹æ³•ï¼Œå½“ç©å®¶æŒ‰ä¸‹è·³è·ƒé”®æ—¶è¢«è°ƒç”¨ã€‚å®ƒé€šè¿‡è®¾ç½®åˆšä½“çš„å‚ç›´é€Ÿåº¦æ¥å®ç°è·³è·ƒæ•ˆæœã€‚
     /// </summary>
-    /// <param name="context">ÓÃÀ´ÊµÏÖÊÂ¼şÏµÍ³µÄ²ÎÊı</param>
+    /// <param name="context">ç”¨æ¥å®ç°äº‹ä»¶ç³»ç»Ÿçš„å‚æ•°</param>
     private void OnJumpPerformed(InputAction.CallbackContext context)
     {
         rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-        OnJump?.Invoke(); //´¥·¢ÌøÔ¾ÊÂ¼ş
-        Debug.Log("ÌøÔ¾£¡");
+        OnJump?.Invoke(); //è§¦å‘è·³è·ƒäº‹ä»¶
+        Debug.Log("è·³è·ƒï¼");
     }
 
     private void OnAttackPerformed(InputAction.CallbackContext context)
     {
         OnAttack?.Invoke();
-        Debug.Log("¹¥»÷£¡");
+        Debug.Log("æ”»å‡»ï¼");
     }
 
     /// <summary>
-    /// ¼ÆËãÊÜµ½µÄÉËº¦
+    /// è®¡ç®—å—åˆ°çš„ä¼¤å®³
     /// </summary>
-    /// <param name="rawDamage">ÊÜµ½µÄÔ­Ê¼ÉËº¦</param>
+    /// <param name="rawDamage">å—åˆ°çš„åŸå§‹ä¼¤å®³</param>
     public void TakeDamage(float rawDamage)
     {
         float finalDamage = Mathf.Max(rawDamage - playerData.defence, 0);
         health.UpdateHealth(finalDamage);
     }
 }
+

@@ -2,14 +2,30 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Timers;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SceneLoader : MonoBehaviour
 {
-    public static SceneLoader Instance { get; private set; }
+    private static SceneLoader _instance;
 
+    public static SceneLoader Instance {
+        get
+        {
+            if(_instance == null)
+            {
+                _instance = FindFirstObjectByType<SceneLoader>();
+                if(_instance == null)
+                {
+                    var prefab = Resources.Load<SceneLoader>("Prefabs/Scene/SceneManager");
+                    _instance = Instantiate(prefab);
+                }
+            }
+            return _instance;
+        }
+    }
     [Header("UI组件")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;
     [SerializeField] private Slider progressBar;
@@ -17,14 +33,13 @@ public class SceneLoader : MonoBehaviour
 
     private void Awake()
     {
-        if(Instance != null && Instance != this)
+        if(_instance != null && _instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        Instance = this;
-
-        DontDestroyOnLoad(gameObject);
+        _instance = this;
+        DontDestroyOnLoad(_instance.gameObject);
 
         //初始化加载幕布，隐藏
         if (fadeCanvasGroup != null)
@@ -83,6 +98,7 @@ public class SceneLoader : MonoBehaviour
             //加载完成后等在一会儿，防止突然切换让玩家突兀
             if(operation.progress >= 0.9f)
             {
+                Time.timeScale = 1;
                 operation.allowSceneActivation = true;
             }
 
@@ -112,7 +128,7 @@ public class SceneLoader : MonoBehaviour
 
         while ( timer < fadeDuration)
         {
-            timer += Time.deltaTime;
+            timer += Time.unscaledDeltaTime;
             fadeCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, timer / fadeDuration);
             yield return null;
         }

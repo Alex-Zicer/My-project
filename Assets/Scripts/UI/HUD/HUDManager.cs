@@ -7,13 +7,16 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private CanvasGroup hudCanvasGroup;
 
     /// <summary>
-    /// 显示或者隐藏整个UI（观看剧情或者进入主菜单时隐藏）
+    /// 鏄剧ず鎴栬�呴殣钘忔暣涓猆I锛堣鐪嬪墽鎯呮垨鑰呰繘鍏ヤ富鑿滃崟鏃堕殣钘忥級
     /// </summary>
-    /// <param name="isActive">显示或者隐藏UI</param>
+    /// <param name="isActive">鏄剧ず鎴栬�呴殣钘廢I</param>
     public void SetHUDActive(bool isActive)
     {
+        if(hudCanvasGroup != null)
+        {
         hudCanvasGroup.alpha = isActive ? 1 : 0;
         hudCanvasGroup.blocksRaycasts = isActive;
         hudCanvasGroup.interactable = isActive;
+        }
     }
 }

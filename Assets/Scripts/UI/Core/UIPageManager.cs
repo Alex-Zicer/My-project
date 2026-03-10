@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class UIPageManager : MonoBehaviour
@@ -10,7 +11,7 @@ public class UIPageManager : MonoBehaviour
     [SerializeField] private List<UIPage> pageList;
     [Tooltip("管理页面栈")]
     private Stack<UIPage> historyStack = new Stack<UIPage>();
-
+    public bool IsPause {  get; private set; }
     /// <summary>
     /// 开始关闭所有页面
     /// </summary>
@@ -18,7 +19,14 @@ public class UIPageManager : MonoBehaviour
     {
         foreach (var page in pageList)
         {
-            page.Close();
+            if(page == null)
+            {
+                Debug.LogError("pageList中有空页面");
+            }
+            else
+            {
+                page.Close();
+            }
         }
         GoToPageByName("MainMenuPage");
     }
@@ -29,7 +37,7 @@ public class UIPageManager : MonoBehaviour
     /// <param name="pageName">切换页面的名称</param>
     public void GoToPageByName(string pageName)
     {
-        UIPage target = pageList.Find(pageList => pageList.gameObject.name == pageName);//在页面列表中查找与给定名称匹配的页面
+        UIPage target = pageList.Find(page => page.gameObject.name == pageName);//在页面列表中查找与给定名称匹配的页面
         if (target == null)
         {
             Debug.Log($"未找到名为{pageName}的页面");
@@ -74,4 +82,43 @@ public class UIPageManager : MonoBehaviour
             historyStack.Pop().Close();
         }
     }
+
+    #region 暂停功能
+
+    /// <summary>
+    /// 外部入口
+    /// </summary>
+    public void TogglePause()
+    {
+        if (!IsPause)
+        {
+            PauseGame();
+        }
+        else
+        {
+            ResumeGame();
+        }
+    }
+
+    /// <summary>
+    /// 冻结时间，并打开暂停页面
+    /// </summary>
+    private void PauseGame()
+    {
+        IsPause = true;
+        Time.timeScale = 0;
+        GoToPageByName("PausePage");
+    }
+
+    /// <summary>
+    /// 恢复时间，关闭暂停页面
+    /// </summary>
+    public void ResumeGame()
+    {
+        IsPause = false;
+        Time.timeScale = 1;
+
+        Back();//返回上一页，也就是关闭暂停页
+    }
+    #endregion
 }

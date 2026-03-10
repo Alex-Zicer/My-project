@@ -31,6 +31,14 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 加载GamePlay场景
+    /// </summary>
+    public void LoadGamePlay()
+    {
+        SceneLoader.Instance.LoadScene("GamePlay");
+    }
+
+    /// <summary>
     /// 初始化事件系统，确保UI管理器能够正确处理用户输入和交互事件。
     /// </summary>
     private void SetUpEventSystem()
@@ -58,8 +66,6 @@ public class UIManager : MonoBehaviour
         Instance = this;
 
         InitSubManagers();
-
-        DontDestroyOnLoad(gameObject);
     }
 
     private void InitSubManagers()
@@ -76,4 +82,17 @@ public class UIManager : MonoBehaviour
         SetUpEventSystem();      
     }
 
+    /// <summary>
+    /// 检测是否输入Esc
+    /// </summary>
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            pageManager.TogglePause();
+        }
+    }
+
 }
+
+

@@ -1,0 +1,8 @@
+{
+  "maxHealth": 100.0,
+  "moveSpeed": 2.0,
+  "moveSpeedMultiplier": 10.0,
+  "defence": 5.0,
+  "atkPower": 10.0,
+  "atkCoolDown": 0.5
+}
