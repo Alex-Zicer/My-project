@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 
-public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController, IDamageable
+public class PlayerController : MonoBehaviour, IBaseEntity, IDamageable, ICharacterController
 {
     public PlayerData playerData;
     private Health health;
@@ -27,12 +27,20 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
     public float HorizontalSpeed => Mathf.Abs(rb.velocity.x);
     public float VerticalSpeed => rb.velocity.y;
 
-    public float FacingDirection => moveInput.x; //面朝的方向，小于0表示向左，大于0表示向右，根据玩家输入的水平移动方向来确定
-
     public bool IsDead => false; //玩家是否死亡
-    public bool IsGrounded { get; private set; } //玩家是否在地面上,内部自动更新
+    public bool IsGround { get; private set; } //玩家是否在地面上,内部自动更新
 
     private bool lastGrounded; //用于判断落地那一瞬间
+
+    #endregion
+
+    #region 公开属性状态类访问
+
+    public Vector2 MoveInput { get; private set; }
+    public PlayerStateMachine StateMachine { get; private set; }
+    public Rigidbody2D Rb { get; private set; }
+    public PlayerData PlayerData { get; private set; }
+    public float JumpForce => jumpForce;
 
     #endregion
 
@@ -114,9 +122,9 @@ public class PlayerController : MonoBehaviour, IBaseEntity, ICharacterController
         Vector2 checkPosition = (Vector2)transform.position + new Vector2(0, groundCheckOffset);
 
         //使用OverlapBox检测玩家是否在地面上，groundCheck是一个空物体，放置在玩家脚下，检测范围为0.2f，检测的层为groundLayer
-        IsGrounded = Physics2D.OverlapBox(groundCheck.position, groundCheckSize, 0f, groundLayer);
+        IsGround = Physics2D.OverlapBox(groundCheck.position, groundCheckSize, 0f, groundLayer);
 
-        if(IsGrounded && !lastGrounded)
+        if (IsGround && !lastGrounded)
         {
             OnLand?.Invoke(); //触发着陆事件
         }

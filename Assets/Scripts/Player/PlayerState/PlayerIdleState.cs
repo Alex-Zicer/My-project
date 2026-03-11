@@ -14,15 +14,23 @@ public class PlayerIdleState : PlayerStateBase
     public override void Enter()
     {
         anim.SetBool("IsGround", true);
-        anim.SetFloat("HorizontalSpeed", 0);
     }
 
     /// <summary>
-    /// 检测玩家的输入，是否应该转换到Run
+    /// 检测玩家的输入，是否应该转换到Run或者Fall
     /// </summary>
     public override void Update()
     {
+        if (Mathf.Abs(player.MoveInput.x) > 0.1f)
+        {
+            player.StateMachine.TransitionTo(PlayerStateType.Run);
+            return;
+        }
 
+        if (!player.IsGround)
+        {
+            player.StateMachine.TransitionTo(PlayerStateType.Fall);
+        }
     }
 
     public override bool CanTransitionTo(PlayerStateType state)

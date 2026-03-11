@@ -56,6 +56,21 @@ public class PlayerStateMachine
         currentState.Enter();
     }
 
+    /// <summary>
+    /// 先尝试是否能够转换到目标状态
+    /// </summary>
+    /// <param name="stateType"></param>
+    /// <returns></returns>
+    public bool TryTransitionTo(PlayerStateType stateType)
+    {
+        if (currentState != null && !currentState.CanTransitionTo(stateType))
+        {
+            return false;
+        }
+        TransitionTo(stateType);
+        return true;
+    }
+
     public void Update()
     {
         currentState?.Update();

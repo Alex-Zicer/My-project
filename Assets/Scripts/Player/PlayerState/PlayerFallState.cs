@@ -8,14 +8,12 @@ public class PlayerFallState : PlayerStateBase
 
     public PlayerFallState(PlayerController player) : base(player) { }
 
-    public override void Enter()
-    {
-        base.Enter();
-    }
-
     public override void Update()
     {
-        base.Update();
+        if (player.IsGround)
+        {
+            ReturnToMovementState();
+        }
     }
 
     public override bool CanTransitionTo(PlayerStateType state)
