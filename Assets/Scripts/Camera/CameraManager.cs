@@ -13,11 +13,19 @@ public class CameraManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
+        if (Instance == null) 
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
         else Destroy(gameObject);
 
         // 获取 Noise 模块的引用
         _perlin = playerCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
+
+        //将参数初始化为0，以免已进入游戏镜头就开始抖动
+        _perlin.m_AmplitudeGain = 0;
+        _perlin.m_FrequencyGain = 0;
     }
 
     /// <summary>
