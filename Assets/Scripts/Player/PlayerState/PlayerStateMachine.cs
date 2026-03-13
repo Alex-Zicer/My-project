@@ -8,10 +8,12 @@ public class PlayerStateMachine
     private IPlayerState currentState;
     private PlayerController player;
 
+    public IPlayerState CurrentState => currentState;
+
     /// <summary>
     /// 获取玩家当前的状态，如果为空，就返回Idle
     /// </summary>
-    public PlayerStateType CurrentStateType => currentState?.StateType ?? PlayerStateType.Idle;
+    public PlayerStateType CurrentStateType => currentState?.StateType ?? PlayerStateType.Movement;
 
     /// <summary>
     /// 构造函数
@@ -30,6 +32,19 @@ public class PlayerStateMachine
     public void RegisterState(IPlayerState playerState)
     {
         states[playerState.StateType] = playerState;
+    }
+
+    /// <summary>
+    /// 初始化状态
+    /// </summary>
+    /// <param name="initialState">初始状态</param>
+    public void Initialize(PlayerStateType initialState)
+    {
+        if (states.TryGetValue(initialState, out IPlayerState state))
+        {
+            currentState = state;
+            currentState.Enter();
+        }
     }
 
     /// <summary>

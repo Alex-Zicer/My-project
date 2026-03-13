@@ -13,10 +13,13 @@ public class PlayerData : ScriptableObject
     public float moveSpeedMultiplier;//移动加速度，确保人物不会突然转向
     [Tooltip("防御力")]
     public float defence;//玩家防御力
+    [Tooltip("跳跃速度")]
+    public float JumpForce;
 
-    [Header("玩家的攻击属性")]
-    public float atkPower;
-    public float atkCoolDown;
+
+
+
+
 
     [ContextMenu("Load From JSON")] //直接在Inspector菜单里右键点击即可触发
     public void LoadFromJson()
@@ -34,7 +37,7 @@ public class PlayerData : ScriptableObject
         }
         else
         {
-            Debug.Log("找不到JSON文件，路径为:" +  path);
+            Debug.Log("找不到JSON文件，路径为:" + path);
         }
     }
 }

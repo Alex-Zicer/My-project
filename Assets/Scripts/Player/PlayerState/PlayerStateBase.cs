@@ -8,6 +8,20 @@ public abstract class PlayerStateBase : IPlayerState
     protected Animator anim;
     protected Rigidbody2D rb;
 
+    //动画状态哈希
+    protected static readonly int MovementHash = Animator.StringToHash("Movement");
+    protected static readonly int JumpHash = Animator.StringToHash("Jump");
+    protected static readonly int FallHash = Animator.StringToHash("Fall");
+    protected static readonly int LandHash = Animator.StringToHash("Land");
+    protected static readonly int HurtHash = Animator.StringToHash("Hurt");
+    protected static readonly int DeadHash = Animator.StringToHash("Dead");
+    protected static readonly int Attack1Hash = Animator.StringToHash("Attack1");
+    protected static readonly int Attack2Hash = Animator.StringToHash("Attack2");
+
+    //动画参数哈希
+    protected static readonly int HorizontalSpeedHash = Animator.StringToHash("HorizontalSpeed");
+    protected static readonly int VerticalSpeedHash = Animator.StringToHash("VerticalSpeed");
+    protected static readonly int IsGroundHash = Animator.StringToHash("IsGround");
 
     public abstract PlayerStateType StateType { get; }
 
@@ -69,13 +83,9 @@ public abstract class PlayerStateBase : IPlayerState
     /// </summary>
     protected void ReturnToMovementState()
     {
-        if (Mathf.Abs(player.MoveInput.x) > 0.1f && player.IsGround)
+        if (player.IsGround)
         {
-            player.StateMachine.TransitionTo(PlayerStateType.Run);
-        }
-        else if (player.IsGround)
-        {
-            player.StateMachine.TransitionTo(PlayerStateType.Idle);
+            player.StateMachine.TransitionTo(PlayerStateType.Movement);
         }
         else
         {
@@ -98,5 +108,13 @@ public abstract class PlayerStateBase : IPlayerState
         {
             player.transform.localScale = new Vector3(-1, 1, 1); //面朝左
         }
+    }
+
+    protected void SmoothSpeed()
+    {
+        float targetXVelocity = player.MoveInput.x * player.PlayerData.moveSpeed;
+        float currentX = rb.velocity.x;
+        float newX = Mathf.MoveTowards(currentX, targetXVelocity, player.PlayerData.moveSpeedMultiplier * Time.fixedDeltaTime);
+        rb.velocity = new Vector2(newX, rb.velocity.y);
     }
 }

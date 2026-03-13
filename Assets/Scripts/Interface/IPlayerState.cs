@@ -4,10 +4,10 @@ using UnityEngine;
 
 public enum PlayerStateType
 {
-    Idle,
-    Run,
+    Movement,
     Jump,
     Fall,
+    Land,
     Attack,
     Hurt,
     Dead
