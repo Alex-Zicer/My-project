@@ -1,27 +1,45 @@
-﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SubPageManager : MonoBehaviour
+/// <summary>
+/// 子页面管理器。用于管理某一“大页”下的多个子页（如设置下的音效/界面，背包下的武器/材料/道具等）。
+/// 支持按 Key 或按 Tab 索引切换子页。
+/// </summary>
+public class SubPageManager : BasePageManager
 {
-    [Header("子页面列表")]
-    public List<GameObject> subPages; // 子页面列表
+    [Header("子页面配置")]
+    [Tooltip("按 Tab 顺序排列的子页面 Key 列表，ShowSubPage(int) 按索引取这里的 Key。")]
+    [SerializeField] private List<string> orderedSubPageKeys = new List<string>();
 
-    private void OnEnable()
+    /// <summary>
+    /// Inspector 重置时设为管理子页面，不设默认打开页。
+    /// </summary>
+    private void Reset()
     {
-        ShowSubPage(0); // 默认显示第一个子页面
+        Configure(UIPageCategory.SubPage, "");
     }
 
     /// <summary>
-    /// 激活指定索引的子页面，并隐藏其他所有子页面的方法。
-    /// 通过调用此方法，可以在UI中切换不同的子页面，确保用户界面的一致性和易用性。
+    /// 按 Tab 索引显示子页面。索引对应 orderedSubPageKeys 中的顺序（如 0=音效，1=界面）。
     /// </summary>
-    /// <param name="index">切换的子页面的索引</param>
+    /// <param name="index">子页索引，从 0 开始</param>
     public void ShowSubPage(int index)
     {
-        for (int i = 0; i < subPages.Count; i++)
+        if (index < 0 || index >= orderedSubPageKeys.Count)
         {
-            subPages[i].SetActive(i == index); // 仅激活指定索引的子页面，其他页面隐藏
-        }        
+            Debug.LogWarning($"子页面索引超出范围：{index}");
+            return;
+        }
+
+        GoToPageByName(orderedSubPageKeys[index]);
+    }
+
+    /// <summary>
+    /// 按页面 Key 显示子页面。适合按钮直接绑定到某个具体子页。
+    /// </summary>
+    /// <param name="subPageKey">子页的 PageKey</param>
+    public void ShowSubPage(string subPageKey)
+    {
+        GoToPageByName(subPageKey);
     }
 }

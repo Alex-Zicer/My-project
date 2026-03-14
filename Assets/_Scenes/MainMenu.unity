@@ -151,10 +151,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9197de0d0247c8d43b52f2353b2d8b34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  subPages:
-  - {fileID: 800533231}
-  - {fileID: 1294002256}
-  - {fileID: 723098850}
+  managedCategory: 0
+  defaultPageKey: MainMenuPage
+  pageList: []
+  orderedSubPageKeys: []
 --- !u!224 &64819102
 RectTransform:
   m_ObjectHideFlags: 0
@@ -439,6 +439,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fa9a8042d7024143a47a8bf37b36373, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  category: 0
+  pageKey: 
   type: 0
   defaultSelected: {fileID: 348058919}
 --- !u!225 &189589154
@@ -2263,6 +2265,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fa9a8042d7024143a47a8bf37b36373, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  category: 0
+  pageKey: 
   type: 0
   defaultSelected: {fileID: 1369325038}
 --- !u!225 &700518447
@@ -3429,7 +3433,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 417fde29682211e4a81c894b2f46023d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pageManager: {fileID: 1978263187}
+  mainMenuPageManager: {fileID: 0}
+  inGamePageManager: {fileID: 0}
+  subPageManager: {fileID: 0}
   hudManager: {fileID: 1720605372}
   eventSystem: {fileID: 689535276}
 --- !u!1 &1250497293
@@ -5182,7 +5188,7 @@ GameObject:
   - component: {fileID: 1978263183}
   - component: {fileID: 1978263187}
   m_Layer: 5
-  m_Name: UIPageManager
+  m_Name: MainMenuPageManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5468,6 +5474,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fa9a8042d7024143a47a8bf37b36373, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  category: 0
+  pageKey: 
   type: 0
   defaultSelected: {fileID: 0}
 --- !u!114 &2017375434
@@ -5737,6 +5745,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fa9a8042d7024143a47a8bf37b36373, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  category: 0
+  pageKey: 
   type: 0
   defaultSelected: {fileID: 0}
 --- !u!225 &2072712396

@@ -1,37 +1,41 @@
-﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using UnityEngine.Events;
-using Unity.VisualScripting;
+using UnityEngine.SceneManagement;
 
+/// <summary>
+/// UI 总控单例。统一管理主菜单页、游戏内页、子页面、HUD 四个管理器，并在场景加载时动态收集页面、初始化对应 UI。
+/// </summary>
 public class UIManager : MonoBehaviour
 {
-    //单例实例
     public static UIManager Instance { get; private set; }
 
-    [SerializeField] private UIPageManager pageManager;
+    [Header("四个子管理器")]
+    [SerializeField] private MainMenuPageManager mainMenuPageManager;
+    [SerializeField] private InGamePageManager inGamePageManager;
+    [SerializeField] private SubPageManager subPageManager;
     [SerializeField] private HUDManager hudManager;
 
-    public UIPageManager Page => pageManager;
+    public MainMenuPageManager MainMenuPage => mainMenuPageManager;
+    public InGamePageManager InGamePage => inGamePageManager;
+    public SubPageManager SubPage => subPageManager;
     public HUDManager HUD => hudManager;
 
     public EventSystem eventSystem;
+    /// <summary> 当前是否为游戏内场景（用于 Esc 只在实际游戏中触发暂停）。 </summary>
+    private bool isInGameScene;
 
     /// <summary>
-    /// 初始化HUD
+    /// 初始化 HUD：从当前场景找到 HUDManager 并显示。进入游戏场景后由 SceneLoader 或 RefreshManagersByScene 调用。
     /// </summary>
     public void InitHUD()
     {
-        if (hudManager != null) return;
-        
-        hudManager = GameObject.FindFirstObjectByType<HUDManager>();
-        hudManager.SetHUDActive(true);
+        ResolveHUDFromCurrentScene();
+        if (hudManager != null) hudManager.SetHUDActive(true);
     }
 
     /// <summary>
-    /// 加载GamePlay场景
+    /// 加载游戏玩法场景。主菜单“开始游戏”等按钮可调用。
     /// </summary>
     public void LoadGamePlay()
     {
@@ -39,11 +43,11 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 初始化事件系统，确保UI管理器能够正确处理用户输入和交互事件。
+    /// 查找场景中的 EventSystem，供 UIPage 设置默认选中项等使用。
     /// </summary>
     private void SetUpEventSystem()
     {
-        eventSystem = FindObjectOfType<EventSystem>();
+        eventSystem = FindFirstObjectByType<EventSystem>();
 
         if (eventSystem == null)
         {
@@ -52,9 +56,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 初始化UI管理器，确保只有一个实例存在，并且在场景中保持不被销毁。
-    /// 这种单例模式的实现方式可以确保在整个游戏生命周期中，UI管理器始终可用，
-    /// 并且不会因为场景切换而丢失。
+    /// 单例初始化：重复则销毁自身；否则设为 Instance 并跨场景保留，然后确保四个子管理器存在。
     /// </summary>
     private void Awake()
     {
@@ -64,35 +66,140 @@ public class UIManager : MonoBehaviour
             return;
         }
         Instance = this;
-
-        InitSubManagers();
+        DontDestroyOnLoad(gameObject);
+        EnsureSubManagers();
     }
 
-    private void InitSubManagers()
+    private void OnEnable()
     {
-        if(pageManager != null) pageManager.Initialize();
-        if(hudManager != null) hudManager.SetHUDActive(false);
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     /// <summary>
-    /// 初始化UI管理器，设置事件系统和可交互UI元素的类型，以确保在游戏开始时，UI能够正确响应用户输入和交互事件。
+    /// 确保四个子管理器都存在且已配置：若未赋值则从本物体获取或自动添加，并调用 Configure 设定分类与默认页。
+    /// </summary>
+    private void EnsureSubManagers()
+    {
+        if (mainMenuPageManager == null) mainMenuPageManager = GetComponent<MainMenuPageManager>();
+        if (mainMenuPageManager == null) mainMenuPageManager = gameObject.AddComponent<MainMenuPageManager>();
+        mainMenuPageManager.Configure(UIPageCategory.MainMenu, "MainMenuPage");
+
+        if (inGamePageManager == null) inGamePageManager = GetComponent<InGamePageManager>();
+        if (inGamePageManager == null) inGamePageManager = gameObject.AddComponent<InGamePageManager>();
+        inGamePageManager.Configure(UIPageCategory.InGame, "");
+
+        if (subPageManager == null) subPageManager = GetComponent<SubPageManager>();
+        if (subPageManager == null) subPageManager = gameObject.AddComponent<SubPageManager>();
+        subPageManager.Configure(UIPageCategory.SubPage, "");
+    }
+
+    /// <summary>
+    /// 场景加载完成后，根据新场景刷新所有管理器的页面与 HUD，并按主菜单/游戏内分支初始化。
+    /// </summary>
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        RefreshManagersByScene(scene);
+    }
+
+    /// <summary>
+    /// 收集指定场景中所有的 UIPage（含未激活的），用于分发给各页面管理器。
+    /// </summary>
+    /// <param name="scene">要收集的场景</param>
+    /// <returns>该场景内的 UIPage 列表</returns>
+    private List<UIPage> CollectScenePages(Scene scene)
+    {
+        var allPages = FindObjectsByType<UIPage>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var scenePages = new List<UIPage>(allPages.Length);
+
+        foreach (var page in allPages)
+        {
+            if (page != null && page.gameObject.scene == scene)
+            {
+                scenePages.Add(page);
+            }
+        }
+
+        return scenePages;
+    }
+
+    /// <summary>
+    /// 从当前激活场景中查找 HUDManager，并赋值给 hudManager。切换场景后需调用以指向新场景的 HUD。
+    /// </summary>
+    private void ResolveHUDFromCurrentScene()
+    {
+        Scene currentScene = SceneManager.GetActiveScene();
+        var hudList = FindObjectsByType<HUDManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        hudManager = null;
+        foreach (var hud in hudList)
+        {
+            if (hud != null && hud.gameObject.scene == currentScene)
+            {
+                hudManager = hud;
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 根据当前场景刷新 UI：重设事件系统与 HUD 引用，收集本场景 UIPage 并分发给三个页面管理器，
+    /// 再根据是否为“主菜单”场景决定初始化主菜单还是游戏内 UI，并控制 HUD 显隐与时间尺度。
+    /// </summary>
+    /// <param name="scene">刚加载的场景</param>
+    private void RefreshManagersByScene(Scene scene)
+    {
+        SetUpEventSystem();
+        ResolveHUDFromCurrentScene();
+
+        List<UIPage> scenePages = CollectScenePages(scene);
+        mainMenuPageManager.RegisterPages(scenePages);
+        inGamePageManager.RegisterPages(scenePages);
+        subPageManager.RegisterPages(scenePages);
+
+        bool isMainMenuScene = scene.name.ToLower().Contains("menu");
+        isInGameScene = !isMainMenuScene;
+
+        if (isMainMenuScene)
+        {
+            mainMenuPageManager.Initialize();
+            inGamePageManager.CloseAll();
+            subPageManager.CloseAll();
+            if (hudManager != null) hudManager.SetHUDActive(false);
+            Time.timeScale = 1;
+            return;
+        }
+
+        mainMenuPageManager.CloseAll();
+        inGamePageManager.Initialize();
+        subPageManager.CloseAll();
+        if (hudManager != null) hudManager.SetHUDActive(true);
+        Time.timeScale = 1;
+    }
+
+    /// <summary>
+    /// 首次进入时按当前场景做一次完整的 UI 刷新与初始化。
     /// </summary>
     private void Start()
     {
-        SetUpEventSystem();      
+        RefreshManagersByScene(SceneManager.GetActiveScene());
     }
 
     /// <summary>
-    /// 检测是否输入Esc
+    /// 仅在游戏内场景时，Esc 触发暂停/恢复。
     /// </summary>
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            pageManager.TogglePause();
+            if (isInGameScene && inGamePageManager != null)
+            {
+                inGamePageManager.TogglePause();
+            }
         }
     }
-
 }
-
-
