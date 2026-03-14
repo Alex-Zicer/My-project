@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,14 +13,14 @@ public enum PanelType
 [RequireComponent(typeof(CanvasGroup))]
 public class UIPage : MonoBehaviour
 {
-    [Tooltip("Ò³ÃæÀàĞÍ")]
+    [Tooltip("é¡µé¢ç±»å‹")]
     public PanelType type;
-    [Tooltip("Ä¬ÈÏÑ¡ÖĞµÄUIÑ¡Ïî")]
+    [Tooltip("é»˜è®¤é€‰ä¸­çš„UIé€‰é¡¹")]
     public GameObject defaultSelected;
     private CanvasGroup _canvasGroup;
 
     /// <summary>
-    /// ³õÊ¼»¯Ã¿¸öÒ³ÃæµÄCanvasGroup£¬È·±£ÔÚÖ´ĞĞÊ±CanvasGroup²»Îª¿Õ
+    /// åˆå§‹åŒ–æ¯ä¸ªé¡µé¢çš„CanvasGroupï¼Œç¡®ä¿åœ¨æ‰§è¡Œæ—¶CanvasGroupä¸ä¸ºç©º
     /// </summary>
     private CanvasGroup CanvasGroup
     {
@@ -35,7 +35,7 @@ public class UIPage : MonoBehaviour
     }
 
     /// <summary>
-    /// ÖØĞÂÉèÖÃ¸ßÁÁUIÎªÄ¬ÈÏÑ¡Ïî£¬Í¨³£ÔÚÒ³Ãæ´ò¿ªÊ±µ÷ÓÃ£¬ÒÔÈ·±£ÓÃ»§½çÃæµÄÒ»ÖÂĞÔºÍÒ×ÓÃĞÔ¡£
+    /// é‡æ–°è®¾ç½®é«˜äº®UIä¸ºé»˜è®¤é€‰é¡¹ï¼Œé€šå¸¸åœ¨é¡µé¢æ‰“å¼€æ—¶è°ƒç”¨ï¼Œä»¥ç¡®ä¿ç”¨æˆ·ç•Œé¢çš„ä¸€è‡´æ€§å’Œæ˜“ç”¨æ€§ã€‚
     /// </summary>
     public void SetSelectedUIToDefault()
     {

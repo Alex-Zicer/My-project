@@ -3,5 +3,5 @@
   "moveSpeed": 2.0,
   "moveSpeedMultiplier": 10.0,
   "defence": 5.0,
-  "JumpForce": 12
+  "JumpForce": 4
 }

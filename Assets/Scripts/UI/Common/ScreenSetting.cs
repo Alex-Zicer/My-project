@@ -1,14 +1,14 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 public class ScreenSetting : MonoBehaviour
 {
-    [Header("×é¼şµÄÒıÓÃ")]
-    [Tooltip("·Ö±æÂÊÏÂÀ­²Ëµ¥µÄÒıÓÃ£¬ÓÃÓÚÏÔÊ¾ºÍÑ¡ÔñÆÁÄ»·Ö±æÂÊ¡£")]
+    [Header("ç»„ä»¶çš„å¼•ç”¨")]
+    [Tooltip("åˆ†è¾¨ç‡ä¸‹æ‹‰èœå•çš„å¼•ç”¨ï¼Œç”¨äºæ˜¾ç¤ºå’Œé€‰æ‹©å±å¹•åˆ†è¾¨ç‡ã€‚")]
     public TMP_Dropdown resolutionDropdown;
-    [Tooltip("´°¿ÚÄ£Ê½ÏÂÀ­²Ëµ¥µÄÒıÓÃ£¬ÓÃÓÚÏÔÊ¾ºÍÑ¡Ôñ´°¿ÚÄ£Ê½£¨È«ÆÁ¡¢´°¿Ú»¯µÈ£©¡£")]
+    [Tooltip("çª—å£æ¨¡å¼ä¸‹æ‹‰èœå•çš„å¼•ç”¨ï¼Œç”¨äºæ˜¾ç¤ºå’Œé€‰æ‹©çª—å£æ¨¡å¼ï¼ˆå…¨å±ã€çª—å£åŒ–ç­‰ï¼‰ã€‚")]
     public TMP_Dropdown windowModeDropdown;
 
     private Resolution[] resolutions;
@@ -20,31 +20,31 @@ public class ScreenSetting : MonoBehaviour
         InitWindowMode();
     }
 
-    #region ÆÁÄ»·Ö±æÂÊÉèÖÃ
+    #region å±å¹•åˆ†è¾¨ç‡è®¾ç½®
     private void InitResolution()
     {
-        //»ñÈ¡ËùÓĞ¿ÉÓÃµÄÆÁÄ»·Ö±æÂÊ
+        //è·å–æ‰€æœ‰å¯ç”¨çš„å±å¹•åˆ†è¾¨ç‡
         Resolution[] allResolutions = Screen.resolutions;
 
-        //Çå³ıÏÖÓĞµÄÑ¡Ïî
+        //æ¸…é™¤ç°æœ‰çš„é€‰é¡¹
         resolutionDropdown.ClearOptions();
 
-        //°ÑËùÓĞ·Ö±æÂÊ×ª»»Îª×Ö·û´®¸ñÊ½
+        //æŠŠæ‰€æœ‰åˆ†è¾¨ç‡è½¬æ¢ä¸ºå­—ç¬¦ä¸²æ ¼å¼
         List<string> options = new List<string>();
 
-        //Ê¹ÓÃHashSetÀ´¸ú×ÙÒÑ¾­Ìí¼ÓµÄ·Ö±æÂÊ£¬±ÜÃâÖØ¸´Ïî
+        //ä½¿ç”¨HashSetæ¥è·Ÿè¸ªå·²ç»æ·»åŠ çš„åˆ†è¾¨ç‡ï¼Œé¿å…é‡å¤é¡¹
         List<Resolution> uniqueResolutions = new List<Resolution>();
         HashSet<string> seenResolutions = new HashSet<string>();
 
         int currentResolutionIndex = 0;
 
-        //±éÀúËùÓĞ·Ö±æÂÊ£¬¹¹½¨Ñ¡ÏîÁĞ±í£¬²¢ÕÒµ½µ±Ç°ÆÁÄ»·Ö±æÂÊµÄË÷Òı
+        //éå†æ‰€æœ‰åˆ†è¾¨ç‡ï¼Œæ„å»ºé€‰é¡¹åˆ—è¡¨ï¼Œå¹¶æ‰¾åˆ°å½“å‰å±å¹•åˆ†è¾¨ç‡çš„ç´¢å¼•
         for (int i = 0; i < allResolutions.Length; i++)
         {
-            //¹¹½¨·Ö±æÂÊ×Ö·û´®£¬ÀıÈç "1920 x 1080"
+            //æ„å»ºåˆ†è¾¨ç‡å­—ç¬¦ä¸²ï¼Œä¾‹å¦‚ "1920 x 1080"
             string resKey = allResolutions[i].width + " x " + allResolutions[i].height;
 
-            //¼ì²éµ±Ç°·Ö±æÂÊÊÇ·ñÒÑ¾­Ìí¼Ó¹ı£¬Èç¹ûÃ»ÓĞ£¬ÔòÌí¼Óµ½Î¨Ò»·Ö±æÂÊÁĞ±íºÍÑ¡ÏîÁĞ±íÖĞ
+            //æ£€æŸ¥å½“å‰åˆ†è¾¨ç‡æ˜¯å¦å·²ç»æ·»åŠ è¿‡ï¼Œå¦‚æœæ²¡æœ‰ï¼Œåˆ™æ·»åŠ åˆ°å”¯ä¸€åˆ†è¾¨ç‡åˆ—è¡¨å’Œé€‰é¡¹åˆ—è¡¨ä¸­
             if (!seenResolutions.Contains(resKey))
             {
                 seenResolutions.Add(resKey);
@@ -60,78 +60,78 @@ public class ScreenSetting : MonoBehaviour
                 currentResolutionIndex = options.Count - 1;
             }
         }
-        //±éÀúÍê³Éºó£¬½«Î¨Ò»µÄ·Ö±æÂÊÁĞ±í×ª»»ÎªÊı×é²¢´æ´¢ÔÚ³ÉÔ±±äÁ¿ÖĞ£¬ÒÔ±ãºóĞøÊ¹ÓÃ
+        //éå†å®Œæˆåï¼Œå°†å”¯ä¸€çš„åˆ†è¾¨ç‡åˆ—è¡¨è½¬æ¢ä¸ºæ•°ç»„å¹¶å­˜å‚¨åœ¨æˆå‘˜å˜é‡ä¸­ï¼Œä»¥ä¾¿åç»­ä½¿ç”¨
         this.resolutions = uniqueResolutions.ToArray();
 
-        //½«Ñ¡ÏîÁĞ±íÌí¼Óµ½ÏÂÀ­²Ëµ¥ÖĞ£¬²¢ÉèÖÃµ±Ç°·Ö±æÂÊÎªÄ¬ÈÏÑ¡Ïî
+        //å°†é€‰é¡¹åˆ—è¡¨æ·»åŠ åˆ°ä¸‹æ‹‰èœå•ä¸­ï¼Œå¹¶è®¾ç½®å½“å‰åˆ†è¾¨ç‡ä¸ºé»˜è®¤é€‰é¡¹
         resolutionDropdown.AddOptions(options);
         resolutionDropdown.value = currentResolutionIndex;
 
-        //Ë¢ĞÂÏÂÀ­²Ëµ¥ÏÔÊ¾µ±Ç°Ñ¡Ïî
+        //åˆ·æ–°ä¸‹æ‹‰èœå•æ˜¾ç¤ºå½“å‰é€‰é¡¹
         resolutionDropdown.RefreshShownValue();
     }
 
     /// <summary>
-    /// ÉèÖÃÆÁÄ»·Ö±æÂÊµÄ·½·¨£¬¸ù¾İÓÃ»§ÔÚÏÂÀ­²Ëµ¥ÖĞÑ¡ÔñµÄ·Ö±æÂÊË÷ÒıÀ´µ÷ÕûÓÎÏ·µÄÏÔÊ¾ÉèÖÃ¡£
+    /// è®¾ç½®å±å¹•åˆ†è¾¨ç‡çš„æ–¹æ³•ï¼Œæ ¹æ®ç”¨æˆ·åœ¨ä¸‹æ‹‰èœå•ä¸­é€‰æ‹©çš„åˆ†è¾¨ç‡ç´¢å¼•æ¥è°ƒæ•´æ¸¸æˆçš„æ˜¾ç¤ºè®¾ç½®ã€‚
     /// </summary>
-    /// <param name="resolutionIndex">·Ö±æÂÊË÷Òı</param>
+    /// <param name="resolutionIndex">åˆ†è¾¨ç‡ç´¢å¼•</param>
     public void SetResolution(int resolutionIndex)
     {
         Resolution res = resolutions[resolutionIndex];
-        //ÉèÖÃÆÁÄ»·Ö±æÂÊ£¬±£³Öµ±Ç°µÄÈ«ÆÁÄ£Ê½
+        //è®¾ç½®å±å¹•åˆ†è¾¨ç‡ï¼Œä¿æŒå½“å‰çš„å…¨å±æ¨¡å¼
         Screen.SetResolution(res.width, res.height, Screen.fullScreen);
 
-        Debug.Log("·Ö±æÂÊÒÑÉèÖÃÎª: " + res.width + " x " + res.height);
+        Debug.Log("åˆ†è¾¨ç‡å·²è®¾ç½®ä¸º: " + res.width + " x " + res.height);
     }
     #endregion
 
-    #region ´°¿ÚÄ£Ê½ÉèÖÃ
+    #region çª—å£æ¨¡å¼è®¾ç½®
     private void InitWindowMode()
     {
-        //Çå³ıÏÖÓĞµÄÑ¡Ïî
+        //æ¸…é™¤ç°æœ‰çš„é€‰é¡¹
         windowModeDropdown.ClearOptions();
-        //Ìí¼Ó´°¿ÚÄ£Ê½Ñ¡Ïîµ½ÏÂÀ­²Ëµ¥ÖĞ
-        windowModeDropdown.AddOptions(new List<string> { "È«ÆÁ", "ÎŞ±ß¿ò","´°¿Ú»¯" });
-        //¸ù¾İµ±Ç°µÄÈ«ÆÁÄ£Ê½ÉèÖÃÏÂÀ­²Ëµ¥µÄÄ¬ÈÏÑ¡Ïî
+        //æ·»åŠ çª—å£æ¨¡å¼é€‰é¡¹åˆ°ä¸‹æ‹‰èœå•ä¸­
+        windowModeDropdown.AddOptions(new List<string> { "å…¨å±", "æ— è¾¹æ¡†","çª—å£åŒ–" });
+        //æ ¹æ®å½“å‰çš„å…¨å±æ¨¡å¼è®¾ç½®ä¸‹æ‹‰èœå•çš„é»˜è®¤é€‰é¡¹
         if (Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen)
         {
-            windowModeDropdown.value = 0; //ÎŞ±ß¿ò
+            windowModeDropdown.value = 0; //æ— è¾¹æ¡†
         }
         else if(Screen.fullScreenMode == FullScreenMode.FullScreenWindow)
         {
-            windowModeDropdown.value = 1; //ÎŞ±ß¿ò
+            windowModeDropdown.value = 1; //æ— è¾¹æ¡†
         }
         else
         {
-            windowModeDropdown.value = 2; //´°¿Ú»¯
+            windowModeDropdown.value = 2; //çª—å£åŒ–
         }
-        //Ë¢ĞÂÏÂÀ­²Ëµ¥ÏÔÊ¾µ±Ç°Ñ¡Ïî
+        //åˆ·æ–°ä¸‹æ‹‰èœå•æ˜¾ç¤ºå½“å‰é€‰é¡¹
         windowModeDropdown.RefreshShownValue();
     }
 
     /// <summary>
-    /// ÉèÖÃ´°¿ÚÄ£Ê½µÄ·½·¨£¬¸ù¾İÓÃ»§ÔÚÏÂÀ­²Ëµ¥ÖĞÑ¡ÔñµÄ´°¿ÚÄ£Ê½Ë÷ÒıÀ´µ÷ÕûÓÎÏ·µÄÏÔÊ¾ÉèÖÃ¡£
+    /// è®¾ç½®çª—å£æ¨¡å¼çš„æ–¹æ³•ï¼Œæ ¹æ®ç”¨æˆ·åœ¨ä¸‹æ‹‰èœå•ä¸­é€‰æ‹©çš„çª—å£æ¨¡å¼ç´¢å¼•æ¥è°ƒæ•´æ¸¸æˆçš„æ˜¾ç¤ºè®¾ç½®ã€‚
     /// </summary>
-    /// <param name="modeIndex">´°¿ÚÄ£Ê½Ë÷Òı</param>
+    /// <param name="modeIndex">çª—å£æ¨¡å¼ç´¢å¼•</param>
     public void SetWindowMode(int modeIndex)
     {
-        //¸ù¾İÓÃ»§Ñ¡ÔñµÄ´°¿ÚÄ£Ê½Ë÷ÒıÉèÖÃÈ«ÆÁÄ£Ê½
+        //æ ¹æ®ç”¨æˆ·é€‰æ‹©çš„çª—å£æ¨¡å¼ç´¢å¼•è®¾ç½®å…¨å±æ¨¡å¼
         switch (modeIndex)
         {
-            case 0: //È«ÆÁ
+            case 0: //å…¨å±
                 Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
-                Debug.Log("ÒÑÉèÖÃÎªÈ«ÆÁÄ£Ê½");
+                Debug.Log("å·²è®¾ç½®ä¸ºå…¨å±æ¨¡å¼");
                 break;
-            case 1: //ÎŞ±ß¿ò
+            case 1: //æ— è¾¹æ¡†
                 Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-                Debug.Log("ÒÑÉèÖÃÎªÎŞ±ß¿òÄ£Ê½");
+                Debug.Log("å·²è®¾ç½®ä¸ºæ— è¾¹æ¡†æ¨¡å¼");
                 break;
-            case 2: //´°¿Ú»¯
+            case 2: //çª—å£åŒ–
                 Screen.fullScreenMode = FullScreenMode.Windowed;
-                Debug.Log("ÒÑÉèÖÃÎª´°¿Ú»¯Ä£Ê½");
+                Debug.Log("å·²è®¾ç½®ä¸ºçª—å£åŒ–æ¨¡å¼");
                 break;
         }
-        Debug.Log("´°¿ÚÄ£Ê½ÒÑÉèÖÃÎª: " + Screen.fullScreenMode);
+        Debug.Log("çª—å£æ¨¡å¼å·²è®¾ç½®ä¸º: " + Screen.fullScreenMode);
     }
     #endregion
 }

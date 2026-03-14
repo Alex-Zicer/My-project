@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using Unity.VisualScripting;
@@ -6,14 +6,14 @@ using UnityEngine;
 
 public class UIPageManager : MonoBehaviour
 {
-    [Header("Ò³Ãæ¹ÜÀí")]
-    [Tooltip("ËùÓĞÒ³Ãæ")]
+    [Header("é¡µé¢ç®¡ç†")]
+    [Tooltip("æ‰€æœ‰é¡µé¢")]
     [SerializeField] private List<UIPage> pageList;
-    [Tooltip("¹ÜÀíÒ³ÃæÕ»")]
+    [Tooltip("ç®¡ç†é¡µé¢æ ˆ")]
     private Stack<UIPage> historyStack = new Stack<UIPage>();
     public bool IsPause {  get; private set; }
     /// <summary>
-    /// ¿ªÊ¼¹Ø±ÕËùÓĞÒ³Ãæ
+    /// å¼€å§‹å…³é—­æ‰€æœ‰é¡µé¢
     /// </summary>
     public void Initialize()
     {
@@ -21,7 +21,7 @@ public class UIPageManager : MonoBehaviour
         {
             if(page == null)
             {
-                Debug.LogError("pageListÖĞÓĞ¿ÕÒ³Ãæ");
+                Debug.LogError("pageListä¸­æœ‰ç©ºé¡µé¢");
             }
             else
             {
@@ -32,24 +32,24 @@ public class UIPageManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Í¨¹ıÒ³ÃæÃû³ÆÇĞ»»Ò³ÃæµÄ·½·¨£¬½ÓÊÜÒ»¸ö×Ö·û´®²ÎÊıpageName£¬±íÊ¾ÒªÇĞ»»µ½µÄÒ³ÃæÃû³Æ¡£
+    /// é€šè¿‡é¡µé¢åç§°åˆ‡æ¢é¡µé¢çš„æ–¹æ³•ï¼Œæ¥å—ä¸€ä¸ªå­—ç¬¦ä¸²å‚æ•°pageNameï¼Œè¡¨ç¤ºè¦åˆ‡æ¢åˆ°çš„é¡µé¢åç§°ã€‚
     /// </summary>
-    /// <param name="pageName">ÇĞ»»Ò³ÃæµÄÃû³Æ</param>
+    /// <param name="pageName">åˆ‡æ¢é¡µé¢çš„åç§°</param>
     public void GoToPageByName(string pageName)
     {
-        UIPage target = pageList.Find(page => page.gameObject.name == pageName);//ÔÚÒ³ÃæÁĞ±íÖĞ²éÕÒÓë¸ø¶¨Ãû³ÆÆ¥ÅäµÄÒ³Ãæ
+        UIPage target = pageList.Find(page => page.gameObject.name == pageName);//åœ¨é¡µé¢åˆ—è¡¨ä¸­æŸ¥æ‰¾ä¸ç»™å®šåç§°åŒ¹é…çš„é¡µé¢
         if (target == null)
         {
-            Debug.Log($"Î´ÕÒµ½ÃûÎª{pageName}µÄÒ³Ãæ");
+            Debug.Log($"æœªæ‰¾åˆ°åä¸º{pageName}çš„é¡µé¢");
             return;
         }
 
-        //Èç¹ûµ±Ç°ÓĞÒ³ÃæÔÚÏÔÊ¾£¬Òş²Øµ±Ç°Ò³Ãæ£¬µ«ÊÇ±£ÁôÔÚÕ»ÄÚ
+        //å¦‚æœå½“å‰æœ‰é¡µé¢åœ¨æ˜¾ç¤ºï¼Œéšè—å½“å‰é¡µé¢ï¼Œä½†æ˜¯ä¿ç•™åœ¨æ ˆå†…
         if (historyStack.Count > 0)
         {
             historyStack.Peek().Close();
         }
-        //´ò¿ª¶ÔÓ¦Ò³Ãæ£¬²¢ÍÆÈëÕ»ÄÚ
+        //æ‰“å¼€å¯¹åº”é¡µé¢ï¼Œå¹¶æ¨å…¥æ ˆå†…
         target.Open();
         historyStack.Push(target);
 
@@ -57,23 +57,23 @@ public class UIPageManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ·µ»ØÉÏÒ»Ò³
+    /// è¿”å›ä¸Šä¸€é¡µ
     /// </summary>
     public void Back()
     {
-        if (historyStack.Count <= 1) return;//Èç¹ûµ±Ç°Õ»ÄÚÖ»ÓĞÒ»¸öÒ³Ãæ£¬ÄÇ¾ÍÊÇµ±Ç°ÕıÔÚÏÔÊ¾µÄÒ³Ãæ
+        if (historyStack.Count <= 1) return;//å¦‚æœå½“å‰æ ˆå†…åªæœ‰ä¸€ä¸ªé¡µé¢ï¼Œé‚£å°±æ˜¯å½“å‰æ­£åœ¨æ˜¾ç¤ºçš„é¡µé¢
 
-        //¹Ø±Õµ±Ç°Ò³Ãæ
+        //å…³é—­å½“å‰é¡µé¢
         UIPage currentPage = historyStack.Pop();
         currentPage.Close();
 
-        //ÏÔÊ¾ÉÏÒ»¸öÒ³Ãæ
+        //æ˜¾ç¤ºä¸Šä¸€ä¸ªé¡µé¢
         UIPage previousPage = historyStack.Peek();
         previousPage.Open();
     }
 
     /// <summary>
-    /// ¹Ø±ÕËùÓĞÒ³Ãæ£¬²¢Çå³ıÕ»
+    /// å…³é—­æ‰€æœ‰é¡µé¢ï¼Œå¹¶æ¸…é™¤æ ˆ
     /// </summary>
     public void CloseAll()
     {
@@ -83,10 +83,10 @@ public class UIPageManager : MonoBehaviour
         }
     }
 
-    #region ÔİÍ£¹¦ÄÜ
+    #region æš‚åœåŠŸèƒ½
 
     /// <summary>
-    /// Íâ²¿Èë¿Ú
+    /// å¤–éƒ¨å…¥å£
     /// </summary>
     public void TogglePause()
     {
@@ -101,7 +101,7 @@ public class UIPageManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¶³½áÊ±¼ä£¬²¢´ò¿ªÔİÍ£Ò³Ãæ
+    /// å†»ç»“æ—¶é—´ï¼Œå¹¶æ‰“å¼€æš‚åœé¡µé¢
     /// </summary>
     private void PauseGame()
     {
@@ -111,14 +111,14 @@ public class UIPageManager : MonoBehaviour
     }
 
     /// <summary>
-    /// »Ö¸´Ê±¼ä£¬¹Ø±ÕÔİÍ£Ò³Ãæ
+    /// æ¢å¤æ—¶é—´ï¼Œå…³é—­æš‚åœé¡µé¢
     /// </summary>
     public void ResumeGame()
     {
         IsPause = false;
         Time.timeScale = 1;
 
-        Back();//·µ»ØÉÏÒ»Ò³£¬Ò²¾ÍÊÇ¹Ø±ÕÔİÍ£Ò³
+        Back();//è¿”å›ä¸Šä¸€é¡µï¼Œä¹Ÿå°±æ˜¯å…³é—­æš‚åœé¡µ
     }
     #endregion
 }

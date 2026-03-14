@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,7 +8,7 @@ using Unity.VisualScripting;
 
 public class UIManager : MonoBehaviour
 {
-    //µ¥ÀıÊµÀı
+    //å•ä¾‹å®ä¾‹
     public static UIManager Instance { get; private set; }
 
     [SerializeField] private UIPageManager pageManager;
@@ -20,7 +20,7 @@ public class UIManager : MonoBehaviour
     public EventSystem eventSystem;
 
     /// <summary>
-    /// ³õÊ¼»¯HUD
+    /// åˆå§‹åŒ–HUD
     /// </summary>
     public void InitHUD()
     {
@@ -31,7 +31,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¼ÓÔØGamePlay³¡¾°
+    /// åŠ è½½GamePlayåœºæ™¯
     /// </summary>
     public void LoadGamePlay()
     {
@@ -39,7 +39,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ³õÊ¼»¯ÊÂ¼şÏµÍ³£¬È·±£UI¹ÜÀíÆ÷ÄÜ¹»ÕıÈ·´¦ÀíÓÃ»§ÊäÈëºÍ½»»¥ÊÂ¼ş¡£
+    /// åˆå§‹åŒ–äº‹ä»¶ç³»ç»Ÿï¼Œç¡®ä¿UIç®¡ç†å™¨èƒ½å¤Ÿæ­£ç¡®å¤„ç†ç”¨æˆ·è¾“å…¥å’Œäº¤äº’äº‹ä»¶ã€‚
     /// </summary>
     private void SetUpEventSystem()
     {
@@ -47,14 +47,14 @@ public class UIManager : MonoBehaviour
 
         if (eventSystem == null)
         {
-            Debug.LogWarning("È±ÉÙÊÂ¼şÏµÍ³£¡");
+            Debug.LogWarning("ç¼ºå°‘äº‹ä»¶ç³»ç»Ÿï¼");
         }
     }
 
     /// <summary>
-    /// ³õÊ¼»¯UI¹ÜÀíÆ÷£¬È·±£Ö»ÓĞÒ»¸öÊµÀı´æÔÚ£¬²¢ÇÒÔÚ³¡¾°ÖĞ±£³Ö²»±»Ïú»Ù¡£
-    /// ÕâÖÖµ¥ÀıÄ£Ê½µÄÊµÏÖ·½Ê½¿ÉÒÔÈ·±£ÔÚÕû¸öÓÎÏ·ÉúÃüÖÜÆÚÖĞ£¬UI¹ÜÀíÆ÷Ê¼ÖÕ¿ÉÓÃ£¬
-    /// ²¢ÇÒ²»»áÒòÎª³¡¾°ÇĞ»»¶ø¶ªÊ§¡£
+    /// åˆå§‹åŒ–UIç®¡ç†å™¨ï¼Œç¡®ä¿åªæœ‰ä¸€ä¸ªå®ä¾‹å­˜åœ¨ï¼Œå¹¶ä¸”åœ¨åœºæ™¯ä¸­ä¿æŒä¸è¢«é”€æ¯ã€‚
+    /// è¿™ç§å•ä¾‹æ¨¡å¼çš„å®ç°æ–¹å¼å¯ä»¥ç¡®ä¿åœ¨æ•´ä¸ªæ¸¸æˆç”Ÿå‘½å‘¨æœŸä¸­ï¼ŒUIç®¡ç†å™¨å§‹ç»ˆå¯ç”¨ï¼Œ
+    /// å¹¶ä¸”ä¸ä¼šå› ä¸ºåœºæ™¯åˆ‡æ¢è€Œä¸¢å¤±ã€‚
     /// </summary>
     private void Awake()
     {
@@ -75,7 +75,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ³õÊ¼»¯UI¹ÜÀíÆ÷£¬ÉèÖÃÊÂ¼şÏµÍ³ºÍ¿É½»»¥UIÔªËØµÄÀàĞÍ£¬ÒÔÈ·±£ÔÚÓÎÏ·¿ªÊ¼Ê±£¬UIÄÜ¹»ÕıÈ·ÏìÓ¦ÓÃ»§ÊäÈëºÍ½»»¥ÊÂ¼ş¡£
+    /// åˆå§‹åŒ–UIç®¡ç†å™¨ï¼Œè®¾ç½®äº‹ä»¶ç³»ç»Ÿå’Œå¯äº¤äº’UIå…ƒç´ çš„ç±»å‹ï¼Œä»¥ç¡®ä¿åœ¨æ¸¸æˆå¼€å§‹æ—¶ï¼ŒUIèƒ½å¤Ÿæ­£ç¡®å“åº”ç”¨æˆ·è¾“å…¥å’Œäº¤äº’äº‹ä»¶ã€‚
     /// </summary>
     private void Start()
     {
@@ -83,7 +83,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¼ì²âÊÇ·ñÊäÈëEsc
+    /// æ£€æµ‹æ˜¯å¦è¾“å…¥Esc
     /// </summary>
     private void Update()
     {

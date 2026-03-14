@@ -1,19 +1,19 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Health : MonoBehaviour
 {
-    [Header("ÉúÃüÖµÉèÖÃ")]
+    [Header("ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½")]
     public float maxHealth;
     public float currentHealth;
     
     public  System.Action<float, float> OnHealthChanged;
 
     /// <summary>
-    /// ¸üÐÂÑªÁ¿
+    /// ï¿½ï¿½ï¿½ï¿½Ñªï¿½ï¿½
     /// </summary>
-    /// <param name="amount">ÊÜµ½µÄÉËº¦</param>
+    /// <param name="amount">ï¿½Üµï¿½ï¿½ï¿½ï¿½Ëºï¿½</param>
     public void UpdateHealth(float amount)
     {
         if (currentHealth - amount < 0)
@@ -25,7 +25,7 @@ public class Health : MonoBehaviour
             currentHealth -= amount;
         }
 
-        //Èç¹ûÊÇÍæ¼Ò¾Í¸üÐÂÑªÌõ
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¾Í¸ï¿½ï¿½ï¿½Ñªï¿½ï¿½
         if (gameObject.CompareTag("Player"))
         {
             OnHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -38,7 +38,7 @@ public class Health : MonoBehaviour
     }
 
     /// <summary>
-    /// ÑªÁ¿Îª0Ê±µÄËÀÍöº¯Êý
+    /// Ñªï¿½ï¿½Îª0Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     private void Die()
     {

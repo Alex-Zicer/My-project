@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,25 +8,25 @@ public class HealthDisplay : MonoBehaviour
     [SerializeField]
     private Health playerHealth;
 
-    [Header("UIÒıÓÃ")]
-    public Slider hpSlider;//Êµ¼ÊÑªÌõ
-    public Image ghostFill;//»º³åÑªÌõ
+    [Header("UIå¼•ç”¨")]
+    public Slider hpSlider;//å®é™…è¡€æ¡
+    public Image ghostFill;//ç¼“å†²è¡€æ¡
 
-    [Header("Æ½»¬²ÎÊı")]
-    public float lerpSpeed = 0.05f;//»º³åËÙ¶È
-    public float waitBeforeDrop = 0.5f;//ÊÜÉËÖ®ºóÏÈÍ£¶Ù¶à¾Ã²Å¿ªÊ¼µô²ĞÓ°
+    [Header("å¹³æ»‘å‚æ•°")]
+    public float lerpSpeed = 0.05f;//ç¼“å†²é€Ÿåº¦
+    public float waitBeforeDrop = 0.5f;//å—ä¼¤ä¹‹åå…ˆåœé¡¿å¤šä¹…æ‰å¼€å§‹æ‰æ®‹å½±
 
     private Coroutine ghostCoroutine;
 
     private void OnEnable()
     {
-        //¶©ÔÄÊÂ¼ş
+        //è®¢é˜…äº‹ä»¶
         playerHealth.OnHealthChanged += UpdateHealthBar;
     }
 
     private void OnDisable()
     {
-        //È¡Ïû¶©ÔÄÊÂ¼ş£¬·ÀÖ¹ÄÚ´æĞ¹Â¶
+        //å–æ¶ˆè®¢é˜…äº‹ä»¶ï¼Œé˜²æ­¢å†…å­˜æ³„éœ²
         playerHealth.OnHealthChanged -= UpdateHealthBar;
     }
 
@@ -36,10 +36,10 @@ public class HealthDisplay : MonoBehaviour
     }
 
     /// <summary>
-    /// ¸üĞÂÑªÌõ
+    /// æ›´æ–°è¡€æ¡
     /// </summary>
-    /// <param name="current">µ±Ç°µÄÑªÁ¿</param>
-    /// <param name="max">×î´óÑªÁ¿</param>
+    /// <param name="current">å½“å‰çš„è¡€é‡</param>
+    /// <param name="max">æœ€å¤§è¡€é‡</param>
     private void UpdateHealthBar(float current, float max)
     {
         hpSlider.maxValue = max;
@@ -61,9 +61,9 @@ public class HealthDisplay : MonoBehaviour
     }
 
     /// <summary>
-    /// ÑªÌõ¼õÉÙºó²ĞÓ°×·¸ÏÑªÌõµÄĞ­³Ì
+    /// è¡€æ¡å‡å°‘åæ®‹å½±è¿½èµ¶è¡€æ¡çš„åç¨‹
     /// </summary>
-    /// <param name="targetFillAmount">Ä¿±êÑªÌõ£¬Ò²ÊÇÊµ¼ÊÑªÁ¿</param>
+    /// <param name="targetFillAmount">ç›®æ ‡è¡€æ¡ï¼Œä¹Ÿæ˜¯å®é™…è¡€é‡</param>
     /// <returns></returns>
     private IEnumerator SmoothDropGhost(float targetFillAmount)
     {
@@ -75,13 +75,13 @@ public class HealthDisplay : MonoBehaviour
             yield return null;
         }
 
-        //×îºóÒ»µãÇ¿ÖÆ¶ÔÆë
+        //æœ€åä¸€ç‚¹å¼ºåˆ¶å¯¹é½
         ghostFill.fillAmount = targetFillAmount;
-        ghostCoroutine = null;//Çå³ıĞ­³Ì
+        ghostCoroutine = null;//æ¸…é™¤åç¨‹
     }
 
     /// <summary>
-    /// Í£Ö¹Ğ­³Ì²¢Çå¿ÕÒıÓÃ
+    /// åœæ­¢åç¨‹å¹¶æ¸…ç©ºå¼•ç”¨
     /// </summary>
     private void StopGhostCoroutine()
     {

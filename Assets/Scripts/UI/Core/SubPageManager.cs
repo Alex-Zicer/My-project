@@ -1,27 +1,27 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class SubPageManager : MonoBehaviour
 {
-    [Header("×ÓÒ³ÃæÁĞ±í")]
-    public List<GameObject> subPages; // ×ÓÒ³ÃæÁĞ±í
+    [Header("å­é¡µé¢åˆ—è¡¨")]
+    public List<GameObject> subPages; // å­é¡µé¢åˆ—è¡¨
 
     private void OnEnable()
     {
-        ShowSubPage(0); // Ä¬ÈÏÏÔÊ¾µÚÒ»¸ö×ÓÒ³Ãæ
+        ShowSubPage(0); // é»˜è®¤æ˜¾ç¤ºç¬¬ä¸€ä¸ªå­é¡µé¢
     }
 
     /// <summary>
-    /// ¼¤»îÖ¸¶¨Ë÷ÒıµÄ×ÓÒ³Ãæ£¬²¢Òş²ØÆäËûËùÓĞ×ÓÒ³ÃæµÄ·½·¨¡£
-    /// Í¨¹ıµ÷ÓÃ´Ë·½·¨£¬¿ÉÒÔÔÚUIÖĞÇĞ»»²»Í¬µÄ×ÓÒ³Ãæ£¬È·±£ÓÃ»§½çÃæµÄÒ»ÖÂĞÔºÍÒ×ÓÃĞÔ¡£
+    /// æ¿€æ´»æŒ‡å®šç´¢å¼•çš„å­é¡µé¢ï¼Œå¹¶éšè—å…¶ä»–æ‰€æœ‰å­é¡µé¢çš„æ–¹æ³•ã€‚
+    /// é€šè¿‡è°ƒç”¨æ­¤æ–¹æ³•ï¼Œå¯ä»¥åœ¨UIä¸­åˆ‡æ¢ä¸åŒçš„å­é¡µé¢ï¼Œç¡®ä¿ç”¨æˆ·ç•Œé¢çš„ä¸€è‡´æ€§å’Œæ˜“ç”¨æ€§ã€‚
     /// </summary>
-    /// <param name="index">ÇĞ»»µÄ×ÓÒ³ÃæµÄË÷Òı</param>
+    /// <param name="index">åˆ‡æ¢çš„å­é¡µé¢çš„ç´¢å¼•</param>
     public void ShowSubPage(int index)
     {
         for (int i = 0; i < subPages.Count; i++)
         {
-            subPages[i].SetActive(i == index); // ½ö¼¤»îÖ¸¶¨Ë÷ÒıµÄ×ÓÒ³Ãæ£¬ÆäËûÒ³ÃæÒş²Ø
+            subPages[i].SetActive(i == index); // ä»…æ¿€æ´»æŒ‡å®šç´¢å¼•çš„å­é¡µé¢ï¼Œå…¶ä»–é¡µé¢éšè—
         }        
     }
 }

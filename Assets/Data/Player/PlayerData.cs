@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
@@ -6,14 +6,14 @@ using System.IO;
 [CreateAssetMenu(fileName = "NewPlayerData", menuName = "Data/PlayerData")]
 public class PlayerData : ScriptableObject
 {
-    [Header("Íæ¼ÒµÄ»ù±¾ÊôĞÔ")]
-    public float maxHealth;//×î´óÉúÃüÖµ
-    public float moveSpeed;//ÒÆ¶¯ËÙ¶È
-    [Tooltip("Æô¶¯¼ÓËÙ¶È£¬±£Ö¤ÈËÎï²»»áÍ»È»±äÏò")]
-    public float moveSpeedMultiplier;//ÒÆ¶¯¼ÓËÙ¶È£¬È·±£ÈËÎï²»»áÍ»È»×ªÏò
-    [Tooltip("·ÀÓùÁ¦")]
-    public float defence;//Íæ¼Ò·ÀÓùÁ¦
-    [Tooltip("ÌøÔ¾ËÙ¶È")]
+    [Header("ç©å®¶çš„åŸºæœ¬å±æ€§")]
+    public float maxHealth;//æœ€å¤§ç”Ÿå‘½å€¼
+    public float moveSpeed;//ç§»åŠ¨é€Ÿåº¦
+    [Tooltip("å¯åŠ¨åŠ é€Ÿåº¦ï¼Œä¿è¯äººç‰©ä¸ä¼šçªç„¶å˜å‘")]
+    public float moveSpeedMultiplier;//ç§»åŠ¨åŠ é€Ÿåº¦ï¼Œç¡®ä¿äººç‰©ä¸ä¼šçªç„¶è½¬å‘
+    [Tooltip("é˜²å¾¡åŠ›")]
+    public float defence;//ç©å®¶é˜²å¾¡åŠ›
+    [Tooltip("è·³è·ƒé€Ÿåº¦")]
     public float JumpForce;
 
 
@@ -21,7 +21,7 @@ public class PlayerData : ScriptableObject
 
 
 
-    [ContextMenu("Load From JSON")] //Ö±½ÓÔÚInspector²Ëµ¥ÀïÓÒ¼üµã»÷¼´¿É´¥·¢
+    [ContextMenu("Load From JSON")] //ç›´æ¥åœ¨Inspectorèœå•é‡Œå³é”®ç‚¹å‡»å³å¯è§¦å‘
     public void LoadFromJson()
     {
         string path = Path.Combine(Application.streamingAssetsPath, "PlayerData.json");
@@ -30,14 +30,14 @@ public class PlayerData : ScriptableObject
         {
             string jsonContent = File.ReadAllText(path);
 
-            //½«jsonÊı¾İÖ±½Ó×¢Èëµ½Õâ¸ö½Å±¾ÖĞ
+            //å°†jsonæ•°æ®ç›´æ¥æ³¨å…¥åˆ°è¿™ä¸ªè„šæœ¬ä¸­
             JsonUtility.FromJsonOverwrite(jsonContent, this);
 
-            Debug.Log("jsonÎÄ¼şÊı¾İµ¼Èë³É¹¦");
+            Debug.Log("jsonæ–‡ä»¶æ•°æ®å¯¼å…¥æˆåŠŸ");
         }
         else
         {
-            Debug.Log("ÕÒ²»µ½JSONÎÄ¼ş£¬Â·¾¶Îª:" + path);
+            Debug.Log("æ‰¾ä¸åˆ°JSONæ–‡ä»¶ï¼Œè·¯å¾„ä¸º:" + path);
         }
     }
 }

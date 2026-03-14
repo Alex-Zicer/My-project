@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,13 +10,13 @@ public class EnemyAI : MonoBehaviour, IDamageable
     void Start()
     {
         health = GetComponent<Health>();
-        health.maxHealth = enemyBaseData.maxHealth;//³õÊ¼»¯×î´óÉúÃüÖµ
-        health.currentHealth = health.maxHealth;//³õÊ¼»¯ÉúÃüÖµ
+        health.maxHealth = enemyBaseData.maxHealth;//åˆå§‹åŒ–æœ€å¤§ç”Ÿå‘½å€¼
+        health.currentHealth = health.maxHealth;//åˆå§‹åŒ–ç”Ÿå‘½å€¼
     }
 
     public void TakeDamage(float rawDamage)
     {
-        //¼ÆËã×îÖÕÊÜµ½µÄÉËº¦
+        //è®¡ç®—æœ€ç»ˆå—åˆ°çš„ä¼¤å®³
         float finalDamage = Mathf.Max(rawDamage - enemyBaseData.defence);
         health.UpdateHealth(finalDamage);
     }
