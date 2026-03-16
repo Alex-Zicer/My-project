@@ -138,7 +138,9 @@ public class BasePageManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 根据源页面列表构建 pageMap：只保留与 managedCategory 匹配且同场景的页面；Key 为 PageKey，重复则警告并忽略。
+    /// 根据源页面列表构建 pageMap：只保留与 managedCategory 匹配的页面；Key 为 PageKey，重复则警告并忽略。
+    /// 注意：场景过滤已由 UIManager 在传入 sourcePages 时处理，这里不再按场景过滤，
+    /// 以兼容挂在 DontDestroyOnLoad 场景的管理器。
     /// </summary>
     /// <param name="sourcePages">源页面列表（来自场景或 UIManager 传入）</param>
     /// <param name="clearSource">为 true 时先清空 pageList 再只加入本次匹配的页面；为 false 时不改 pageList</param>
@@ -150,27 +152,15 @@ public class BasePageManager : MonoBehaviour
 
         if (sourcePages == null || sourcePages.Count == 0) return;
 
-        // 先按分类筛选本场景内的页面
+        // 先按分类筛选页面（不再按场景过滤，场景过滤已在 UIManager 中完成）
         List<UIPage> matchedPages = new List<UIPage>();
         foreach (var page in sourcePages)
         {
-            if (page == null || page.gameObject.scene != gameObject.scene) continue;
+            if (page == null) continue;
 
             if (page.Category == managedCategory)
             {
                 matchedPages.Add(page);
-            }
-        }
-
-        // 向后兼容：若没有任何页面带本分类，则把同场景的页面都当作本管理器管理
-        if (matchedPages.Count == 0)
-        {
-            foreach (var page in sourcePages)
-            {
-                if (page != null && page.gameObject.scene == gameObject.scene)
-                {
-                    matchedPages.Add(page);
-                }
             }
         }
 

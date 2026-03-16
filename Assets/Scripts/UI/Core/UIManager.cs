@@ -4,21 +4,19 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// UI 总控单例。统一管理主菜单页、游戏内页、子页面、HUD 四个管理器，并在场景加载时动态收集页面、初始化对应 UI。
+/// UI 总控单例。统一管理主菜单页、游戏内页与 HUD，并在场景加载时动态收集页面、初始化对应 UI。
 /// </summary>
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [Header("四个子管理器")]
+    [Header("核心子管理器")]
     [SerializeField] private MainMenuPageManager mainMenuPageManager;
     [SerializeField] private InGamePageManager inGamePageManager;
-    [SerializeField] private SubPageManager subPageManager;
     [SerializeField] private HUDManager hudManager;
 
     public MainMenuPageManager MainMenuPage => mainMenuPageManager;
     public InGamePageManager InGamePage => inGamePageManager;
-    public SubPageManager SubPage => subPageManager;
     public HUDManager HUD => hudManager;
 
     public EventSystem eventSystem;
@@ -56,7 +54,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 单例初始化：重复则销毁自身；否则设为 Instance 并跨场景保留，然后确保四个子管理器存在。
+    /// 单例初始化：重复则销毁自身；否则设为 Instance 并跨场景保留，然后确保核心子管理器存在。
     /// </summary>
     private void Awake()
     {
@@ -81,7 +79,9 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 确保四个子管理器都存在且已配置：若未赋值则从本物体获取或自动添加，并调用 Configure 设定分类与默认页。
+    /// 确保主菜单与游戏内两个页面管理器都存在且已配置：
+    /// 若未赋值则从本物体获取或自动添加，并调用 Configure 设定分类与默认页。
+    /// 子页面管理器改为每组页面自管理，不再由 UIManager 统一维护。
     /// </summary>
     private void EnsureSubManagers()
     {
@@ -93,9 +93,6 @@ public class UIManager : MonoBehaviour
         if (inGamePageManager == null) inGamePageManager = gameObject.AddComponent<InGamePageManager>();
         inGamePageManager.Configure(UIPageCategory.InGame, "");
 
-        if (subPageManager == null) subPageManager = GetComponent<SubPageManager>();
-        if (subPageManager == null) subPageManager = gameObject.AddComponent<SubPageManager>();
-        subPageManager.Configure(UIPageCategory.SubPage, "");
     }
 
     /// <summary>
@@ -147,7 +144,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 根据当前场景刷新 UI：重设事件系统与 HUD 引用，收集本场景 UIPage 并分发给三个页面管理器，
+    /// 根据当前场景刷新 UI：重设事件系统与 HUD 引用，收集本场景 UIPage 并分发给两个页面管理器，
     /// 再根据是否为“主菜单”场景决定初始化主菜单还是游戏内 UI，并控制 HUD 显隐与时间尺度。
     /// </summary>
     /// <param name="scene">刚加载的场景</param>
@@ -159,7 +156,6 @@ public class UIManager : MonoBehaviour
         List<UIPage> scenePages = CollectScenePages(scene);
         mainMenuPageManager.RegisterPages(scenePages);
         inGamePageManager.RegisterPages(scenePages);
-        subPageManager.RegisterPages(scenePages);
 
         bool isMainMenuScene = scene.name.ToLower().Contains("menu");
         isInGameScene = !isMainMenuScene;
@@ -168,7 +164,6 @@ public class UIManager : MonoBehaviour
         {
             mainMenuPageManager.Initialize();
             inGamePageManager.CloseAll();
-            subPageManager.CloseAll();
             if (hudManager != null) hudManager.SetHUDActive(false);
             Time.timeScale = 1;
             return;
@@ -176,7 +171,6 @@ public class UIManager : MonoBehaviour
 
         mainMenuPageManager.CloseAll();
         inGamePageManager.Initialize();
-        subPageManager.CloseAll();
         if (hudManager != null) hudManager.SetHUDActive(true);
         Time.timeScale = 1;
     }
