@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,6 +30,11 @@ public class PlayerAttackState : PlayerStateBase
         attackIndex = 0;
         currentWeapon = player.CurrentWeapon;
         nextAttackQueued = false;
+        if (!TryGetAttackData(out _, logError: true))
+        {
+            ReturnToMovementState();
+            return;
+        }
         StartAttack();
     }
 
@@ -52,7 +57,11 @@ public class PlayerAttackState : PlayerStateBase
         hasDealDamage = false;
         hitTargets.Clear();
 
-        AttackData data = currentWeapon.attackData[attackIndex];
+        if (!TryGetAttackData(out AttackData data, logError: true))
+        {
+            ReturnToMovementState();
+            return;
+        }
 
         int hashIndex = Mathf.Min(attackIndex, AttackHashes.Length - 1);
         anim.CrossFade(AttackHashes[hashIndex], 0.05f);
@@ -68,7 +77,19 @@ public class PlayerAttackState : PlayerStateBase
     {
         attackTimer += Time.deltaTime;
 
-        AttackData data = currentWeapon.attackData[attackIndex];
+        if (!TryGetAttackData(out AttackData data, logError: true))
+        {
+            ReturnToMovementState();
+            return;
+        }
+
+        if (data.duration <= 0f)
+        {
+            Debug.LogWarning($"武器 {currentWeapon.name} 的第 {attackIndex + 1} 段攻击 duration 必须大于 0。");
+            ReturnToMovementState();
+            return;
+        }
+
         float normalizeTime = attackTimer / data.duration;
 
         //在攻击动画的特定时间点检测伤害
@@ -81,7 +102,8 @@ public class PlayerAttackState : PlayerStateBase
         //检测是否进行下一段攻击，没有则回到移动模式
         if (attackTimer >= data.duration * 0.8)
         {
-            if (nextAttackQueued && attackIndex < currentWeapon.attackComboCount - 1)
+            int maxComboIndex = GetMaxComboIndex();
+            if (nextAttackQueued && attackIndex < maxComboIndex)
             {
                 attackIndex++;
                 StartAttack();
@@ -98,7 +120,7 @@ public class PlayerAttackState : PlayerStateBase
     /// </summary>
     private void DetectHit(AttackData data)
     {
-        Vector2 attackPos = (Vector2)player.transform.position + data.attackOffset;
+        Vector2 attackPos = player.GetAttackWorldPosition(data.attackOffset);
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(attackPos, data.attackRange, player.EnemyLayer);
 
@@ -119,15 +141,27 @@ public class PlayerAttackState : PlayerStateBase
     /// <summary>
     /// 预输入设置
     /// </summary>
-    public void QueueNextAttack()
+    public bool QueueNextAttack()
     {
-        AttackData data = currentWeapon.attackData[attackIndex];
+        if (!TryGetAttackData(out AttackData data))
+        {
+            return false;
+        }
+
+        if (data.duration <= 0f)
+        {
+            return false;
+        }
+
         float normalizeTime = attackTimer / data.duration;
 
-        if (normalizeTime < 0.8f)
+        if (normalizeTime < 0.8f && attackIndex < GetMaxComboIndex())
         {
             nextAttackQueued = true;
+            return true;
         }
+
+        return false;
     }
 
     /// <summary>
@@ -138,18 +172,106 @@ public class PlayerAttackState : PlayerStateBase
     public override bool CanTransitionTo(PlayerStateType state)
     {
         //数据异常直接返回true切换到其他状态
-        if (currentWeapon == null || currentWeapon.attackData == null || attackIndex < 0 || attackIndex > currentWeapon.attackData.Length)
+        if (!TryGetAttackData(out AttackData data))
         {
             return true;
         }
 
-        AttackData data = currentWeapon?.attackData[attackIndex];
         //攻击结束之后可以转换到任何状态
-        if (attackTimer >= data.duration)
+        if (data.duration <= 0f || attackTimer >= data.duration)
         {
             return true;
         }
         //攻击状态过程中只能被受击和死亡状态打断
         return state == PlayerStateType.Hurt || state == PlayerStateType.Dead;
+    }
+
+    /// <summary>
+    /// 画出攻击范围
+    /// </summary>
+    /// <param name="attackPos">攻击位置</param>
+    /// <param name="attackRange">攻击范围</param>
+    /// <returns>返回一个bool值来判断能否画出攻击范围</returns>
+    public bool TryGetDebugAttackGizmo(out Vector2 attackPos, out float attackRange)
+    {
+        attackPos = Vector2.zero;
+        attackRange = 0f;
+
+        if (!TryGetAttackData(out AttackData data))
+        {
+            return false;
+        }
+
+        attackPos = player.GetAttackWorldPosition(data.attackOffset);
+        attackRange = data.attackRange;
+        return true;
+    }
+
+    /// <summary>
+    /// 获取武器攻击参数
+    /// </summary>
+    /// <param name="data">武器数据</param>
+    /// <param name="logError">是否输出错误原因</param>
+    /// <returns>返回一个bool值来判断是否获取了攻击参数</returns>
+    private bool TryGetAttackData(out AttackData data, bool logError = false)
+    {
+        data = null;
+
+        if (currentWeapon == null)
+        {
+            if (logError)
+            {
+                Debug.LogWarning("当前没有装备武器，无法进入攻击状态。");
+            }
+            return false;
+        }
+
+        if (currentWeapon.attackData == null || currentWeapon.attackData.Length == 0)
+        {
+            if (logError)
+            {
+                Debug.LogWarning($"武器 {currentWeapon.name} 没有配置 attackData，无法进入攻击状态。");
+            }
+            return false;
+        }
+
+        if (attackIndex < 0 || attackIndex >= currentWeapon.attackData.Length)
+        {
+            if (logError)
+            {
+                Debug.LogWarning($"武器 {currentWeapon.name} 的攻击段数越界：index={attackIndex}，length={currentWeapon.attackData.Length}。");
+            }
+            return false;
+        }
+
+        data = currentWeapon.attackData[attackIndex];
+        if (data == null)
+        {
+            if (logError)
+            {
+                Debug.LogWarning($"武器 {currentWeapon.name} 的第 {attackIndex + 1} 段攻击数据为空。");
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 获取攻击当前武器的最大组合索引
+    /// </summary>
+    /// <returns>返回最大攻击组合索引，如果攻击数据无效则返回-1</returns>
+    private int GetMaxComboIndex()
+    {
+        if (currentWeapon == null || currentWeapon.attackData == null || currentWeapon.attackData.Length == 0)
+        {
+            return -1;
+        }
+
+        int comboCount = currentWeapon.attackComboCount > 0
+            ? currentWeapon.attackComboCount
+            : currentWeapon.attackData.Length;
+
+        return Mathf.Min(comboCount, currentWeapon.attackData.Length) - 1;
     }
 }

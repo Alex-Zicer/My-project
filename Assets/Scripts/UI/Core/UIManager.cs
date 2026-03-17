@@ -85,14 +85,10 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void EnsureSubManagers()
     {
-        if (mainMenuPageManager == null) mainMenuPageManager = GetComponent<MainMenuPageManager>();
-        if (mainMenuPageManager == null) mainMenuPageManager = gameObject.AddComponent<MainMenuPageManager>();
-        mainMenuPageManager.Configure(UIPageCategory.MainMenu, "MainMenuPage");
-
-        if (inGamePageManager == null) inGamePageManager = GetComponent<InGamePageManager>();
-        if (inGamePageManager == null) inGamePageManager = gameObject.AddComponent<InGamePageManager>();
-        inGamePageManager.Configure(UIPageCategory.InGame, "");
-
+        // MainMenuPageManager 是主菜单场景内对象，不要挂在常驻 UIManager 上自动创建。
+        // 它会在每次场景加载后由 RefreshManagersByScene 按 scene 解析并绑定。
+        // InGamePageManager 是“场景内对象”（如 GamePlay 场景），不要在这里全局查找/创建。
+        // 它会在每次场景加载后由 RefreshManagersByScene 按 scene 解析并绑定。
     }
 
     /// <summary>
@@ -144,6 +140,58 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 从指定场景中查找 InGamePageManager，并赋值给 inGamePageManager。
+    /// UIManager 自身常驻（DontDestroyOnLoad），因此必须在场景切换后重新解析引用。
+    /// </summary>
+    private void ResolveInGamePageManagerFromScene(Scene scene)
+    {
+        var mgrs = FindObjectsByType<InGamePageManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        inGamePageManager = null;
+        foreach (var mgr in mgrs)
+        {
+            if (mgr != null && mgr.gameObject.scene == scene)
+            {
+                inGamePageManager = mgr;
+                break;
+            }
+        }
+
+        if (inGamePageManager == null)
+        {
+            Debug.LogWarning($"场景 {scene.name} 未找到 InGamePageManager：请在该场景中手动添加一个。");
+        }
+        else
+        {
+            inGamePageManager.Configure(UIPageCategory.InGame, "");
+        }
+    }
+
+    /// <summary>
+    /// 从指定场景中查找 MainMenuPageManager，并赋值给 mainMenuPageManager。
+    /// UIManager 自身常驻（DontDestroyOnLoad），因此必须在场景切换后重新解析引用。
+    /// </summary>
+    private void ResolveMainMenuPageManagerFromScene(Scene scene)
+    {
+        var mgrs = FindObjectsByType<MainMenuPageManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        mainMenuPageManager = null;
+        foreach (var mgr in mgrs)
+        {
+            if (mgr != null && mgr.gameObject.scene == scene)
+            {
+                mainMenuPageManager = mgr;
+                break;
+            }
+        }
+
+        if (mainMenuPageManager != null)
+        {
+            mainMenuPageManager.Configure(UIPageCategory.MainMenu, "MainMenuPage");
+        }
+    }
+
+    /// <summary>
     /// 根据当前场景刷新 UI：重设事件系统与 HUD 引用，收集本场景 UIPage 并分发给两个页面管理器，
     /// 再根据是否为“主菜单”场景决定初始化主菜单还是游戏内 UI，并控制 HUD 显隐与时间尺度。
     /// </summary>
@@ -152,25 +200,34 @@ public class UIManager : MonoBehaviour
     {
         SetUpEventSystem();
         ResolveHUDFromCurrentScene();
+        ResolveMainMenuPageManagerFromScene(scene);
+        ResolveInGamePageManagerFromScene(scene);
 
         List<UIPage> scenePages = CollectScenePages(scene);
-        mainMenuPageManager.RegisterPages(scenePages);
-        inGamePageManager.RegisterPages(scenePages);
+        if (mainMenuPageManager != null) mainMenuPageManager.RegisterPages(scenePages);
+        if (inGamePageManager != null) inGamePageManager.RegisterPages(scenePages);
 
         bool isMainMenuScene = scene.name.ToLower().Contains("menu");
         isInGameScene = !isMainMenuScene;
 
         if (isMainMenuScene)
         {
-            mainMenuPageManager.Initialize();
-            inGamePageManager.CloseAll();
+            if (mainMenuPageManager == null)
+            {
+                Debug.LogWarning($"场景 {scene.name} 未找到 MainMenuPageManager：请在该场景中手动添加一个。");
+            }
+            else
+            {
+                mainMenuPageManager.Initialize();
+            }
+            if (inGamePageManager != null) inGamePageManager.CloseAll();
             if (hudManager != null) hudManager.SetHUDActive(false);
             Time.timeScale = 1;
             return;
         }
 
-        mainMenuPageManager.CloseAll();
-        inGamePageManager.Initialize();
+        if (mainMenuPageManager != null) mainMenuPageManager.CloseAll();
+        if (inGamePageManager != null) inGamePageManager.Initialize();
         if (hudManager != null) hudManager.SetHUDActive(true);
         Time.timeScale = 1;
     }

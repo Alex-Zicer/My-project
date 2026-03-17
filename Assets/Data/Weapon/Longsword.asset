@@ -20,13 +20,13 @@ MonoBehaviour:
     hitStartTime: 0.33
     hitEndTime: 0.66
     attackRange: 0.1
-    attackOffset: {x: 0, y: 0}
+    attackOffset: {x: 0.25, y: 0}
     attackSound: {fileID: 0}
   - damage: 6
     duration: 0.4
     hitStartTime: 0.33
     hitEndTime: 0.66
     attackRange: 0.1
-    attackOffset: {x: 0, y: 0}
+    attackOffset: {x: 0.2, y: 0}
     attackSound: {fileID: 0}
   attackAnimationPrefix: 

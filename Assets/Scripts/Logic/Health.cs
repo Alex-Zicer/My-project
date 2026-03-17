@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class Health : MonoBehaviour
 {
-    [Header("����ֵ����")]
+    [Header("生命值设置")]
     public float maxHealth;
     public float currentHealth;
-    
-    public  System.Action<float, float> OnHealthChanged;
+
+    public System.Action<float, float> OnHealthChanged;
 
     /// <summary>
-    /// ����Ѫ��
+    /// 更新血量
     /// </summary>
-    /// <param name="amount">�ܵ����˺�</param>
+    /// <param name="amount">受到的伤害</param>
     public void UpdateHealth(float amount)
     {
         if (currentHealth - amount < 0)
@@ -25,7 +25,7 @@ public class Health : MonoBehaviour
             currentHealth -= amount;
         }
 
-        //�������Ҿ͸���Ѫ��
+        // 如果是玩家就更新血条
         if (gameObject.CompareTag("Player"))
         {
             OnHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -38,7 +38,7 @@ public class Health : MonoBehaviour
     }
 
     /// <summary>
-    /// Ѫ��Ϊ0ʱ����������
+    /// 血量为0时的死亡函数
     /// </summary>
     private void Die()
     {
@@ -48,7 +48,6 @@ public class Health : MonoBehaviour
         }
         else
         {
-            
         }
     }
 }

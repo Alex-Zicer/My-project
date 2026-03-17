@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -48,6 +48,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public Animator animator { get; private set; }
     public WeaponData CurrentWeapon { get; private set; }
     public LayerMask EnemyLayer => enemyLayer;
+    public float FacingDirection => transform.localScale.x >= 0f ? 1f : -1f;
 
     #endregion
 
@@ -183,13 +184,17 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         //如果当前状态就是攻击状态，则进行下一段攻击
         if (current == PlayerStateType.Attack)
         {
-            (StateMachine.CurrentState as PlayerAttackState)?.QueueNextAttack();
+            bool queued = (StateMachine.CurrentState as PlayerAttackState)?.QueueNextAttack() == true;
+            if (queued)
+            {
+                OnAttack?.Invoke();
+            }
         }
         else if (IsGround && current != PlayerStateType.Hurt && current != PlayerStateType.Dead)
         {
             StateMachine.TransitionTo(PlayerStateType.Attack);//进行第一段攻击
+            OnAttack?.Invoke();
         }
-        OnAttack?.Invoke();
     }
 
     /// <summary>
@@ -220,6 +225,66 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public void EquipWeapon(WeaponData weapon)
     {
         CurrentWeapon = weapon;
+    }
+
+    /// <summary>
+    /// 获取攻击朝向
+    /// </summary>
+    /// <param name="attackOffset">攻击偏移点</param>
+    /// <returns></returns>
+    public Vector2 GetAttackWorldPosition(Vector2 attackOffset)
+    {
+        Vector2 facingOffset = attackOffset;
+        facingOffset.x *= FacingDirection;
+        return (Vector2)transform.position + facingOffset;
+    }
+
+    /// <summary>
+    /// 尝试获取攻击预览
+    /// </summary>
+    /// <param name="attackPos">攻击点</param>
+    /// <param name="attackRange">攻击范围i</param>
+    /// <param name="isActiveAttack">是否处于攻击状态</param>
+    /// <returns></returns>
+    private bool TryGetAttackPreview(out Vector2 attackPos, out float attackRange, out bool isActiveAttack)
+    {
+        attackPos = Vector2.zero;
+        attackRange = 0f;
+        isActiveAttack = false;
+
+        if (Application.isPlaying && StateMachine?.CurrentState is PlayerAttackState attackState &&
+            attackState.TryGetDebugAttackGizmo(out attackPos, out attackRange))
+        {
+            isActiveAttack = true;
+            return true;
+        }
+
+        WeaponData previewWeapon = Application.isPlaying ? CurrentWeapon : defaultWeapon;
+        if (previewWeapon == null || previewWeapon.attackData == null || previewWeapon.attackData.Length == 0 ||
+            previewWeapon.attackData[0] == null)
+        {
+            return false;
+        }
+
+        AttackData previewData = previewWeapon.attackData[0];
+        attackPos = GetAttackWorldPosition(previewData.attackOffset);
+        attackRange = previewData.attackRange;
+        return true;
+    }
+
+    /// <summary>
+    /// 画出攻击判定范围
+    /// </summary>
+    private void OnDrawGizmosSelected()
+    {
+        if (!TryGetAttackPreview(out Vector2 attackPos, out float attackRange, out bool isActiveAttack))
+        {
+            return;
+        }
+
+        Gizmos.color = isActiveAttack ? Color.red : Color.yellow;
+        Gizmos.DrawLine(transform.position, attackPos);
+        Gizmos.DrawWireSphere(attackPos, attackRange);
     }
 
 }

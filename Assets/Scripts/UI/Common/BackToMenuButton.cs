@@ -9,7 +9,5 @@ public class BackToMenuButton : MonoBehaviour
         // 调用SceneLoader加载
         Time.timeScale = 1f;
         SceneLoader.Instance.LoadScene("MainMenu");
-        GameObject gameManager = GetComponentInParent<GameManager>().gameObject;
-        Destroy(gameManager);
     }
 }

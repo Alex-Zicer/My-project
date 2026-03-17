@@ -148,7 +148,13 @@ public class BasePageManager : MonoBehaviour
     {
         if (clearSource) pageList.Clear();
         pageMap.Clear();
-        historyStack.Clear();
+        // 仅在“完整重建”（通常是场景刷新、UIManager.RegisterPages 调用）时清空历史栈。
+        // 对于 EnsurePageMapReady 这类“惰性构建”场景，不清理 historyStack，
+        // 避免在第一次页面跳转前把默认页从栈里清掉，导致首跳时无法正确关闭前一页。
+        if (clearSource)
+        {
+            historyStack.Clear();
+        }
 
         if (sourcePages == null || sourcePages.Count == 0) return;
 
