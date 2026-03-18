@@ -56,6 +56,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public float VerticalSpeed => Rb.velocity.y;
     public bool IsGround { get; private set; }
     public bool IsDead => StateMachine.CurrentStateType == PlayerStateType.Dead;
+    public bool IsInputEnabled => inputActions != null && inputActions.Player.enabled;
 
 
 
@@ -119,13 +120,19 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     // Update is called once per frame
     void Update()
     {
-        // 获取玩家的输入，更新移动向量
-        MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
+        // 输入可能在暂停等场景被禁用；禁用时强制为 0，避免残留输入驱动角色。
+        if (IsInputEnabled)
+        {
+            // 获取玩家的输入，更新移动向量
+            MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
+        }
+        else
+        {
+            MoveInput = Vector2.zero;
+        }
 
         CheckGroundStatus();
         StateMachine.Update();
-
-        Debug.Log($"代码状态机当前状态: {StateMachine.CurrentStateType}");
 
         if (Input.GetKeyDown(KeyCode.E))
         {
@@ -225,6 +232,26 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public void EquipWeapon(WeaponData weapon)
     {
         CurrentWeapon = weapon;
+    }
+
+    /// <summary>
+    /// 外部（如暂停系统）开关玩家输入。仅控制 InputActionMap，不影响组件启用状态。
+    /// </summary>
+    public void SetInputEnabled(bool enabled)
+    {
+        if (inputActions == null) return;
+
+        if (enabled)
+        {
+            // 若组件本身被禁用（如死亡禁用 PlayerController），不要在这里强行启用输入。
+            if (!isActiveAndEnabled) return;
+            if (!inputActions.Player.enabled) inputActions.Player.Enable();
+        }
+        else
+        {
+            if (inputActions.Player.enabled) inputActions.Player.Disable();
+            MoveInput = Vector2.zero;
+        }
     }
 
     /// <summary>

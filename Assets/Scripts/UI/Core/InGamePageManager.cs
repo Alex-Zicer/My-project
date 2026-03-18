@@ -55,6 +55,7 @@ public class InGamePageManager : BasePageManager
         }
 
         IsPause = true;
+        SetPlayerInputEnabled(false);
         Time.timeScale = 0;
         GoToPageByName(pausePageKey);
     }
@@ -66,6 +67,14 @@ public class InGamePageManager : BasePageManager
     {
         IsPause = false;
         Time.timeScale = 1;
+        SetPlayerInputEnabled(true);
         Back();
+    }
+
+    private void SetPlayerInputEnabled(bool enabled)
+    {
+        var player = FindFirstObjectByType<PlayerController>();
+        if (player == null) return;
+        player.SetInputEnabled(enabled);
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -45,11 +46,61 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void SetUpEventSystem()
     {
-        eventSystem = FindFirstObjectByType<EventSystem>();
+        var allEventSystems = FindObjectsByType<EventSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
-        if (eventSystem == null)
+        if (allEventSystems == null || allEventSystems.Length == 0)
         {
+            eventSystem = null;
             Debug.LogWarning("缺少事件系统！");
+            return;
+        }
+
+        // 选择一个“当前要用”的 EventSystem（优先用激活的；否则用第一个）
+        EventSystem chosen = null;
+        foreach (var es in allEventSystems)
+        {
+            if (es != null && es.isActiveAndEnabled)
+            {
+                chosen = es;
+                break;
+            }
+        }
+        if (chosen == null) chosen = allEventSystems[0];
+        eventSystem = chosen;
+
+        // 如果同时存在多个“激活的 EventSystem”，会在它们 OnEnable 时打出警告。
+        // 这里把多余的禁用掉，并打印来源，方便定位到底哪个对象/哪个场景带了它。
+        int activeCount = 0;
+        foreach (var es in allEventSystems)
+        {
+            if (es != null && es.isActiveAndEnabled) activeCount++;
+        }
+
+        if (activeCount > 1)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("检测到多个激活的 EventSystem，将禁用多余的实例：");
+
+            bool keptOne = false;
+            foreach (var es in allEventSystems)
+            {
+                if (es == null) continue;
+
+                string sceneName = es.gameObject.scene.name;
+                sb.AppendLine($"- {(es.isActiveAndEnabled ? "[Active]" : "[Inactive]")} {es.name} (scene={sceneName})");
+
+                if (!es.isActiveAndEnabled) continue;
+
+                if (!keptOne)
+                {
+                    keptOne = true;
+                    continue;
+                }
+
+                es.enabled = false;
+            }
+
+            Debug.LogWarning(sb.ToString());
         }
     }
 

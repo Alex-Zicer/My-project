@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 69394309131102495}
   - component: {fileID: -8830120413659483821}
   m_Layer: 5
-  m_Name: SubPageButton
+  m_Name: SubPageToggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
