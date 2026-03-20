@@ -20,6 +20,9 @@ public class BagPageController : MonoBehaviour
     [Tooltip("末尾至少保留几行空格子")]
     [SerializeField] private int minEmptyRows = 1;
 
+    [Header("悬停面板")]
+    [SerializeField] private DetailedPanelController detailedPanel;
+
     // 当前筛选类型，null 表示显示全部
     private ItemType? _currentFilter = null;
 
@@ -32,6 +35,8 @@ public class BagPageController : MonoBehaviour
         if (Inventory.Instance != null)
             Inventory.Instance.OnInventoryChanged += Refresh;
 
+        if (detailedPanel != null)
+            detailedPanel.Hide();
         Refresh();
     }
 
@@ -98,9 +103,11 @@ public class BagPageController : MonoBehaviour
         {
             BagSlotView slot = pool.Get(contentRoot);
             slot.Bind(item);
-            // 悬停事件预留接口，后续接入 TooltipPanel 时在此订阅
-            // slot.OnHoverEnter += tooltip.Show;
-            // slot.OnHoverExit  += tooltip.Hide;
+            if (detailedPanel != null)
+            {
+                slot.OnHoverEnter += detailedPanel.Show;
+                slot.OnHoverExit  += detailedPanel.Hide;
+            }
         }
 
         // 补空格子：总格子数取 "已填充行+minEmptyRows 行" 与 preWarmCount 两者的较大值，

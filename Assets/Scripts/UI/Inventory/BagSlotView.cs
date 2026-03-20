@@ -12,8 +12,8 @@ public class BagSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI countText;
 
-    /// <summary> 鼠标悬停进入时触发，携带当前绑定的物品数据。 </summary>
-    public event Action<InventoryItem> OnHoverEnter;
+    /// <summary> 鼠标悬停进入时触发，携带物品数据和格子自身 RectTransform。 </summary>
+    public event Action<InventoryItem, RectTransform> OnHoverEnter;
     /// <summary> 鼠标悬停离开时触发。 </summary>
     public event Action OnHoverExit;
 
@@ -62,7 +62,7 @@ public class BagSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (_boundItem != null)
-            OnHoverEnter?.Invoke(_boundItem);
+            OnHoverEnter?.Invoke(_boundItem, transform as RectTransform);
     }
 
     public void OnPointerExit(PointerEventData eventData)

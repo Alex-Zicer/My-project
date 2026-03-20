@@ -13,6 +13,8 @@ public class MiscData : ItemDataBase
         isStackable = true;
     }
 
+    public override string GetStatsText() => $"售价：{sellPrice}";
+
     [Header("杂物专属")]
     [Tooltip("售卖价格")]
     public int sellPrice;

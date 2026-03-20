@@ -19,4 +19,7 @@ public abstract class ItemDataBase : ScriptableObject
     public bool isStackable;
     [Tooltip("单组最大叠加数量，仅可叠加物品有效")]
     public int maxStackSize = 99;
+
+    /// <summary> 返回该物品的属性文本，供悬停面板显示。子类重写以提供具体属性。 </summary>
+    public virtual string GetStatsText() => string.Empty;
 }

@@ -13,6 +13,8 @@ public class ArmorData : ItemDataBase
         isStackable = false;
     }
 
+    public override string GetStatsText() => $"防御：{defenceBonus}  生命：{healthBonus}";
+
     [Header("防具专属")]
     [Tooltip("防御加成")]
     public float defenceBonus;

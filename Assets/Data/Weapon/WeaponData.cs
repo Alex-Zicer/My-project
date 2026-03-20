@@ -13,6 +13,8 @@ public class WeaponData : ItemDataBase
         isStackable = false;
     }
 
+    public override string GetStatsText() => $"攻击力：{attackData?[0].damage ?? 0}";
+
     [Header("武器专属")]
     public int attackComboCount;
 
