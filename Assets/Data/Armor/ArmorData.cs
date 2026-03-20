@@ -7,6 +7,12 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewArmorData", menuName = "Data/ArmorData")]
 public class ArmorData : ItemDataBase
 {
+    private void OnEnable()
+    {
+        itemType = ItemType.Armor;
+        isStackable = false;
+    }
+
     [Header("防具专属")]
     [Tooltip("防御加成")]
     public float defenceBonus;

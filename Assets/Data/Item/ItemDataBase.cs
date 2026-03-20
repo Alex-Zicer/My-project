@@ -4,13 +4,6 @@ using UnityEngine;
 /// 所有物品的 SO 基类。存储物品共有的通用信息（名称、图标、描述、分类等），
 /// 具体物品类型（武器、防具、杂物）继承此基类并添加各自专属字段。
 /// </summary>
-public enum ItemType
-{
-    Weapon,
-    Armor,
-    Misc
-}
-
 public abstract class ItemDataBase : ScriptableObject
 {
     [Header("通用信息")]
@@ -24,4 +17,6 @@ public abstract class ItemDataBase : ScriptableObject
     public ItemType itemType;
     [Tooltip("是否可叠加（武器/防具通常不可，材料/杂物可以）")]
     public bool isStackable;
+    [Tooltip("单组最大叠加数量，仅可叠加物品有效")]
+    public int maxStackSize = 99;
 }

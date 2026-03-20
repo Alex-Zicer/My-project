@@ -52,17 +52,27 @@ public class Inventory : MonoBehaviour
 
         if (itemData.isStackable)
         {
-            // 可叠加物品：先查找背包中是否已有同类条目
-            InventoryItem existing = items.Find(i => i.CanStackWith(itemData));
-            if (existing != null)
+            int remaining = amount;
+            int maxStack = itemData.maxStackSize > 0 ? itemData.maxStackSize : 99;
+
+            // 先填满已有的未满条目
+            foreach (var item in items)
             {
-                // 已有条目：直接累加数量
-                existing.AddCount(amount);
+                if (remaining <= 0) break;
+                if (!item.CanStackWith(itemData)) continue;
+                int space = maxStack - item.Count;
+                if (space <= 0) continue;
+                int add = Mathf.Min(space, remaining);
+                item.AddCount(add);
+                remaining -= add;
             }
-            else
+
+            // 剩余数量开新条目
+            while (remaining > 0)
             {
-                // 没有已有条目：新建一个条目加入列表
-                items.Add(new InventoryItem(itemData, amount));
+                int add = Mathf.Min(maxStack, remaining);
+                items.Add(new InventoryItem(itemData, add));
+                remaining -= add;
             }
         }
         else

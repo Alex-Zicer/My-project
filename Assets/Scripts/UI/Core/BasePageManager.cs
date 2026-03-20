@@ -20,6 +20,9 @@ public class BasePageManager : MonoBehaviour
     /// <summary> 已打开页面的历史栈，用于 Back 返回上一页。 </summary>
     private readonly Stack<UIPage> historyStack = new Stack<UIPage>();
 
+    /// <summary> 当前栈顶页面的 Key，栈为空时返回空字符串。 </summary>
+    public string CurrentPageKey => historyStack.Count > 0 ? historyStack.Peek().PageKey : string.Empty;
+
     /// <summary>
     /// 配置本管理器管理的页面分类与默认打开页。
     /// 由 UIManager 或子类在 Reset/Awake 时调用。

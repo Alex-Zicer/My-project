@@ -14,6 +14,9 @@ public class BagSlotPool : MonoBehaviour
     [Tooltip("预热数量")]
     [SerializeField] private int preWarmCount = 36;
 
+    /// <summary> 预热数量，供外部计算最小格子数使用。 </summary>
+    public int PreWarmCount => preWarmCount;
+
     private readonly Queue<BagSlotView> _idle = new Queue<BagSlotView>();
     private readonly List<BagSlotView> _active = new List<BagSlotView>();
 

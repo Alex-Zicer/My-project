@@ -71,10 +71,25 @@ public class InGamePageManager : BasePageManager
         Back();
     }
 
+    /// <summary>
+    /// 禁用玩家输入
+    /// </summary>
+    /// <param name="enabled"></param>
     private void SetPlayerInputEnabled(bool enabled)
     {
         var player = FindFirstObjectByType<PlayerController>();
         if (player == null) return;
         player.SetInputEnabled(enabled);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            if (CurrentPageKey == "BagPage")
+                Back();
+            else
+                GoToPageByName("BagPage");
+        }
     }
 }

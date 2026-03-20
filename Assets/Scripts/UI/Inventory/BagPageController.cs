@@ -14,6 +14,12 @@ public class BagPageController : MonoBehaviour
     [Tooltip("ScrollRect 的 Content 节点")]
     [SerializeField] private Transform contentRoot;
 
+    [Header("布局配置")]
+    [Tooltip("每行格子数，需与 GridLayoutGroup 保持一致")]
+    [SerializeField] private int columnsPerRow = 6;
+    [Tooltip("末尾至少保留几行空格子")]
+    [SerializeField] private int minEmptyRows = 1;
+
     // 当前筛选类型，null 表示显示全部
     private ItemType? _currentFilter = null;
 
@@ -87,6 +93,7 @@ public class BagPageController : MonoBehaviour
             ? Inventory.Instance.GetItemsByType(_currentFilter.Value)
             : Inventory.Instance.GetAllItems();
 
+        // 有数据的格子
         foreach (InventoryItem item in data)
         {
             BagSlotView slot = pool.Get(contentRoot);
@@ -95,5 +102,17 @@ public class BagPageController : MonoBehaviour
             // slot.OnHoverEnter += tooltip.Show;
             // slot.OnHoverExit  += tooltip.Hide;
         }
+
+        // 补空格子：总格子数取 "已填充行+minEmptyRows 行" 与 preWarmCount 两者的较大值，
+        // 保证页面始终至少显示 preWarmCount 个格子（默认 36）。
+        int filledRows = Mathf.CeilToInt((float)data.Count / columnsPerRow);
+        int totalSlots = Mathf.Max((filledRows + minEmptyRows) * columnsPerRow, pool.PreWarmCount);
+        int emptyCount = totalSlots - data.Count;
+        for (int i = 0; i < emptyCount; i++)
+        {
+            BagSlotView slot = pool.Get(contentRoot);
+            slot.Bind(null);
+        }
     }
+
 }

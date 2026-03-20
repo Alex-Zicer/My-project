@@ -7,6 +7,12 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewWeaponData", menuName = "Data/WeaponData")]
 public class WeaponData : ItemDataBase
 {
+    private void OnEnable()
+    {
+        itemType = ItemType.Weapon;
+        isStackable = false;
+    }
+
     [Header("武器专属")]
     public int attackComboCount;
 
@@ -16,15 +22,7 @@ public class WeaponData : ItemDataBase
     [Header("动画")]
     public string attackAnimationPrefix;
 
-    /// <summary>
-    /// 武器名称，映射自基类 itemName。
-    /// 外部代码可继续使用 weaponName 访问，避免与基类 itemName 混淆。
-    /// </summary>
-    public string weaponName
-    {
-        get => itemName;
-        set => itemName = value;
-    }
+
 }
 
 [System.Serializable]

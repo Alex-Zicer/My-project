@@ -7,6 +7,12 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewMiscData", menuName = "Data/MiscData")]
 public class MiscData : ItemDataBase
 {
+    private void OnEnable()
+    {
+        itemType = ItemType.Misc;
+        isStackable = true;
+    }
+
     [Header("杂物专属")]
     [Tooltip("售卖价格")]
     public int sellPrice;
