@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Timers;
@@ -26,10 +26,10 @@ public class SceneLoader : MonoBehaviour
             return _instance;
         }
     }
-    [Header("UI×é¼ş")]
+    [Header("UIç»„ä»¶")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;
     [SerializeField] private Slider progressBar;
-    [SerializeField] private float fadeDuration = 0.5f;// ½¥±äÊ±¼ä
+    [SerializeField] private float fadeDuration = 0.5f;// æ¸å˜æ—¶é—´
 
     private void Awake()
     {
@@ -41,7 +41,7 @@ public class SceneLoader : MonoBehaviour
         _instance = this;
         DontDestroyOnLoad(_instance.gameObject);
 
-        //³õÊ¼»¯¼ÓÔØÄ»²¼£¬Òş²Ø
+        //åˆå§‹åŒ–åŠ è½½å¹•å¸ƒï¼Œéšè—
         if (fadeCanvasGroup != null)
         {
             fadeCanvasGroup.alpha = 0f;
@@ -54,40 +54,40 @@ public class SceneLoader : MonoBehaviour
     }
 
     /// <summary>
-    /// ¶ÔÍâµ÷ÓÃµÄÎ¨Ò»º¯Êı
+    /// å¯¹å¤–è°ƒç”¨çš„å”¯ä¸€å‡½æ•°
     /// </summary>
-    /// <param name="sceneName">Ä¿±ê³¡¾°µÄÃû×Ö</param>
+    /// <param name="sceneName">ç›®æ ‡åœºæ™¯çš„åå­—</param>
     public void LoadScene(string sceneName)
     {
         StartCoroutine(LoadCoroutine(sceneName));
     }
 
     /// <summary>
-    /// ÊµÏÖÒì²½¼ÓÔØ³¡¾°µÄĞ­³Ì
+    /// å®ç°å¼‚æ­¥åŠ è½½åœºæ™¯çš„åç¨‹
     /// </summary>
-    /// <param name="sceneName">Ä¿±ê³¡¾°µÄÃû×Ö</param>
+    /// <param name="sceneName">ç›®æ ‡åœºæ™¯çš„åå­—</param>
     /// <returns></returns>
     private IEnumerator LoadCoroutine(string sceneName)
     {
-        //ÕÚÕÖµ­Èë£¨ÆÁÄ»±äºÚ£©
+        //é®ç½©æ·¡å…¥ï¼ˆå±å¹•å˜é»‘ï¼‰
         fadeCanvasGroup.blocksRaycasts = true;
         yield return StartCoroutine(Fade(1f));
 
-        //ÏÔÊ¾½ø¶ÈÌõ
+        //æ˜¾ç¤ºè¿›åº¦æ¡
         if(progressBar != null)
         {
             progressBar.gameObject.SetActive(true);
             progressBar.value = 0;
         }
 
-        //¿ªÊ¼Òì²½¼ÓÔØ
+        //å¼€å§‹å¼‚æ­¥åŠ è½½
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
         operation.allowSceneActivation = false;
 
         //
         while (!operation.isDone)
         {
-            //allowSceneActivationÎªfalseÊ±£¬½ø¶ÈÌõ×î¶à¼ÓÔØµ½90%
+            //allowSceneActivationä¸ºfalseæ—¶ï¼Œè¿›åº¦æ¡æœ€å¤šåŠ è½½åˆ°90%
             float progress = Mathf.Clamp01(operation.progress / 0.9f);
 
             if(progressBar != null)
@@ -95,7 +95,7 @@ public class SceneLoader : MonoBehaviour
                 progressBar.value = progress;
             }
 
-            //¼ÓÔØÍê³ÉºóµÈÔÚÒ»»á¶ù£¬·ÀÖ¹Í»È»ÇĞ»»ÈÃÍæ¼ÒÍ»Ø£
+            //åŠ è½½å®Œæˆåç­‰åœ¨ä¸€ä¼šå„¿ï¼Œé˜²æ­¢çªç„¶åˆ‡æ¢è®©ç©å®¶çªå…€
             if(operation.progress >= 0.9f)
             {
                 Time.timeScale = 1;
@@ -105,21 +105,21 @@ public class SceneLoader : MonoBehaviour
             yield return null;
         }
 
-        //ÏÈ¼ÓÔØHUD
+        //å…ˆåŠ è½½HUD
         UIManager.Instance.InitHUD();
 
-        //Òş²Ø½ø¶ÈÌõ
+        //éšè—è¿›åº¦æ¡
         if (progressBar != null) progressBar.gameObject.SetActive(false);
 
-        //ÕÚÕÖµ­³ö£¨ÆÁÄ»±äÁÁ£©
+        //é®ç½©æ·¡å‡ºï¼ˆå±å¹•å˜äº®ï¼‰
         yield return StartCoroutine(Fade(0f));
         fadeCanvasGroup.blocksRaycasts = false;
     }
 
     /// <summary>
-    /// ÊµÏÖÕÚÕÖalphaÆ½»¬×ª»»µÄĞ­³Ì
+    /// å®ç°é®ç½©alphaå¹³æ»‘è½¬æ¢çš„åç¨‹
     /// </summary>
-    /// <param name="targetAlpha">Ä¿±êalpha</param>
+    /// <param name="targetAlpha">ç›®æ ‡alpha</param>
     /// <returns></returns>
     private IEnumerator Fade(float targetAlpha)
     {

@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class UIInteractableSound : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler
 {
-    public UISoundType soundType = UISoundType.Default; //Ä¬ÈÏÒôĞ§ÀàĞÍ
+    public UISoundType soundType = UISoundType.Default; //é»˜è®¤éŸ³æ•ˆç±»å‹
 
     private Toggle toggle;
 
@@ -18,14 +18,14 @@ public class UIInteractableSound : MonoBehaviour, IPointerClickHandler, IPointer
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        //Èç¹ûÃ»ÓĞToggle×é¼ş£¬Ö±½Ó²¥·Åµã»÷ÒôĞ§£»Èç¹ûÓĞToggle×é¼ş£¬Ö»ÓĞÔÚÇĞ»»×´Ì¬Ê±²Å²¥·Åµã»÷ÒôĞ§
+        //å¦‚æœæ²¡æœ‰Toggleç»„ä»¶ï¼Œç›´æ¥æ’­æ”¾ç‚¹å‡»éŸ³æ•ˆï¼›å¦‚æœæœ‰Toggleç»„ä»¶ï¼Œåªæœ‰åœ¨åˆ‡æ¢çŠ¶æ€æ—¶æ‰æ’­æ”¾ç‚¹å‡»éŸ³æ•ˆ
         if (toggle == null)
         {
             AudioManager.Instance.PlaySound(soundType, true);
         }
         else
         {
-            //Èç¹ûÊÇToggle×é¼ş£¬Ö»ÓĞÔÚÇĞ»»×´Ì¬Ê±²Å²¥·Åµã»÷ÒôĞ§
+            //å¦‚æœæ˜¯Toggleç»„ä»¶ï¼Œåªæœ‰åœ¨åˆ‡æ¢çŠ¶æ€æ—¶æ‰æ’­æ”¾ç‚¹å‡»éŸ³æ•ˆ
             if (toggle.isOn)
             {
                 AudioManager.Instance.PlaySound(soundType, true);
@@ -35,7 +35,7 @@ public class UIInteractableSound : MonoBehaviour, IPointerClickHandler, IPointer
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        //ÎŞÂÛÊÇ·ñÓĞToggle×é¼ş£¬ĞüÍ£Ê±¶¼²¥·ÅĞüÍ£ÒôĞ§
+        //æ— è®ºæ˜¯å¦æœ‰Toggleç»„ä»¶ï¼Œæ‚¬åœæ—¶éƒ½æ’­æ”¾æ‚¬åœéŸ³æ•ˆ
         AudioManager.Instance.PlaySound(soundType, false); 
     }
 }

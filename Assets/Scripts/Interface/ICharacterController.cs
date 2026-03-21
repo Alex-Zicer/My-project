@@ -1,10 +1,9 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public interface ICharacterController
 {
-    event System.Action OnJump; //ÌøÔ¾ÊÂ¼þ
-    event System.Action OnAttack; //¹¥»÷ÊÂ¼þ
-    event System.Action OnDash;//³å´ÌÊÂ¼þ
+    event System.Action OnJump; //è·³è·ƒäº‹ä»¶
+    event System.Action OnAttack; //æ”»å‡»äº‹ä»¶
 }

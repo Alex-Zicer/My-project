@@ -8,15 +8,21 @@ public abstract class PlayerStateBase : IPlayerState
     protected Animator anim;
     protected Rigidbody2D rb;
 
-    //动画状态哈希
-    protected static readonly int MovementHash = Animator.StringToHash("Movement");
-    protected static readonly int JumpHash = Animator.StringToHash("Jump");
-    protected static readonly int FallHash = Animator.StringToHash("Fall");
-    protected static readonly int LandHash = Animator.StringToHash("Land");
-    protected static readonly int HurtHash = Animator.StringToHash("Hurt");
-    protected static readonly int DeadHash = Animator.StringToHash("Dead");
-    protected static readonly int Attack1Hash = Animator.StringToHash("Attack1");
-    protected static readonly int Attack2Hash = Animator.StringToHash("Attack2");
+    // 动画状态哈希
+    // 说明：
+    // - CrossFade/Play 用 int hash 时，建议使用“完整路径”以避免状态在子状态机/不同层导致找不到。
+    // - 默认都在 Base Layer 上播放（layerIndex=0）。
+    protected const int BaseLayerIndex = 0;
+    private const string BaseLayerPathPrefix = "Base Layer.";
+
+    protected static readonly int MovementHash = Animator.StringToHash(BaseLayerPathPrefix + "Movement");
+    protected static readonly int JumpHash = Animator.StringToHash(BaseLayerPathPrefix + "Jump");
+    protected static readonly int FallHash = Animator.StringToHash(BaseLayerPathPrefix + "Fall");
+    protected static readonly int LandHash = Animator.StringToHash(BaseLayerPathPrefix + "Land");
+    protected static readonly int HurtHash = Animator.StringToHash(BaseLayerPathPrefix + "Hurt");
+    protected static readonly int DeadHash = Animator.StringToHash(BaseLayerPathPrefix + "Dead");
+    protected static readonly int Attack1Hash = Animator.StringToHash(BaseLayerPathPrefix + "Attack1");
+    protected static readonly int Attack2Hash = Animator.StringToHash(BaseLayerPathPrefix + "Attack2");
 
     //动画参数哈希
     protected static readonly int HorizontalSpeedHash = Animator.StringToHash("HorizontalSpeed");
@@ -34,6 +40,21 @@ public abstract class PlayerStateBase : IPlayerState
         this.player = player;
         this.anim = player.GetComponent<Animator>();
         this.rb = player.GetComponent<Rigidbody2D>();
+    }
+
+    /// <summary>
+    /// 动画器是否可用（是否存在 Animator 且挂了 AnimatorController）。
+    /// 用于避免 CrossFade 时出现 “Invalid Layer Index -1 / State could not be found” 这类误导性报错。
+    /// </summary>
+    protected bool IsAnimatorReady()
+    {
+        if (anim == null) return false;
+        if (anim.runtimeAnimatorController == null)
+        {
+            Debug.LogWarning("Animator 未挂载 AnimatorController，无法播放动画。");
+            return false;
+        }
+        return true;
     }
 
     /// <summary>

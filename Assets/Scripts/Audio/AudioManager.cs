@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,33 +14,33 @@ public class SoundMapping
 
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager Instance; //µ¥ÀıÊµÀı
+    public static AudioManager Instance; //å•ä¾‹å®ä¾‹
 
-    public AudioSource uiSource; //UIÒôĞ§²¥·ÅÆ÷
+    public AudioSource uiSource; //UIéŸ³æ•ˆæ’­æ”¾å™¨
 
-    [Tooltip("UIÒôĞ§Ó³ÉäÁĞ±í£¬°üº¬²»Í¬ÀàĞÍµÄUIÒôĞ§¼°Æä¶ÔÓ¦µÄÒôĞ§Æ¬¶Î¡£")]
+    [Tooltip("UIéŸ³æ•ˆæ˜ å°„åˆ—è¡¨ï¼ŒåŒ…å«ä¸åŒç±»å‹çš„UIéŸ³æ•ˆåŠå…¶å¯¹åº”çš„éŸ³æ•ˆç‰‡æ®µã€‚")]
     public List<SoundMapping> soundLibrary;
 
     private void Awake()
     {
-        //È·±£Ö»ÓĞÒ»¸öÊµÀı´æÔÚ
+        //ç¡®ä¿åªæœ‰ä¸€ä¸ªå®ä¾‹å­˜åœ¨
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); //ÔÚ³¡¾°ÇĞ»»Ê±²»Ïú»Ù
+            DontDestroyOnLoad(gameObject); //åœ¨åœºæ™¯åˆ‡æ¢æ—¶ä¸é”€æ¯
         }
         else
         {
-            Destroy(gameObject); //Ïú»Ù¶àÓàµÄÊµÀı
+            Destroy(gameObject); //é”€æ¯å¤šä½™çš„å®ä¾‹
         }
     }
 
     /// <summary>
-    /// ²¥·ÅUIÒôĞ§µÄ·½·¨£¬½ÓÊÜÒ»¸öUISoundTypeÀàĞÍµÄ²ÎÊıtype£¬
-    /// ±íÊ¾Òª²¥·ÅµÄUIÒôĞ§ÀàĞÍ£¬ÒÔ¼°Ò»¸ö²¼¶ûÖµ²ÎÊıisClick£¬±íÊ¾ÊÇ·ñÊÇµã»÷ÊÂ¼ş¡£
+    /// æ’­æ”¾UIéŸ³æ•ˆçš„æ–¹æ³•ï¼Œæ¥å—ä¸€ä¸ªUISoundTypeç±»å‹çš„å‚æ•°typeï¼Œ
+    /// è¡¨ç¤ºè¦æ’­æ”¾çš„UIéŸ³æ•ˆç±»å‹ï¼Œä»¥åŠä¸€ä¸ªå¸ƒå°”å€¼å‚æ•°isClickï¼Œè¡¨ç¤ºæ˜¯å¦æ˜¯ç‚¹å‡»äº‹ä»¶ã€‚
     /// </summary>
-    /// <param name="type">ÒôĞ§ÀàĞÍ</param>
-    /// <param name="isClick">ÊÇ·ñµã»÷</param>
+    /// <param name="type">éŸ³æ•ˆç±»å‹</param>
+    /// <param name="isClick">æ˜¯å¦ç‚¹å‡»</param>
     public void PlaySound(UISoundType type, bool isClick)
     {
         var mapping = soundLibrary.Find(s => s.type == type);

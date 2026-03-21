@@ -1,18 +1,18 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewEnemyData", menuName = "Data/EnemyData")]
 public class EnemyBaseData : ScriptableObject
 {
-    [Header("»ù±¾ÊôĞÔ")]
-    public string enemyName; //µĞÈËÃû³Æ
-    public float maxHealth; //×î´óÉúÃüÖµ
-    public float moveSpeed; //ÒÆ¶¯ËÙ¶È
-    public float defence; //·ÀÓùÁ¦
+    [Header("åŸºæœ¬å±æ€§")]
+    public string enemyName; //æ•Œäººåç§°
+    public float maxHealth; //æœ€å¤§ç”Ÿå‘½å€¼
+    public float moveSpeed; //ç§»åŠ¨é€Ÿåº¦
+    public float defence; //é˜²å¾¡åŠ›
 
-    [Header("¹¥»÷ÊôĞÔ")]
-    public float attackDamage; //¹¥»÷ÉËº¦
-    public float attackRange; //¹¥»÷·¶Î§
-    public float attackCooldown; //¹¥»÷ÀäÈ´Ê±¼ä
+    [Header("æ”»å‡»å±æ€§")]
+    public float attackDamage; //æ”»å‡»ä¼¤å®³
+    public float attackRange; //æ”»å‡»èŒƒå›´
+    public float attackCooldown; //æ”»å‡»å†·å´æ—¶é—´
 }

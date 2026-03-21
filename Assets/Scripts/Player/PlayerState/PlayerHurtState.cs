@@ -16,7 +16,10 @@ public class PlayerHurtState : PlayerStateBase
     public override void Enter()
     {
         hurtTimer = 0;
-        anim.CrossFade(HurtHash, 0.1f);
+        if (!IsAnimatorReady()) return;
+
+        // 使用完整路径 hash + 显式 layerIndex，避免状态在不同层/子状态机时找不到
+        anim.CrossFade(HurtHash, 0.1f, BaseLayerIndex);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
@@ -8,7 +8,7 @@ public class CameraManager : MonoBehaviour
     public static CameraManager Instance { get; private set; }
 
     [SerializeField] private CinemachineVirtualCamera playerCamera;
-    //ÓÃÀ´·ÃÎÊnoise,´¦Àí¾µÍ·¶¶¶¯
+    //ç”¨æ¥è®¿é—®noise,å¤„ç†é•œå¤´æŠ–åŠ¨
     private CinemachineBasicMultiChannelPerlin _perlin;
 
     private void Awake()
@@ -20,23 +20,23 @@ public class CameraManager : MonoBehaviour
         }
         else Destroy(gameObject);
 
-        // »ñÈ¡ Noise Ä£¿éµÄÒıÓÃ
+        // è·å– Noise æ¨¡å—çš„å¼•ç”¨
         _perlin = playerCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
 
-        //½«²ÎÊı³õÊ¼»¯Îª0£¬ÒÔÃâÒÑ½øÈëÓÎÏ·¾µÍ·¾Í¿ªÊ¼¶¶¶¯
+        //å°†å‚æ•°åˆå§‹åŒ–ä¸º0ï¼Œä»¥å…å·²è¿›å…¥æ¸¸æˆé•œå¤´å°±å¼€å§‹æŠ–åŠ¨
         _perlin.m_AmplitudeGain = 0;
         _perlin.m_FrequencyGain = 0;
     }
 
     /// <summary>
-    /// ¶¶¶¯¾µÍ·
+    /// æŠ–åŠ¨é•œå¤´
     /// </summary>
-    /// <param name="intensity">Õñ·ù</param>
-    /// <param name="frequency">ÆµÂÊ</param>
-    /// <param name="time">Ê±¼ä</param>
+    /// <param name="intensity">æŒ¯å¹…</param>
+    /// <param name="frequency">é¢‘ç‡</param>
+    /// <param name="time">æ—¶é—´</param>
     public void Shake(float intensity, float frequency, float time)
     {
-        StopAllCoroutines();//·ÀÖ¹¶à¸ö¶¶¶¯³åÍ»
+        StopAllCoroutines();//é˜²æ­¢å¤šä¸ªæŠ–åŠ¨å†²çª
         StartCoroutine(ShakeRoutine(intensity, frequency, time));
     }
 
@@ -52,9 +52,9 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Ö¡¶³½á
+    /// å¸§å†»ç»“
     /// </summary>
-    /// <param name="duration">³ÖĞøÊ±¼ä</param>
+    /// <param name="duration">æŒç»­æ—¶é—´</param>
     public void HitStop(float duration)
     {
         StartCoroutine(HitStopRoutine(duration));

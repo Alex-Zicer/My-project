@@ -1,110 +1,23 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// µĞÈËAI¿ØÖÆÆ÷£¬Ê¹ÓÃ×´Ì¬»úÄ£Ê½
-/// </summary>
 public class EnemyAI : MonoBehaviour, IDamageable
 {
-    [Header("µĞÈËÊı¾İ")]
     public EnemyBaseData enemyBaseData;
     private Health health;
 
-    [Header("AIÉèÖÃ")]
-    [Tooltip("Ñ²ÂßËÙ¶È")]
-    public float PatrolSpeed = 2f;
-    [Tooltip("×·ÖğËÙ¶È")]
-    public float ChaseSpeed = 3f;
-    [Tooltip("Ñ²ÂßµÈ´ıÊ±¼ä")]
-    public float PatrolWaitTime = 2f;
-    [Tooltip("Ñ²Âßµã1")]
-    public Transform PatrolPoint1;
-    [Tooltip("Ñ²Âßµã2")]
-    public Transform PatrolPoint2;
-    [Tooltip("×·Öğ·¶Î§")]
-    public float ChaseRange = 5f;
-    [Tooltip("¹¥»÷·¶Î§")]
-    public float AttackRange = 1.5f;
-    [Tooltip("¹¥»÷Á¦")]
-    public float AttackDamage = 10f;
-    [Tooltip("¹¥»÷ËÙ¶È")]
-    public float AttackRate = 1f;
-    [Tooltip("¹¥»÷³å»÷Á¦")]
-    public float AttackImpactForce = 5f;
-
-    [Header("Ó²Ö±ÉèÖÃ")]
-    [Tooltip("´¥·¢Ó²Ö±µÄ×îĞ¡³å»÷Á¦")]
-    public float MinImpactForHurt = 10f;
-    [Tooltip("Ó²Ö±³ÖĞøÊ±¼ä")]
-    public float HurtDuration = 0.5f;
-    [Tooltip("Ó²Ö±³å»÷Á¦±¶ÂÊ")]
-    public float ImpactToDurationMultiplier = 0.02f;
-
-    // ×´Ì¬»ú
-    public StateMachine StateMachine { get; private set; }
-
-    // ¶¯»­¿ØÖÆÆ÷
-    public Animator Animator { get; private set; }
-
-    private Rigidbody2D rb;
-
     void Start()
     {
-        // ³õÊ¼»¯×é¼ş
         health = GetComponent<Health>();
-        health.maxHealth = enemyBaseData.maxHealth;
-        health.currentHealth = health.maxHealth;
-
-        rb = GetComponent<Rigidbody2D>();
-        Animator = GetComponent<Animator>();
-
-        // ³õÊ¼»¯×´Ì¬»ú
-        StateMachine = new StateMachine();
-        StateMachine.ChangeState(new PatrolState(this));
+        health.maxHealth = enemyBaseData.maxHealth;//åˆå§‹åŒ–æœ€å¤§ç”Ÿå‘½å€¼
+        health.currentHealth = health.maxHealth;//åˆå§‹åŒ–ç”Ÿå‘½å€¼
     }
 
-    void Update()
+    public void TakeDamage(float rawDamage)
     {
-        StateMachine.Update();
-    }
-
-    private void FixedUpdate()
-    {
-        StateMachine.FixedUpdate();
-    }
-
-    /// <summary>
-    /// µĞÈËÊÜµ½ÉËº¦
-    /// </summary>
-    /// <param name="rawDamage">Ô­Ê¼ÉËº¦</param>
-    /// <param name="impactForce">³å»÷Á¦</param>
-    public void TakeDamage(float rawDamage, float impactForce = 0f)
-    {
-        // ¼ÆËãÊµ¼ÊÉËº¦
-        float finalDamage = Mathf.Max(rawDamage - enemyBaseData.defence, 0);
+        //è®¡ç®—æœ€ç»ˆå—åˆ°çš„ä¼¤å®³
+        float finalDamage = Mathf.Max(rawDamage - enemyBaseData.defence);
         health.UpdateHealth(finalDamage);
-
-        // ¼ì²éÊÇ·ñÓ¦¸Ã´¥·¢Ó²Ö±
-        if (impactForce >= MinImpactForHurt)
-        {
-            TriggerHurtState(impactForce);
-        }
-    }
-
-    /// <summary>
-    /// ´¥·¢Ó²Ö±×´Ì¬
-    /// </summary>
-    /// <param name="impactForce">³å»÷Á¦</param>
-    private void TriggerHurtState(float impactForce)
-    {
-        // ¸ù¾İ³å»÷Á¦¼ÆËãÓ²Ö±Ê±¼ä
-        float hurtDuration = HurtDuration + (impactForce - MinImpactForHurt) * ImpactToDurationMultiplier;
-
-        // »ñÈ¡µ±Ç°×´Ì¬
-        IEnemyState currentState = StateMachine.GetCurrentState();
-
-        // ÇĞ»»µ½Ó²Ö±×´Ì¬
-        StateMachine.ChangeState(new HurtState(this, hurtDuration, currentState));
     }
 }

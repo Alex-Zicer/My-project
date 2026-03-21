@@ -48,6 +48,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public Animator animator { get; private set; }
     public WeaponData CurrentWeapon { get; private set; }
     public LayerMask EnemyLayer => enemyLayer;
+    public float FacingDirection => transform.localScale.x >= 0f ? 1f : -1f;
 
     #endregion
 
@@ -55,6 +56,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public float VerticalSpeed => Rb.velocity.y;
     public bool IsGround { get; private set; }
     public bool IsDead => StateMachine.CurrentStateType == PlayerStateType.Dead;
+    public bool IsInputEnabled => inputActions != null && inputActions.Player.enabled;
 
 
 
@@ -118,13 +120,19 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     // Update is called once per frame
     void Update()
     {
-        // 获取玩家的输入，更新移动向量
-        MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
+        // 输入可能在暂停等场景被禁用；禁用时强制为 0，避免残留输入驱动角色。
+        if (IsInputEnabled)
+        {
+            // 获取玩家的输入，更新移动向量
+            MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
+        }
+        else
+        {
+            MoveInput = Vector2.zero;
+        }
 
         CheckGroundStatus();
         StateMachine.Update();
-
-        Debug.Log($"代码状态机当前状态: {StateMachine.CurrentStateType}");
 
         if (Input.GetKeyDown(KeyCode.E))
         {
@@ -183,13 +191,17 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         //如果当前状态就是攻击状态，则进行下一段攻击
         if (current == PlayerStateType.Attack)
         {
-            (StateMachine.CurrentState as PlayerAttackState)?.QueueNextAttack();
+            bool queued = (StateMachine.CurrentState as PlayerAttackState)?.QueueNextAttack() == true;
+            if (queued)
+            {
+                OnAttack?.Invoke();
+            }
         }
         else if (IsGround && current != PlayerStateType.Hurt && current != PlayerStateType.Dead)
         {
             StateMachine.TransitionTo(PlayerStateType.Attack);//进行第一段攻击
+            OnAttack?.Invoke();
         }
-        OnAttack?.Invoke();
     }
 
     /// <summary>
@@ -220,6 +232,86 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public void EquipWeapon(WeaponData weapon)
     {
         CurrentWeapon = weapon;
+    }
+
+    /// <summary>
+    /// 外部（如暂停系统）开关玩家输入。仅控制 InputActionMap，不影响组件启用状态。
+    /// </summary>
+    public void SetInputEnabled(bool enabled)
+    {
+        if (inputActions == null) return;
+
+        if (enabled)
+        {
+            // 若组件本身被禁用（如死亡禁用 PlayerController），不要在这里强行启用输入。
+            if (!isActiveAndEnabled) return;
+            if (!inputActions.Player.enabled) inputActions.Player.Enable();
+        }
+        else
+        {
+            if (inputActions.Player.enabled) inputActions.Player.Disable();
+            MoveInput = Vector2.zero;
+        }
+    }
+
+    /// <summary>
+    /// 获取攻击朝向
+    /// </summary>
+    /// <param name="attackOffset">攻击偏移点</param>
+    /// <returns></returns>
+    public Vector2 GetAttackWorldPosition(Vector2 attackOffset)
+    {
+        Vector2 facingOffset = attackOffset;
+        facingOffset.x *= FacingDirection;
+        return (Vector2)transform.position + facingOffset;
+    }
+
+    /// <summary>
+    /// 尝试获取攻击预览
+    /// </summary>
+    /// <param name="attackPos">攻击点</param>
+    /// <param name="attackRange">攻击范围i</param>
+    /// <param name="isActiveAttack">是否处于攻击状态</param>
+    /// <returns></returns>
+    private bool TryGetAttackPreview(out Vector2 attackPos, out float attackRange, out bool isActiveAttack)
+    {
+        attackPos = Vector2.zero;
+        attackRange = 0f;
+        isActiveAttack = false;
+
+        if (Application.isPlaying && StateMachine?.CurrentState is PlayerAttackState attackState &&
+            attackState.TryGetDebugAttackGizmo(out attackPos, out attackRange))
+        {
+            isActiveAttack = true;
+            return true;
+        }
+
+        WeaponData previewWeapon = Application.isPlaying ? CurrentWeapon : defaultWeapon;
+        if (previewWeapon == null || previewWeapon.attackData == null || previewWeapon.attackData.Length == 0 ||
+            previewWeapon.attackData[0] == null)
+        {
+            return false;
+        }
+
+        AttackData previewData = previewWeapon.attackData[0];
+        attackPos = GetAttackWorldPosition(previewData.attackOffset);
+        attackRange = previewData.attackRange;
+        return true;
+    }
+
+    /// <summary>
+    /// 画出攻击判定范围
+    /// </summary>
+    private void OnDrawGizmosSelected()
+    {
+        if (!TryGetAttackPreview(out Vector2 attackPos, out float attackRange, out bool isActiveAttack))
+        {
+            return;
+        }
+
+        Gizmos.color = isActiveAttack ? Color.red : Color.yellow;
+        Gizmos.DrawLine(transform.position, attackPos);
+        Gizmos.DrawWireSphere(attackPos, attackRange);
     }
 
 }

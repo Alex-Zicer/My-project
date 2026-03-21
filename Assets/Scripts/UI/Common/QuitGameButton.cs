@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,14 +6,14 @@ public class QuitGameButton : MonoBehaviour
 {
     public void QuitGame()
     {
-        // 1. Èç¹ûÊÇÔÚ Unity ±à¼­Æ÷ÀïÔËĞĞ£¬µã»÷ºóÍ£Ö¹²¥·ÅÄ£Ê½
+        // 1. å¦‚æœæ˜¯åœ¨ Unity ç¼–è¾‘å™¨é‡Œè¿è¡Œï¼Œç‚¹å‡»ååœæ­¢æ’­æ”¾æ¨¡å¼
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-            // 2. Èç¹ûÊÇÕıÊ½·¢²¼µÄ°æ±¾£¬Ö´ĞĞÍË³ö³ÌĞò
+            // 2. å¦‚æœæ˜¯æ­£å¼å‘å¸ƒçš„ç‰ˆæœ¬ï¼Œæ‰§è¡Œé€€å‡ºç¨‹åº
             Application.Quit();
 #endif
 
-        Debug.Log("ÓÎÏ·ÒÑÍË³ö");
+        Debug.Log("æ¸¸æˆå·²é€€å‡º");
     }
 }

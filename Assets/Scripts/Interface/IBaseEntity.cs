@@ -1,11 +1,11 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public interface IBaseEntity
 {
-    float HorizontalSpeed { get; } //¶ÔÓ¦ÓÚË®Æ½ÒÆ¶¯ËÙ¶È
-    float VerticalSpeed { get; } //¶ÔÓ¦ÓÚ´¹Ö±ÒÆ¶¯ËÙ¶È
-    bool IsDead { get; } //¶ÔÓ¦ÓÚÊÇ·ñËÀÍö
-    bool IsGround { get; } //¶ÔÓ¦ÓÚÊÇ·ñÔÚµØÃæÉÏ
+    float HorizontalSpeed { get; } //å¯¹åº”äºæ°´å¹³ç§»åŠ¨é€Ÿåº¦
+    float VerticalSpeed { get; } //å¯¹åº”äºå‚ç›´ç§»åŠ¨é€Ÿåº¦
+    bool IsDead { get; } //å¯¹åº”äºæ˜¯å¦æ­»äº¡
+    bool IsGround { get; } //å¯¹åº”äºæ˜¯å¦åœ¨åœ°é¢ä¸Š
 }

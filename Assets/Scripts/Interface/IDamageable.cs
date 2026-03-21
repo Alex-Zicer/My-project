@@ -1,8 +1,12 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public interface IDamageable
-{
-    public void TakeDamage(float rawDamage, float impactForce);
+{    
+    /// <summary>
+    /// 接收伤害
+    /// </summary>
+    /// <param name="rawDamage">原始伤害</param>
+    public void TakeDamage(float rawDamage);
 }

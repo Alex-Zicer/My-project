@@ -22,7 +22,7 @@ public class PlayerFallState : PlayerStateBase
     {
         anim.SetFloat(VerticalSpeedHash, rb.velocity.y);
 
-        if (Mathf.Abs(rb.velocity.y) < 0.1f)
+        if (player.IsGround && rb.velocity.y <= 0.1f)
         {
             player.StateMachine.TransitionTo(PlayerStateType.Land);
         }

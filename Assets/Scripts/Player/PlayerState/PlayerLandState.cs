@@ -12,6 +12,7 @@ public class PlayerLandState : PlayerStateBase
     private float landDuration = 0.33f;
     public override void Enter()
     {
+        landTimer = 0f;
         anim.CrossFade(LandHash, 0.05f);
         anim.SetBool(IsGroundHash, true);
         anim.SetFloat(VerticalSpeedHash, 0f);
