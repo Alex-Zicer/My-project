@@ -1,11 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
-using System.Data;
-using UnityEngine.Experimental.Rendering;
-using Unity.VisualScripting;
 
 public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 {
@@ -15,7 +10,6 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
     [Header("组件引用")]
     [SerializeField] private Health health;
-    [SerializeField] private Animator anim;
     private PlayerControls inputActions;//玩家输入系统的引用，使用Unity的新输入系统来处理玩家的输入
     private LayerMask enemyLayer;
 
@@ -30,7 +24,6 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public float groundCheckOffset = 0.1f;
     [Tooltip("跳跃段数")]
     public int canJumpCount = 2;
-    private int currentJumpCount;
 
     #region 接口事件
     //用于ICharacterController接口的事件，其他系统可以订阅这些事件来响应玩家的跳跃和着陆行为
@@ -133,11 +126,6 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
         CheckGroundStatus();
         StateMachine.Update();
-
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            TakeDamage(10);
-        }
     }
 
     private void FixedUpdate()
@@ -160,22 +148,16 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     /// <param name="context">用来实现事件系统的参数</param>
     private void OnJumpPerformed(InputAction.CallbackContext context)
     {
-        if (IsGround)//从地上开始跳能跳两次
-        {
-            currentJumpCount = 0;
-        }
-        else if (!IsGround && currentJumpCount < canJumpCount)//在空中只能跳一次
-        {
-            currentJumpCount = 1;
-        }
-
-        //如果目前是以下状态并且还没有进行过二段跳就能够进行跳跃
         PlayerStateType currentType = StateMachine.CurrentStateType;
-        bool canJump = (currentType == PlayerStateType.Movement ||
-                        currentType == PlayerStateType.Jump || currentType == PlayerStateType.Fall) && currentJumpCount < canJumpCount;
-        if (canJump)
+        bool inJumpableState = currentType == PlayerStateType.Movement ||
+                               currentType == PlayerStateType.Jump ||
+                               currentType == PlayerStateType.Fall;
+        if (!inJumpableState) return;
+
+        var jumpState = StateMachine.CurrentState as PlayerJumpState
+                     ?? StateMachine.GetState<PlayerJumpState>();
+        if (jumpState != null && jumpState.TryConsumeJump())
         {
-            currentJumpCount++;
             StateMachine.TransitionTo(PlayerStateType.Jump);
             OnJump?.Invoke();
         }

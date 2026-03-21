@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerMovementState : PlayerStateBase
 {
@@ -12,6 +10,8 @@ public class PlayerMovementState : PlayerStateBase
     {
         anim.CrossFade(MovementHash, 0.1f);
         anim.SetBool(IsGroundHash, true);
+        // 落地恢复跳跃次数
+        player.StateMachine.GetState<PlayerJumpState>()?.ResetJumps();
     }
 
     public override void Update()
@@ -20,16 +20,11 @@ public class PlayerMovementState : PlayerStateBase
         anim.SetFloat(HorizontalSpeedHash, speed);
 
         if (!player.IsGround)
-        {
             player.StateMachine.TransitionTo(PlayerStateType.Fall);
-        }
 
         FlipCharacter();
     }
 
-    /// <summary>
-    /// 设置平滑转向
-    /// </summary>
     public override void FixedUpdate()
     {
         SmoothSpeed();

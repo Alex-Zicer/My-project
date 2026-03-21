@@ -1,27 +1,29 @@
-using UnityEngine;
+/// <summary>
+/// 敌人状态类型枚举，顺序不影响逻辑。
+/// </summary>
+public enum EnemyStateType
+{
+    Patrol,
+    Chase,
+    Attack,
+    Hurt,
+    Dead
+}
 
 /// <summary>
-/// ����״̬�ӿ�
+/// 敌人状态接口，对齐玩家状态机设计：含 StateType 和 CanTransitionTo。
 /// </summary>
 public interface IEnemyState
 {
-    /// <summary>
-    /// ����״̬ʱ����
-    /// </summary>
+    EnemyStateType StateType { get; }
+
     void Enter();
-
-    /// <summary>
-    /// �˳�״̬ʱ����
-    /// </summary>
     void Exit();
-
-    /// <summary>
-    /// ÿ֡����
-    /// </summary>
     void Update();
+    void FixedUpdate();
 
     /// <summary>
-    /// �̶�֡�ʸ���
+    /// 当前状态是否允许转换到目标状态（白名单机制）。
     /// </summary>
-    void FixedUpdate();
+    bool CanTransitionTo(EnemyStateType targetState);
 }

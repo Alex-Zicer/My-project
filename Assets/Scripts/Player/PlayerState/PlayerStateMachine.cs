@@ -35,6 +35,16 @@ public class PlayerStateMachine
     }
 
     /// <summary>
+    /// 按类型取已注册的状态实例，找不到返回 null。
+    /// </summary>
+    public T GetState<T>() where T : class, IPlayerState
+    {
+        foreach (var s in states.Values)
+            if (s is T result) return result;
+        return null;
+    }
+
+    /// <summary>
     /// 初始化状态
     /// </summary>
     /// <param name="initialState">初始状态</param>

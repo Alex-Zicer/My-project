@@ -1,102 +1,71 @@
 using UnityEngine;
 
-/// <summary>
-/// ¹¥»÷×´Ì¬
-/// </summary>
 public class AttackState : EnemyState
 {
-    private float nextAttackTime = 0f;
+    public override EnemyStateType StateType => EnemyStateType.Attack;
+
+    private float _nextAttackTime;
+    private bool _isAttacking; // æ”»å‡»åŠ¨ç”»æ’­æ”¾æœŸé—´ä¸º trueï¼Œå†·å´é˜¶æ®µä¸º false
 
     public AttackState(EnemyAI enemy) : base(enemy) { }
 
     public override void Enter()
     {
-        // ½øÈë¹¥»÷×´Ì¬Ê±Í£Ö¹ÒÆ¶¯
-        if (rb != null)
-        {
-            rb.velocity = new Vector2(0, rb.velocity.y);
-        }
-
-        // ²¥·Å¹¥»÷¶¯»­
-        if (enemy.Animator != null)
-        {
-            enemy.Animator.SetBool("IsPatrolling", false);
-            enemy.Animator.SetBool("IsChasing", false);
-            enemy.Animator.SetBool("IsAttacking", true);
-        }
+        rb.velocity = new Vector2(0, rb.velocity.y);
+        _isAttacking = false;
+        _nextAttackTime = Time.time;// è¿›å…¥èŒƒå›´ç«‹åˆ»è§¦å‘ç¬¬ä¸€æ¬¡æ”»å‡»
+        if (anim != null) anim.CrossFade(AttackHash, 0.1f);
     }
 
+    /// <summary>
+    /// ç©å®¶æ­»äº¡åˆ‡æ¢å›å·¡é€»æ¨¡å¼
+    /// æ—¶åˆ»ä¿æŒç²¾çµçš„æ­£ç¡®æœå‘
+    /// ç©å®¶è„±ç¦»æ”»å‡»èŒƒå›´åˆ‡æ¢å›è¿½å‡»çŠ¶æ€
+    /// </summary>
     public override void Update()
     {
         if (player == null)
         {
-            enemy.StateMachine.ChangeState(new PatrolState(enemy));
+            enemy.StateMachine.TransitionTo(EnemyStateType.Patrol);
             return;
         }
 
-        // ÃæÏòÍæ¼Ò
-        FacePlayer();
+        FlipTowardsDirection(GetDirectionToPlayer().x);
 
-        // Ö´ĞĞ¹¥»÷
-        HandleAttack();
+        if (GetDistanceToPlayer() > enemy.AttackRange)
+        {
+            enemy.StateMachine.TransitionTo(EnemyStateType.Chase);
+            return;
+        }
 
-        // ¼ì²é×´Ì¬×ª»»
-        CheckTransitions();
-    }
-
-    /// <summary>
-    /// ÃæÏòÍæ¼Ò
-    /// </summary>
-    private void FacePlayer()
-    {
-        Vector2 direction = GetDirectionToPlayer();
-        FlipTowardsDirection(direction.x);
-    }
-
-    /// <summary>
-    /// ´¦Àí¹¥»÷Âß¼­
-    /// </summary>
-    private void HandleAttack()
-    {
-        if (Time.time >= nextAttackTime)
+        //æ‰§è¡Œæ”»å‡»å¹¶è®¡ç®—ä¸‹ä¸€æ¬¡æ”»å‡»æ—¶é—´
+        if (Time.time >= _nextAttackTime)
         {
             PerformAttack();
-            nextAttackTime = Time.time + 1f / enemy.AttackRate;
+            _nextAttackTime = Time.time + 1f / enemy.AttackRate;
         }
     }
 
     /// <summary>
-    /// Ö´ĞĞ¹¥»÷
+    /// æ”»å‡»è¿›è¡Œä¸­åªèƒ½è¢«å—å‡»å’Œæ­»äº¡æ‰“æ–­ï¼›
+    /// å†·å´é˜¶æ®µï¼ˆ_isAttacking == falseï¼‰é¢å¤–å…è®¸åˆ‡æ¢åˆ°è¿½å‡»çŠ¶æ€ã€‚
+    /// </summary>
+    public override bool CanTransitionTo(EnemyStateType targetState)
+    {
+        if (targetState == EnemyStateType.Hurt || targetState == EnemyStateType.Dead)
+            return true;
+        if (!_isAttacking && targetState == EnemyStateType.Chase)
+            return true;
+        return false;
+    }
+
+    /// <summary>
+    /// æ‰§è¡Œä¼¤å®³é€»è¾‘è®¡ç®—
     /// </summary>
     private void PerformAttack()
     {
-        if (player == null) return;
-
-        // ´¥·¢¹¥»÷¶¯»­
-        if (enemy.Animator != null)
-        {
-            enemy.Animator.SetTrigger("Attack");
-        }
-
-        IDamageable playerDamageable = player.GetComponent<IDamageable>();
-        if (playerDamageable != null)
-        {
-            playerDamageable.TakeDamage(enemy.AttackDamage, enemy.AttackImpactForce);
-            Debug.Log("µĞÈË¹¥»÷Íæ¼Ò");
-        }
-    }
-
-    /// <summary>
-    /// ¼ì²é×´Ì¬×ª»»
-    /// </summary>
-    private void CheckTransitions()
-    {
-        float distanceToPlayer = GetDistanceToPlayer();
-
-        // Èç¹û³¬³ö¹¥»÷·¶Î§£¬ÇĞ»»»Ø×·Öğ×´Ì¬
-        if (distanceToPlayer > enemy.AttackRange)
-        {
-            enemy.StateMachine.ChangeState(new ChaseState(enemy));
-        }
+        _isAttacking = true;
+        player?.GetComponent<IDamageable>()?.TakeDamage(enemy.AttackDamage);
+        _isAttacking = false;
     }
 }

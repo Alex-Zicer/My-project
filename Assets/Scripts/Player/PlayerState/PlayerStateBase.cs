@@ -38,8 +38,8 @@ public abstract class PlayerStateBase : IPlayerState
     public PlayerStateBase(PlayerController player)
     {
         this.player = player;
-        this.anim = player.GetComponent<Animator>();
-        this.rb = player.GetComponent<Rigidbody2D>();
+        this.anim   = player.animator;
+        this.rb     = player.Rb;
     }
 
     /// <summary>

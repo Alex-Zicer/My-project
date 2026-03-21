@@ -1,67 +1,57 @@
 using UnityEngine;
 
-/// <summary>
-/// �ܻ�Ӳֱ״̬
-/// </summary>
 public class HurtState : EnemyState
 {
-    private float hurtDuration;
-    private float timer;
-    private IEnemyState previousState;
+    public override EnemyStateType StateType => EnemyStateType.Hurt;
 
-    public HurtState(EnemyAI enemy, float duration, IEnemyState previousState) : base(enemy)
-    {
-        this.hurtDuration = duration;
-        this.previousState = previousState;
-    }
+    private float _timer;
+    // 受伤前的状态类型，恢复时切回对应状态
+    private EnemyStateType _previousStateType;
 
+    public HurtState(EnemyAI enemy) : base(enemy) { }
+
+    /// <summary>
+    /// EnemyAI.TakeDamage 调用前先设置前驱状态，再 TransitionTo(Hurt)。
+    /// 先记录受击之前敌人的状态，方便受击状态结束之后切换回去
+    /// </summary>
+    public void SetPreviousState(EnemyStateType previous)
+        => _previousStateType = previous;
+
+    /// <summary>
+    /// 受击时将速度置为0
+    /// </summary>
     public override void Enter()
     {
-        // ֹͣ�ƶ�
-        if (rb != null)
-        {
-            rb.velocity = Vector2.zero;
-        }
-
-        // ���ü�ʱ��
-        timer = 0f;
-
-        // �����ܻ�����
-        if (enemy.Animator != null)
-        {
-            enemy.Animator.SetTrigger("Hurt");
-            enemy.Animator.SetBool("IsPatrolling", false);
-            enemy.Animator.SetBool("IsChasing", false);
-            enemy.Animator.SetBool("IsAttacking", false);
-        }
-    }
-
-    public override void Update()
-    {
-        // ���¼�ʱ��
-        timer += Time.deltaTime;
-
-        // ���Ӳֱʱ���Ƿ����
-        if (timer >= hurtDuration)
-        {
-            ExitHurtState();
-        }
+        _timer = 0f;
+        rb.velocity = Vector2.zero;
+        if (anim != null) anim.CrossFade(HurtHash, 0.05f);
     }
 
     /// <summary>
-    /// �˳�Ӳֱ״̬
+    /// 计时受击过程，当受击时间结束之后切换回原本的状态
     /// </summary>
-    private void ExitHurtState()
+    public override void Update()
     {
-        // �����֮ǰ��״̬������֮ǰ��״̬
-        if (previousState != null)
-        {
-            enemy.StateMachine.ChangeState(previousState);
-        }
-        else
-        {
-            // Ĭ�Ϸ���Ѳ��״̬
-            enemy.StateMachine.ChangeState(new PatrolState(enemy));
-        }
+        _timer += Time.deltaTime;
+        if (_timer >= enemy.HurtDuration)
+            Recover();
+    }
+
+    // 硬直中只能被死亡打断
+    public override bool CanTransitionTo(EnemyStateType targetState)
+    {
+        if (_timer >= enemy.HurtDuration) return true;
+        return targetState == EnemyStateType.Dead;
+    }
+
+    /// <summary>
+    /// 切换回受击之前的状态
+    /// </summary>
+    private void Recover()
+    {
+        EnemyStateType recoverTo = _previousStateType == EnemyStateType.Patrol
+            ? EnemyStateType.Patrol
+            : EnemyStateType.Chase;
+        enemy.StateMachine.TransitionTo(recoverTo);
     }
 }

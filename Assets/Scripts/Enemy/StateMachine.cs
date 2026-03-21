@@ -1,61 +1,70 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ״̬���࣬���ڹ���״̬���л�
+/// 敌人状态机。对齐玩家状态机设计：预注册、白名单转换、GetState<T> 查询。
 /// </summary>
-public class StateMachine
+public class EnemyStateMachine
 {
-    private IEnemyState currentState;
+    private readonly Dictionary<EnemyStateType, IEnemyState> _states
+        = new Dictionary<EnemyStateType, IEnemyState>();
+
+    private IEnemyState _currentState;
+
+    public IEnemyState CurrentState => _currentState;
+    public EnemyStateType CurrentStateType => _currentState?.StateType ?? EnemyStateType.Patrol;
 
     /// <summary>
-    /// �ı�״̬
+    /// 注册状态到字典，Awake 时统一注册。
     /// </summary>
-    /// <param name="newState">��״̬</param>
-    public void ChangeState(IEnemyState newState)
+    public void RegisterState(IEnemyState state)
     {
-        // �˳���ǰ״̬
-        if (currentState != null)
-        {
-            currentState.Exit();
-        }
-
-        // ������״̬
-        currentState = newState;
-
-        // ������״̬
-        if (currentState != null)
-        {
-            currentState.Enter();
-        }
+        _states[state.StateType] = state;
     }
 
     /// <summary>
-    /// ���µ�ǰ״̬
+    /// 初始化并进入初始状态。
     /// </summary>
-    public void Update()
+    public void Initialize(EnemyStateType initialState)
     {
-        if (currentState != null)
+        if (!_states.TryGetValue(initialState, out IEnemyState state))
         {
-            currentState.Update();
+            Debug.LogWarning($"[EnemyStateMachine] 初始状态 {initialState} 未注册");
+            return;
         }
+        _currentState = state;
+        _currentState.Enter();
     }
 
     /// <summary>
-    /// �̶�֡�ʸ��µ�ǰ״̬
+    /// 切换状态，先检查白名单，再 Exit → Enter。
     /// </summary>
-    public void FixedUpdate()
+    public void TransitionTo(EnemyStateType targetState)
     {
-        if (currentState != null)
+        if (!_states.TryGetValue(targetState, out IEnemyState newState))
         {
-            currentState.FixedUpdate();
+            Debug.LogWarning($"[EnemyStateMachine] 状态 {targetState} 未注册");
+            return;
         }
+
+        if (_currentState != null && !_currentState.CanTransitionTo(targetState))
+            return;
+
+        _currentState?.Exit();
+        _currentState = newState;
+        _currentState.Enter();
     }
 
     /// <summary>
-    /// ��ȡ��ǰ״̬
+    /// 按类型取已注册的状态实例，找不到返回 null。
     /// </summary>
-    public IEnemyState GetCurrentState()
+    public T GetState<T>() where T : class, IEnemyState
     {
-        return currentState;
+        foreach (var s in _states.Values)
+            if (s is T result) return result;
+        return null;
     }
+
+    public void Update()   => _currentState?.Update();
+    public void FixedUpdate() => _currentState?.FixedUpdate();
 }
