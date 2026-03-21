@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 悬停详情面板。挂在 DetailedPanel 预制体上（Canvas 根节点直接子节点）。
+/// 悬停详情面板控制器。
+/// 挂在 DetailedPanel 预制体上（Canvas 根节点直接子节点）。
 /// 由 BagPageController 在格子悬停时调用 Show/Hide。
 /// 面板固定显示在格子左上方（空间不足时切换到右上方），带淡入淡出效果。
 /// 注意：面板始终保持 active，仅通过 CanvasGroup.alpha 控制可见性，避免 SetActive 导致协程异常。
@@ -41,7 +42,11 @@ public class DetailedPanelController : MonoBehaviour
         _canvasGroup.blocksRaycasts = false;
     }
 
-    /// <summary> 显示面板，定位到格子左上方（或右上方），淡入显示。 </summary>
+    /// <summary>
+    /// 显示面板，定位到格子左上方（或右上方），淡入显示。
+    /// </summary>
+    /// <param name="item">要显示的物品数据</param>
+    /// <param name="slotRect">触发悬停的格子 RectTransform，用于定位面板位置</param>
     public void Show(InventoryItem item, RectTransform slotRect)
     {
         if (_canvasGroup == null || _rectTransform == null) return;
@@ -62,7 +67,10 @@ public class DetailedPanelController : MonoBehaviour
         _fadeCoroutine = StartCoroutine(FadeTo(1f));
     }
 
-    /// <summary> 淡出面板（不 SetActive，保持 active 状态）。 </summary>
+    /// <summary>
+    /// 隐藏面板，淡出效果。
+    /// 不使用 SetActive，保持 active 状态以便协程正常执行。
+    /// </summary>
     public void Hide()
     {
         if (_canvasGroup == null) return;
@@ -74,6 +82,12 @@ public class DetailedPanelController : MonoBehaviour
     // 定位
     // -------------------------------------------------------
 
+    /// <summary>
+    /// 将面板定位到格子附近。
+    /// 优先放在格子左侧，空间不足时切换到右侧。
+    /// 同时处理顶部和底部边界，确保面板不会超出 Canvas 范围。
+    /// </summary>
+    /// <param name="slotRect">格子的 RectTransform</param>
     private void PositionNearSlot(RectTransform slotRect)
     {
         if (_rootCanvas == null) return;
@@ -111,6 +125,14 @@ public class DetailedPanelController : MonoBehaviour
         _rectTransform.anchoredPosition = pos;
     }
 
+    /// <summary>
+    /// 将世界坐标转换为 Canvas 本地坐标。
+    /// 用于将格子的世界坐标转换为面板的 anchoredPosition。
+    /// </summary>
+    /// <param name="canvasRect">Canvas 的 RectTransform</param>
+    /// <param name="cam">渲染相机，Overlay 模式下为 null</param>
+    /// <param name="worldPos">世界坐标点</param>
+    /// <returns>Canvas 本地坐标</returns>
     private Vector2 WorldToCanvasLocal(RectTransform canvasRect, Camera cam, Vector3 worldPos)
     {
         Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(cam, worldPos);
@@ -122,6 +144,11 @@ public class DetailedPanelController : MonoBehaviour
     // 淡入淡出
     // -------------------------------------------------------
 
+    /// <summary>
+    /// 淡入淡出协程。
+    /// 使用 unscaledDeltaTime 确保在游戏暂停时动画仍能正常播放。
+    /// </summary>
+    /// <param name="target">目标透明度，1f 为完全显示，0f 为完全隐藏</param>
     private IEnumerator FadeTo(float target)
     {
         if (_canvasGroup == null) yield break;

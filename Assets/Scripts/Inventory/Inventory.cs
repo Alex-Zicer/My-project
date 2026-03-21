@@ -186,6 +186,20 @@ public class Inventory : MonoBehaviour
     }
 
     /// <summary>
+    /// 对背包物品排序：先按 ItemType 枚举值升序（枚举顺序即优先级），同类再按物品名称升序。
+    /// </summary>
+    public void Sort()
+    {
+        items.Sort((a, b) =>
+        {
+            int typeCompare = ((int)a.ItemData.itemType).CompareTo((int)b.ItemData.itemType);
+            if (typeCompare != 0) return typeCompare;
+            return string.Compare(a.ItemData.itemName, b.ItemData.itemName, System.StringComparison.CurrentCulture);
+        });
+        OnInventoryChanged?.Invoke();
+    }
+
+    /// <summary>
     /// 获取指定物品在背包中的总数量。
     /// 对于不可叠加物品，每个独立条目计为 1，累加后返回总数。
     /// </summary>

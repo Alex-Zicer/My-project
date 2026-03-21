@@ -80,6 +80,12 @@ public class BagPageController : MonoBehaviour
         Refresh();
     }
 
+    /// <summary> 整理按钮：对背包物品排序，UI 通过 OnInventoryChanged 自动刷新。 </summary>
+    public void OnSortButton()
+    {
+        Inventory.Instance?.Sort();
+    }
+
     // -------------------------------------------------------
     // 核心刷新
     // -------------------------------------------------------
