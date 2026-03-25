@@ -16,8 +16,16 @@ public class PlayerData : ScriptableObject
     [Tooltip("跳跃速度")]
     public float JumpForce;
 
+    [Header("受击反馈")]
+    public float hitShakeIntensity  = 0.3f;
+    public float hitShakeFrequency  = 1f;
+    public float hitShakeDuration   = 0.2f;
 
-
+    [Header("攻击命中反馈")]
+    public float attackHitStopDuration = 0.05f;
+    public float attackShakeIntensity  = 0.2f;
+    public float attackShakeFrequency  = 1f;
+    public float attackShakeDuration   = 0.1f;
 
 
 

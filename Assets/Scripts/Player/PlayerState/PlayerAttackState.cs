@@ -136,6 +136,9 @@ public class PlayerAttackState : PlayerStateBase
                 }
             }
         }
+
+        if (hitTargets.Count > 0)
+            player.NotifyAttackHit();
     }
 
     /// <summary>

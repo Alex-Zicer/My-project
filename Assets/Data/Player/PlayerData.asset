@@ -17,3 +17,10 @@ MonoBehaviour:
   moveSpeedMultiplier: 10
   defence: 5
   JumpForce: 4
+  hitShakeIntensity: 0.3
+  hitShakeFrequency: 1
+  hitShakeDuration: 0.2
+  attackHitStopDuration: 0.1
+  attackShakeIntensity: 0.2
+  attackShakeFrequency: 1
+  attackShakeDuration: 0.1

@@ -4,7 +4,6 @@ public class AttackState : EnemyState
 {
     public override EnemyStateType StateType => EnemyStateType.Attack;
 
-    private float _nextAttackTime;
     private bool _isAttacking; // 攻击动画播放期间为 true，冷却阶段为 false
 
     public AttackState(EnemyAI enemy) : base(enemy) { }
@@ -13,7 +12,6 @@ public class AttackState : EnemyState
     {
         rb.velocity = new Vector2(0, rb.velocity.y);
         _isAttacking = false;
-        _nextAttackTime = Time.time;// 进入范围立刻触发第一次攻击
         if (anim != null) anim.CrossFade(AttackHash, 0.1f);
     }
 
@@ -32,17 +30,16 @@ public class AttackState : EnemyState
 
         FlipTowardsDirection(GetDirectionToPlayer().x);
 
-        if (GetDistanceToPlayer() > enemy.AttackRange)
+        if (GetDistanceToPlayer() > enemy.AttackExitRange)
         {
             enemy.StateMachine.TransitionTo(EnemyStateType.Chase);
             return;
         }
 
-        //执行攻击并计算下一次攻击时间
-        if (Time.time >= _nextAttackTime)
+        // 冷却统一由 EnemyAI 管理，跨状态切换仍保留
+        if (enemy.CanAttackNow)
         {
             PerformAttack();
-            _nextAttackTime = Time.time + 1f / enemy.AttackRate;
         }
     }
 
@@ -65,7 +62,13 @@ public class AttackState : EnemyState
     private void PerformAttack()
     {
         _isAttacking = true;
-        player?.GetComponent<IDamageable>()?.TakeDamage(enemy.AttackDamage);
+
+        if (player != null && player.TryGetComponent<IDamageable>(out IDamageable damageable))
+        {
+            damageable.TakeDamage(enemy.AttackDamage);
+            enemy.MarkAttackPerformed();
+        }
+
         _isAttacking = false;
     }
 }

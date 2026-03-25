@@ -1,0 +1,42 @@
+{
+  "dialogueId": "sample_npc_001",
+  "startNodeId": "start",
+  "nodes": [
+    {
+      "nodeId": "start",
+      "speakerName": "Village Elder",
+      "portraitResourcePath": "",
+      "content": "Welcome, traveler. What do you need?",
+      "nextNodeId": "",
+      "isEndNode": false,
+      "choices": [
+        {
+          "choiceText": "I need directions.",
+          "nextNodeId": "directions"
+        },
+        {
+          "choiceText": "Nothing, thanks.",
+          "nextNodeId": "bye"
+        }
+      ]
+    },
+    {
+      "nodeId": "directions",
+      "speakerName": "Village Elder",
+      "portraitResourcePath": "",
+      "content": "Head east and follow the stone road.",
+      "nextNodeId": "bye",
+      "isEndNode": false,
+      "choices": []
+    },
+    {
+      "nodeId": "bye",
+      "speakerName": "Village Elder",
+      "portraitResourcePath": "",
+      "content": "Safe travels.",
+      "nextNodeId": "",
+      "isEndNode": true,
+      "choices": []
+    }
+  ]
+}

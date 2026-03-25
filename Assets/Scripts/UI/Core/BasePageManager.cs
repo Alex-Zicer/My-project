@@ -111,6 +111,25 @@ public class BasePageManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 关闭当前栈顶页面。
+    /// 若仍有上一页，则自动恢复上一页显示。
+    /// </summary>
+    public virtual void CloseCurrentPage()
+    {
+        if (historyStack.Count == 0) return;
+
+        UIPage currentPage = historyStack.Pop();
+        currentPage.Close();
+
+        if (historyStack.Count > 0)
+        {
+            UIPage previousPage = historyStack.Peek();
+            previousPage.Open();
+            previousPage.SetSelectedUIToDefault();
+        }
+    }
+
+    /// <summary>
     /// 关闭本管理器下的所有页面，并清空历史栈。
     /// </summary>
     public virtual void CloseAll()

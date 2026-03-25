@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     [Header("组件引用")]
     [SerializeField] private Health health;
     private PlayerControls inputActions;//玩家输入系统的引用，使用Unity的新输入系统来处理玩家的输入
-    private LayerMask enemyLayer;
+    [SerializeField] private LayerMask enemyLayer;
 
     [Header("跳跃设置")]
     [Tooltip("地面层，用于检测玩家是否站在地面上")]
@@ -29,6 +29,11 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     //用于ICharacterController接口的事件，其他系统可以订阅这些事件来响应玩家的跳跃和着陆行为
     public event Action OnJump;
     public event Action OnAttack;
+    public event Action OnHit;       // 玩家受击（镜头抖动）
+    public event Action OnAttackHit; // 攻击命中敌人（帧冻结 + 镜头抖动）
+
+    /// <summary> 供 PlayerAttackState 调用，触发攻击命中反馈事件 </summary>
+    public void NotifyAttackHit() => OnAttackHit?.Invoke();
 
     #endregion
 
@@ -199,6 +204,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
         if (health.currentHealth > 0)
         {
+            OnHit?.Invoke();
             StateMachine.TransitionTo(PlayerStateType.Hurt);
         }
         else

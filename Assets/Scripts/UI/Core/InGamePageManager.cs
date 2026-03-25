@@ -1,56 +1,58 @@
 using UnityEngine;
 
 /// <summary>
-/// 游戏内页面管理器。管理游戏场景中的全屏页（如暂停页、背包页等），并处理暂停/恢复逻辑。
+/// 游戏内页面管理器（InGame 分类）。
+/// 负责统一处理：
+/// 1. 暂停页面的开关与 Time.timeScale 控制；
+/// 2. 背包热键（B）的打开/关闭；
+/// 3. 对话页面的打开/关闭（由 DialogueService 间接调用）；
+/// 4. 对话运行期间屏蔽背包/暂停热键，避免交互冲突。
 /// </summary>
 public class InGamePageManager : BasePageManager
 {
-    [Header("暂停配置")]
+    // 暂停页面的 PageKey（需与 UIPage 配置一致）。
+    [Header("Pause")]
     [SerializeField] private string pausePageKey = "PausePage";
-    /// <summary> 当前是否处于暂停状态。 </summary>
+
+    // 对话页面的 PageKey（需与 UIPage 配置一致）。
+    [Header("Dialogue")]
+    [SerializeField] private string dialoguePageKey = "DialoguePage";
+
+    // 当前是否处于暂停状态。
+    // true: 游戏暂停；false: 游戏运行。
     public bool IsPause { get; private set; }
 
-    /// <summary>
-    /// Inspector 重置时设为管理游戏内页面，不设默认打开页（游戏内默认无全屏页）。
-    /// </summary>
     private void Reset()
     {
+        // 组件重置时写入默认分类配置，确保只管理 InGame 页面。
         Configure(UIPageCategory.InGame, "");
     }
 
-    /// <summary>
-    /// 游戏内初始化：重置暂停状态与时间尺度，再执行基类初始化（若有默认页则打开）。
-    /// </summary>
     public override void Initialize()
     {
+        // 初始化时确保游戏恢复到正常运行态，防止场景重载后残留暂停状态。
         IsPause = false;
         Time.timeScale = 1;
         base.Initialize();
     }
 
-    /// <summary>
-    /// 切换暂停状态：未暂停则进入暂停并打开暂停页，已暂停则恢复。
-    /// </summary>
+    // 暂停开关入口：
+    // 对话进行中时不允许暂停，避免输入冲突和页面层级冲突。
     public void TogglePause()
     {
-        if (!IsPause)
-        {
-            PauseGame();
-        }
-        else
-        {
-            ResumeGame();
-        }
+        if (IsDialogueRunning()) return;
+
+        if (!IsPause) PauseGame();
+        else ResumeGame();
     }
 
-    /// <summary>
-    /// 进入暂停：时间停止，打开暂停页。
-    /// </summary>
+    // 执行暂停：
+    // 1) 打开暂停页；2) 禁用玩家输入；3) 时间缩放置 0。
     private void PauseGame()
     {
         if (!HasPage(pausePageKey))
         {
-            Debug.LogWarning($"未找到暂停页：{pausePageKey}");
+            Debug.LogWarning($"未找到暂停页面: {pausePageKey}");
             return;
         }
 
@@ -60,9 +62,8 @@ public class InGamePageManager : BasePageManager
         GoToPageByName(pausePageKey);
     }
 
-    /// <summary>
-    /// 恢复游戏：时间恢复，并执行 Back 关闭暂停页。
-    /// </summary>
+    // 恢复游戏：
+    // 1) 时间缩放恢复；2) 玩家输入恢复；3) 返回上一页（关闭暂停页）。
     public void ResumeGame()
     {
         IsPause = false;
@@ -71,10 +72,30 @@ public class InGamePageManager : BasePageManager
         Back();
     }
 
-    /// <summary>
-    /// 禁用玩家输入
-    /// </summary>
-    /// <param name="enabled"></param>
+    // 打开对话页：
+    // 通常由 DialogueService 在开始对话时调用。
+    public void OpenDialoguePage()
+    {
+        if (!HasPage(dialoguePageKey))
+        {
+            Debug.LogWarning($"未找到对话页面: {dialoguePageKey}");
+            return;
+        }
+
+        GoToPageByName(dialoguePageKey);
+    }
+
+    // 关闭对话页：
+    // 仅当当前页就是对话页时执行，避免误关其他页面。
+    public void CloseDialoguePage()
+    {
+        if (CurrentPageKey == dialoguePageKey)
+        {
+            CloseCurrentPage();
+        }
+    }
+
+    // 统一控制玩家输入开关，供暂停逻辑复用。
     private void SetPlayerInputEnabled(bool enabled)
     {
         var player = FindFirstObjectByType<PlayerController>();
@@ -84,12 +105,22 @@ public class InGamePageManager : BasePageManager
 
     private void Update()
     {
+        // 对话运行期间屏蔽背包热键，避免与对话输入抢占。
+        if (IsDialogueRunning()) return;
+
+        // B 键切换背包：
+        // 当前已在背包页 -> 返回上一页；否则 -> 打开背包页。
         if (Input.GetKeyDown(KeyCode.B))
         {
-            if (CurrentPageKey == "BagPage")
-                Back();
-            else
-                GoToPageByName("BagPage");
+            if (CurrentPageKey == "BagPage") Back();
+            else GoToPageByName("BagPage");
         }
+    }
+
+    // 检查对话系统是否正在运行。
+    // 这里通过 DialogueService 的单例状态做只读判断，不触发任何副作用。
+    private bool IsDialogueRunning()
+    {
+        return DialogueService.HasInstance && DialogueService.Instance.IsRunning;
     }
 }

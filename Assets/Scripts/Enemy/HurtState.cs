@@ -23,7 +23,9 @@ public class HurtState : EnemyState
     public override void Enter()
     {
         _timer = 0f;
-        rb.velocity = Vector2.zero;
+        //受到攻击会被击退
+        Vector2 knockbackDir = (enemy.transform.position - player.transform.position).normalized;
+        rb.velocity = knockbackDir * enemy.KnockbackForce;
         if (anim != null) anim.CrossFade(HurtHash, 0.05f);
     }
 

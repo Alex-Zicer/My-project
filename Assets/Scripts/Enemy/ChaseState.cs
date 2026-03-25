@@ -31,7 +31,12 @@ public class ChaseState : EnemyState
 
         //根据范围切换攻击状态还是巡逻状态
         if (dist <= enemy.AttackRange)
-            enemy.StateMachine.TransitionTo(EnemyStateType.Attack);
+        {
+            if (enemy.CanAttackNow)
+            {
+                enemy.StateMachine.TransitionTo(EnemyStateType.Attack);
+            }
+        }
         else if (dist > enemy.ChaseRange)
             enemy.StateMachine.TransitionTo(EnemyStateType.Patrol);
     }
