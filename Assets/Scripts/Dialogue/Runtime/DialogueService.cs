@@ -3,21 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// 对话运行服务（核心协调器）：
-// 1) 负责从引用加载对话图；
-// 2) 维护对话状态机（Typing / WaitingNext / WaitingChoice）；
-// 3) 驱动 IDialogueView 更新展示；
-// 4) 管理对话期间的玩家输入锁定与页面开关。
+// 对话运行服务：加载对话图、驱动状态机、控制 UI 刷新与输入锁定。
 public class DialogueService : MonoBehaviour
 {
-    // 单例实例：保证场景中只有一个对话运行服务。
+    // 单例实例。
     private static DialogueService _instance;
 
     [Header("打字机设置")]
-    // 每秒显示字符数（基于 unscaledDeltaTime，不受暂停/慢速影响）。
+    // 打字机速度（每秒字符数）。
     [SerializeField] private float charactersPerSecond = 40f;
 
-    // 供外部安全判断是否已经创建实例（避免访问 Instance 时隐式创建）。
+    // 是否已存在实例（避免外部误触发创建）。
     public static bool HasInstance => _instance != null;
 
     public static DialogueService Instance
@@ -32,37 +28,42 @@ public class DialogueService : MonoBehaviour
         }
     }
 
+    // 当前是否处于对话运行中。
     public bool IsRunning => _state != DialogueRunState.Idle;
 
-    // 生命周期事件：可供其他系统监听“进入对话/退出对话”时机。
+    // 对话开始事件。
     public event Action OnDialogueStarted;
+    // 对话结束事件。
     public event Action OnDialogueEnded;
 
-    // 数据加载入口（Provider 注册表）。
+    // 对话数据 Provider 注册表。
     private DialogueProviderRegistry _providerRegistry;
-    // 当前绑定的展示层接口（可热切换）。
+    // 当前绑定的对话视图。
     private IDialogueView _view;
     // 当前运行中的对话图。
     private DialogueGraph _graph;
-    // 当前所在节点。
+    // 当前节点数据。
     private DialogueNodeData _currentNode;
-    // 状态机当前状态。
+    // 当前运行状态。
     private DialogueRunState _state = DialogueRunState.Idle;
 
-    // 当前打字机协程句柄。
+    // 打字协程句柄。
     private Coroutine _typingCoroutine;
-    // 当前完整句文本（用于打字机逐字显示与一键补全）。
+    // 当前完整句文本。
     private string _fullLine = string.Empty;
-    // 玩家在打字中按了“下一步”时置 true，下一帧立即补全。
+    // 打字期间收到“下一步”请求时的快进标记。
     private bool _skipTypingRequested;
 
-    // 是否由本服务锁过玩家输入，用于结束时对称恢复。
+    // 是否由本服务锁定了玩家输入。
     private bool _hasLockedInput;
-    // 防重入保护：避免 EndDialogue 在同一帧被重复触发。
+    // 结束流程重入保护。
     private bool _isEnding;
+    // 当前对话对应的路由结果（用于结束回写）。
+    private DialogueRouteResult _activeRouteResult;
+    // 启动前暂存的路由结果。
+    private DialogueRouteResult _pendingRouteResult;
 
-    // 延迟创建单例：
-    // 当外部首次访问 Instance 且场景尚未放置服务时，自动创建常驻对象。
+    // 延迟创建服务实例，支持场景零接线启动。
     private static void CreateInstance()
     {
         var go = new GameObject("DialogueService");
@@ -70,9 +71,9 @@ public class DialogueService : MonoBehaviour
         DontDestroyOnLoad(go);
     }
 
+    // 保障单例唯一并初始化 Provider 注册表。
     private void Awake()
     {
-        // 场景中若出现重复实例，仅保留先创建的那个。
         if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
@@ -84,9 +85,9 @@ public class DialogueService : MonoBehaviour
         _providerRegistry = new DialogueProviderRegistry();
     }
 
+    // 清理单例与 View 事件订阅，避免悬挂回调。
     private void OnDestroy()
     {
-        // 对象销毁时清理单例引用和事件绑定，避免悬挂回调。
         if (_instance == this)
         {
             _instance = null;
@@ -94,8 +95,7 @@ public class DialogueService : MonoBehaviour
         UnsubscribeViewEvents(_view);
     }
 
-    // 绑定展示层接口：
-    // 运行时可以替换不同 View（正式 UI、调试 UI），Service 不关心具体实现。
+    // 绑定对话视图并接入输入事件。
     public void BindView(IDialogueView view)
     {
         if (ReferenceEquals(_view, view)) return;
@@ -105,8 +105,7 @@ public class DialogueService : MonoBehaviour
         SubscribeViewEvents(_view);
     }
 
-    // 解绑展示层接口：
-    // 若解绑发生在对话进行中，立即安全结束，避免无界面时继续推进状态机。
+    // 解绑对话视图；若正在对话则安全收尾。
     public void UnbindView(IDialogueView view)
     {
         if (!ReferenceEquals(_view, view)) return;
@@ -119,12 +118,16 @@ public class DialogueService : MonoBehaviour
         }
     }
 
-    // 通过 DialogueReference 开启对话：
-    // 会走 Provider 加载链与 fallback 逻辑，成功后进入统一运行流程。
+    // 用对话引用启动对话（不携带路由上下文）。
     public bool StartDialogue(DialogueReference reference)
     {
+        return StartDialogue(reference, null);
+    }
+
+    // 用对话引用启动对话，并携带路由上下文用于结束回写。
+    public bool StartDialogue(DialogueReference reference, DialogueRouteResult routeResult)
+    {
         if (IsRunning) return false;
-        // 与项目现有暂停系统对齐：暂停时禁止开始对话。
         if (UIManager.Instance != null && UIManager.Instance.InGamePage != null && UIManager.Instance.InGamePage.IsPause)
         {
             return false;
@@ -146,12 +149,21 @@ public class DialogueService : MonoBehaviour
             return false;
         }
 
-        return StartDialogue(graph);
+        _pendingRouteResult = routeResult;
+        bool started = StartDialogue(graph);
+        if (!started)
+        {
+            _pendingRouteResult = null;
+        }
+        return started;
     }
 
-    // 直接使用已构建好的对话图开启（常用于调试或自定义来源）。
+    // 直接用已构建的对话图启动运行流程。
     public bool StartDialogue(DialogueGraph graph)
     {
+        DialogueRouteResult routeContext = _pendingRouteResult;
+        _pendingRouteResult = null;
+
         if (IsRunning) return false;
         if (graph == null)
         {
@@ -165,23 +177,20 @@ public class DialogueService : MonoBehaviour
             return false;
         }
 
-        // 初始化运行时上下文。
         _graph = graph;
+        _activeRouteResult = routeContext;
         _state = DialogueRunState.WaitingNext;
 
-        // 对话开始时锁输入，防止移动/战斗输入穿透到游戏逻辑。
         SetPlayerInputEnabled(false);
         _hasLockedInput = true;
         OpenDialoguePage();
 
         OnDialogueStarted?.Invoke();
-        // 进入起始节点后会自动触发打字机流程。
         EnterNodeById(_graph.StartNodeId);
         return true;
     }
 
-    // 结束对话并清理上下文：
-    // 停止协程、清空选项、关闭页面、恢复输入、重置状态机。
+    // 结束对话并清理运行时上下文与输入锁。
     public void EndDialogue()
     {
         if (!IsRunning || _isEnding) return;
@@ -195,7 +204,6 @@ public class DialogueService : MonoBehaviour
 
             if (_hasLockedInput)
             {
-                // 只恢复本服务锁定过的输入，避免误改其他系统状态。
                 SetPlayerInputEnabled(true);
                 _hasLockedInput = false;
             }
@@ -206,6 +214,14 @@ public class DialogueService : MonoBehaviour
             _skipTypingRequested = false;
             _state = DialogueRunState.Idle;
 
+            DialogueRouteResult completedRoute = _activeRouteResult;
+            _activeRouteResult = null;
+            _pendingRouteResult = null;
+            if (completedRoute != null && completedRoute.IsValid)
+            {
+                DialogueRouterService.Instance.NotifyDialogueCompleted(completedRoute);
+            }
+
             OnDialogueEnded?.Invoke();
         }
         finally
@@ -214,11 +230,7 @@ public class DialogueService : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 检查是否实现了 IDialogueView 接口
-    /// </summary>
-    /// <param name="error">是否报错</param>
-    /// <returns></returns>
+    // 确保当前场景有可用对话视图；若未绑定则尝试自动查找并绑定。
     private bool EnsureView(out string error)
     {
         // 已绑定时直接通过。
@@ -250,6 +262,7 @@ public class DialogueService : MonoBehaviour
         return true;
     }
 
+    // 跳转到指定节点并刷新说话人与文本显示。
     private void EnterNodeById(string nodeId)
     {
         // 节点缺失属于数据错误，直接结束避免状态机悬挂。
@@ -267,6 +280,7 @@ public class DialogueService : MonoBehaviour
         BeginTyping(node.content ?? string.Empty);
     }
 
+    // 启动当前节点文本的打字机流程。
     private void BeginTyping(string line)
     {
         // 启动新句前先停止旧协程，避免并发写 UI。
@@ -279,6 +293,7 @@ public class DialogueService : MonoBehaviour
         _typingCoroutine = StartCoroutine(TypeLineRoutine());
     }
 
+    // 按配置速度逐字显示当前句，支持“下一步”快进补全。
     private IEnumerator TypeLineRoutine()
     {
         // 空文本直接完成，避免无意义协程循环。
@@ -323,6 +338,7 @@ public class DialogueService : MonoBehaviour
         OnTypingCompleted();
     }
 
+    // 处理打字完成后的状态迁移（进入选项或等待下一句）。
     private void OnTypingCompleted()
     {
         if (_currentNode == null)
@@ -349,6 +365,7 @@ public class DialogueService : MonoBehaviour
         _state = DialogueRunState.WaitingNext;
     }
 
+    // 处理视图层发来的“下一步”输入请求。
     private void HandleNextRequested()
     {
         if (!IsRunning) return;
@@ -364,6 +381,7 @@ public class DialogueService : MonoBehaviour
         AdvanceToNextNode();
     }
 
+    // 处理视图层发来的选项点击请求。
     private void HandleChoiceSelected(int choiceIndex)
     {
         if (!IsRunning || _state != DialogueRunState.WaitingChoice || _currentNode == null) return;
@@ -385,6 +403,7 @@ public class DialogueService : MonoBehaviour
         EnterNodeById(choice.nextNodeId);
     }
 
+    // 按线性 nextNodeId 推进到下一节点或结束对话。
     private void AdvanceToNextNode()
     {
         if (_currentNode == null)
@@ -410,6 +429,7 @@ public class DialogueService : MonoBehaviour
         EnterNodeById(_currentNode.nextNodeId);
     }
 
+    // 打开对话页面（优先交给页面管理器）。
     private void OpenDialoguePage()
     {
         // 优先走项目统一页面管理，保证层级与页面状态一致。
@@ -427,6 +447,7 @@ public class DialogueService : MonoBehaviour
         }
     }
 
+    // 关闭对话页面（优先交给页面管理器）。
     private void CloseDialoguePage()
     {
         // 与打开逻辑对称：优先交给页面管理器收口。
@@ -443,6 +464,7 @@ public class DialogueService : MonoBehaviour
         }
     }
 
+    // 统一控制玩家输入开关（对话期间锁定，结束后恢复）。
     private void SetPlayerInputEnabled(bool enabled)
     {
         // 通过 PlayerController 统一控制输入开关。
@@ -451,6 +473,7 @@ public class DialogueService : MonoBehaviour
         player.SetInputEnabled(enabled);
     }
 
+    // 停止当前打字协程并清空句柄。
     private void StopTypingCoroutine()
     {
         // 协程句柄清空可避免重复 Stop 引发歧义。
@@ -461,6 +484,7 @@ public class DialogueService : MonoBehaviour
         }
     }
 
+    // 订阅视图输入事件。
     private void SubscribeViewEvents(IDialogueView view)
     {
         if (view == null) return;
@@ -468,6 +492,7 @@ public class DialogueService : MonoBehaviour
         view.OnChoiceSelected += HandleChoiceSelected;
     }
 
+    // 取消订阅视图输入事件。
     private void UnsubscribeViewEvents(IDialogueView view)
     {
         if (view == null) return;

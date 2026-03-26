@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c06a3039e49b6f24d8cba6eeb8887c79, type: 3}
+  m_Name: NpcDialogueProfile
+  m_EditorClassIdentifier: 
+  profileId: npc_001
+  rules:
+  - ruleId: main
+    enabled: 1
+    priority: 100
+    conditionMode: 0
+    conditions: []
+    firstDialogueReference:
+      sourceType: 0
+      primarySO: {fileID: 11400000, guid: 64379373b20be5a4f96cfe3c5a330adc, type: 2}
+      keyOrPath: 
+      fallbackSO: {fileID: 11400000, guid: 64379373b20be5a4f96cfe3c5a330adc, type: 2}
+    firstRepeatPolicy: 0
+    repeatDialogueReference:
+      sourceType: 0
+      primarySO: {fileID: 11400000, guid: 9ab1584f511022f4bb3063586caf72f0, type: 2}
+      keyOrPath: 
+      fallbackSO: {fileID: 11400000, guid: 9ab1584f511022f4bb3063586caf72f0, type: 2}
+    repeatRepeatPolicy: 1
+    onFirstCompleted: []
+    onRepeatCompleted: []
+  defaultDialogueReference:
+    sourceType: 0
+    primarySO: {fileID: 0}
+    keyOrPath: 
+    fallbackSO: {fileID: 0}
+  defaultRepeatPolicy: 1

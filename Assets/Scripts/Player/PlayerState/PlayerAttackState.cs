@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,36 +10,37 @@ public class PlayerAttackState : PlayerStateBase
     private float attackTimer;
     private bool nextAttackQueued;
     private bool hasDealDamage;
-    private List<Collider2D> hitTargets;
+    private readonly List<Collider2D> hitTargets;
+
     private static readonly int[] AttackHashes =
     {
         Animator.StringToHash("AttackCombo.Attack1"),
         Animator.StringToHash("AttackCombo.Attack2")
     };
+
     public PlayerAttackState(PlayerController player) : base(player)
     {
         hitTargets = new List<Collider2D>();
     }
 
     /// <summary>
-    /// 初始化攻击段数
+    /// 进入攻击状态：初始化连段并开始第一段攻击。
     /// </summary>
     public override void Enter()
     {
         attackIndex = 0;
         currentWeapon = player.CurrentWeapon;
         nextAttackQueued = false;
+
         if (!TryGetAttackData(out _, logError: true))
         {
             ReturnToMovementState();
             return;
         }
+
         StartAttack();
     }
 
-    /// <summary>
-    /// 离开攻击状态时，重置攻击段数
-    /// </summary>
     public override void Exit()
     {
         hasDealDamage = false;
@@ -48,29 +48,13 @@ public class PlayerAttackState : PlayerStateBase
     }
 
     /// <summary>
-    /// 开始攻击，并设置攻击动画参数
+    /// 攻击期间保持读取输入：
+    /// 1. 允许角色在攻击时继续移动/减速；
+    /// 2. 避免“进入攻击后沿用旧速度滑行”。
     /// </summary>
-    private void StartAttack()
+    public override void FixedUpdate()
     {
-        attackTimer = 0;
-        nextAttackQueued = false;
-        hasDealDamage = false;
-        hitTargets.Clear();
-
-        if (!TryGetAttackData(out AttackData data, logError: true))
-        {
-            ReturnToMovementState();
-            return;
-        }
-
-        int hashIndex = Mathf.Min(attackIndex, AttackHashes.Length - 1);
-        anim.CrossFade(AttackHashes[hashIndex], 0.05f);
-
-        //播放攻击音效
-        if (data.attackSound != null)
-        {
-            AudioSource.PlayClipAtPoint(data.attackSound, player.transform.position);
-        }
+        SmoothSpeed();
     }
 
     public override void Update()
@@ -90,17 +74,20 @@ public class PlayerAttackState : PlayerStateBase
             return;
         }
 
+        // 攻击状态下也允许根据输入调整朝向。
+        FlipCharacter();
+
         float normalizeTime = attackTimer / data.duration;
 
-        //在攻击动画的特定时间点检测伤害
+        // 在伤害判定窗口内只结算一次伤害。
         if (!hasDealDamage && normalizeTime >= data.hitStartTime && normalizeTime <= data.hitEndTime)
         {
             hasDealDamage = true;
             DetectHit(data);
         }
 
-        //检测是否进行下一段攻击，没有则回到移动模式
-        if (attackTimer >= data.duration * 0.8)
+        // 连段窗口结束后，若没有预输入下一段则返回移动/下落状态。
+        if (attackTimer >= data.duration * 0.8f)
         {
             int maxComboIndex = GetMaxComboIndex();
             if (nextAttackQueued && attackIndex < maxComboIndex)
@@ -116,48 +103,14 @@ public class PlayerAttackState : PlayerStateBase
     }
 
     /// <summary>
-    /// 伤害处理
-    /// </summary>
-    private void DetectHit(AttackData data)
-    {
-        Vector2 attackPos = player.GetAttackWorldPosition(data.attackOffset);
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(attackPos, data.attackRange, player.EnemyLayer);
-
-        foreach (var hit in hits)
-        {
-            //判断此次攻击有没有命中过这个目标，以防造成多次伤害
-            if (!hitTargets.Contains(hit))
-            {
-                if (hit.TryGetComponent<IDamageable>(out IDamageable damageable))
-                {
-                    damageable.TakeDamage(data.damage);
-                    hitTargets.Add(hit);
-                }
-            }
-        }
-
-        if (hitTargets.Count > 0)
-            player.NotifyAttackHit();
-    }
-
-    /// <summary>
-    /// 预输入设置
+    /// 预输入下一段攻击（连段）。
     /// </summary>
     public bool QueueNextAttack()
     {
-        if (!TryGetAttackData(out AttackData data))
-        {
-            return false;
-        }
-
-        if (data.duration <= 0f)
-        {
-            return false;
-        }
+        if (!TryGetAttackData(out AttackData data)) return false;
+        if (data.duration <= 0f) return false;
 
         float normalizeTime = attackTimer / data.duration;
-
         if (normalizeTime < 0.8f && attackIndex < GetMaxComboIndex())
         {
             nextAttackQueued = true;
@@ -167,55 +120,75 @@ public class PlayerAttackState : PlayerStateBase
         return false;
     }
 
-    /// <summary>
-    /// 检测能否转换到对应状态
-    /// </summary>
-    /// <param name="state">目标状态</param>
-    /// <returns></returns>
     public override bool CanTransitionTo(PlayerStateType state)
     {
-        //数据异常直接返回true切换到其他状态
-        if (!TryGetAttackData(out AttackData data))
-        {
-            return true;
-        }
+        if (!TryGetAttackData(out AttackData data)) return true;
+        if (data.duration <= 0f || attackTimer >= data.duration) return true;
 
-        //攻击结束之后可以转换到任何状态
-        if (data.duration <= 0f || attackTimer >= data.duration)
-        {
-            return true;
-        }
-        //攻击状态过程中只能被受击和死亡状态打断
+        // 攻击过程中只允许被受击/死亡打断。
         return state == PlayerStateType.Hurt || state == PlayerStateType.Dead;
     }
 
     /// <summary>
-    /// 画出攻击范围
+    /// 供 Gizmos 预览当前攻击范围。
     /// </summary>
-    /// <param name="attackPos">攻击位置</param>
-    /// <param name="attackRange">攻击范围</param>
-    /// <returns>返回一个bool值来判断能否画出攻击范围</returns>
     public bool TryGetDebugAttackGizmo(out Vector2 attackPos, out float attackRange)
     {
         attackPos = Vector2.zero;
         attackRange = 0f;
 
-        if (!TryGetAttackData(out AttackData data))
-        {
-            return false;
-        }
+        if (!TryGetAttackData(out AttackData data)) return false;
 
         attackPos = player.GetAttackWorldPosition(data.attackOffset);
         attackRange = data.attackRange;
         return true;
     }
 
-    /// <summary>
-    /// 获取武器攻击参数
-    /// </summary>
-    /// <param name="data">武器数据</param>
-    /// <param name="logError">是否输出错误原因</param>
-    /// <returns>返回一个bool值来判断是否获取了攻击参数</returns>
+    private void StartAttack()
+    {
+        attackTimer = 0f;
+        nextAttackQueued = false;
+        hasDealDamage = false;
+        hitTargets.Clear();
+
+        if (!TryGetAttackData(out AttackData data, logError: true))
+        {
+            ReturnToMovementState();
+            return;
+        }
+
+        int hashIndex = Mathf.Min(attackIndex, AttackHashes.Length - 1);
+        anim.CrossFade(AttackHashes[hashIndex], 0.05f);
+
+        if (data.attackSound != null)
+        {
+            AudioSource.PlayClipAtPoint(data.attackSound, player.transform.position);
+        }
+    }
+
+    private void DetectHit(AttackData data)
+    {
+        Vector2 attackPos = player.GetAttackWorldPosition(data.attackOffset);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(attackPos, data.attackRange, player.EnemyLayer);
+
+        foreach (Collider2D hit in hits)
+        {
+            // 同一段攻击只对同一目标结算一次。
+            if (hitTargets.Contains(hit)) continue;
+
+            if (hit.TryGetComponent<IDamageable>(out IDamageable damageable))
+            {
+                damageable.TakeDamage(data.damage);
+                hitTargets.Add(hit);
+            }
+        }
+
+        if (hitTargets.Count > 0)
+        {
+            player.NotifyAttackHit();
+        }
+    }
+
     private bool TryGetAttackData(out AttackData data, bool logError = false)
     {
         data = null;
@@ -242,7 +215,8 @@ public class PlayerAttackState : PlayerStateBase
         {
             if (logError)
             {
-                Debug.LogWarning($"武器 {currentWeapon.name} 的攻击段数越界：index={attackIndex}，length={currentWeapon.attackData.Length}。");
+                Debug.LogWarning(
+                    $"武器 {currentWeapon.name} 的攻击段索引越界：index={attackIndex}，length={currentWeapon.attackData.Length}。");
             }
             return false;
         }
@@ -260,10 +234,6 @@ public class PlayerAttackState : PlayerStateBase
         return true;
     }
 
-    /// <summary>
-    /// 获取攻击当前武器的最大组合索引
-    /// </summary>
-    /// <returns>返回最大攻击组合索引，如果攻击数据无效则返回-1</returns>
     private int GetMaxComboIndex()
     {
         if (currentWeapon == null || currentWeapon.attackData == null || currentWeapon.attackData.Length == 0)
