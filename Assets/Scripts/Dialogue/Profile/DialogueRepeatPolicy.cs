@@ -1,8 +1,9 @@
-// 对话重复策略：控制某段对话是否允许再次触发。
+﻿// Repeat policy for dialogue route entries.
 public enum DialogueRepeatPolicy
 {
-    // 只允许播放一次。
+    // Can be played once.
     Once,
-    // 允许重复播放。
+
+    // Can be played multiple times.
     Repeatable
 }

@@ -1,31 +1,46 @@
-using System;
+﻿using System;
 
-// 单条规则条件：描述“读哪个状态键、用什么方式比较、目标值是什么”。
 [Serializable]
+// One condition item inside a dialogue rule.
 public class DialogueCondition
 {
-    // 是否启用该条件。
+    // Whether this condition is enabled.
     public bool enabled = true;
-    // 状态键（例如 quest.main_001.started / chapter）。
+
+    // State key to read.
     public string key;
-    // 值类型（决定使用 bool/int/string 的读取与比较逻辑）。
+
+    // Value type to read and compare.
     public DialogueConditionValueType valueType = DialogueConditionValueType.Bool;
-    // 比较方式（等于、大于、存在等）。
+
+    // Comparison mode.
     public DialogueConditionComparison comparison = DialogueConditionComparison.IsTrue;
 
-    // 目标布尔值（valueType=Bool 时使用）。
+    // Expected bool value when valueType is Bool.
     public bool boolValue = true;
-    // 目标整数值（valueType=Int 时使用）。
+
+    // Expected int value when valueType is Int.
     public int intValue;
-    // 目标字符串值（valueType=String 时使用）。
+
+    // Expected string value when valueType is String.
     public string stringValue = string.Empty;
 
-    // 评估当前条件在给定状态读取器上是否成立。
+    /// <summary>
+    /// Evaluates this condition with a state reader.
+    /// </summary>
+    /// <param name="stateReader">State reader.</param>
+    /// <returns>True when condition passes.</returns>
     public bool Evaluate(IDialogueGameStateReader stateReader)
     {
-        if (!enabled) return true;
-        if (stateReader == null) return false;
-        if (string.IsNullOrWhiteSpace(key)) return false;
+        if (!enabled)
+        {
+            return true;
+        }
+
+        if (stateReader == null || string.IsNullOrWhiteSpace(key))
+        {
+            return false;
+        }
 
         if (comparison == DialogueConditionComparison.Exists)
         {
@@ -50,10 +65,17 @@ public class DialogueCondition
         }
     }
 
-    // 执行布尔条件比较。
+    /// <summary>
+    /// Evaluates bool-type condition.
+    /// </summary>
+    /// <param name="stateReader">State reader.</param>
+    /// <returns>True when comparison passes.</returns>
     private bool EvaluateBool(IDialogueGameStateReader stateReader)
     {
-        if (!stateReader.TryGetBool(key, out bool currentValue)) return false;
+        if (!stateReader.TryGetBool(key, out bool currentValue))
+        {
+            return false;
+        }
 
         switch (comparison)
         {
@@ -70,10 +92,17 @@ public class DialogueCondition
         }
     }
 
-    // 执行整型条件比较。
+    /// <summary>
+    /// Evaluates int-type condition.
+    /// </summary>
+    /// <param name="stateReader">State reader.</param>
+    /// <returns>True when comparison passes.</returns>
     private bool EvaluateInt(IDialogueGameStateReader stateReader)
     {
-        if (!stateReader.TryGetInt(key, out int currentValue)) return false;
+        if (!stateReader.TryGetInt(key, out int currentValue))
+        {
+            return false;
+        }
 
         switch (comparison)
         {
@@ -94,10 +123,17 @@ public class DialogueCondition
         }
     }
 
-    // 执行字符串条件比较。
+    /// <summary>
+    /// Evaluates string-type condition.
+    /// </summary>
+    /// <param name="stateReader">State reader.</param>
+    /// <returns>True when comparison passes.</returns>
     private bool EvaluateString(IDialogueGameStateReader stateReader)
     {
-        if (!stateReader.TryGetString(key, out string currentValue)) return false;
+        if (!stateReader.TryGetString(key, out string currentValue))
+        {
+            return false;
+        }
 
         switch (comparison)
         {

@@ -1,34 +1,38 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
-// 对话图静态校验器：
-// 在“进入运行时前”尽早发现断链、缺失节点和无出口节点，避免对话进行中崩流程。
+// Static validator for dialogue graph integrity.
 public static class DialogueGraphValidator
 {
-    // 返回 true 表示图结构可运行；false 时 error 含可读错误详情（多行）。
+    /// <summary>
+    /// Validates a dialogue graph and returns human-readable errors.
+    /// </summary>
+    /// <param name="graph">Graph to validate.</param>
+    /// <param name="error">Validation error output.</param>
+    /// <returns>True when graph is valid.</returns>
     public static bool TryValidate(DialogueGraph graph, out string error)
     {
         var issues = new StringBuilder();
 
         if (graph == null)
         {
-            error = "对话图为空。";
+            error = "Dialogue graph is null.";
             return false;
         }
 
         if (graph.Nodes == null || graph.Nodes.Count == 0)
         {
-            error = "对话图没有节点数据。";
+            error = "Dialogue graph has no nodes.";
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(graph.StartNodeId))
         {
-            issues.AppendLine("StartNodeId 为空。");
+            issues.AppendLine("StartNodeId is empty.");
         }
         else if (!graph.Nodes.ContainsKey(graph.StartNodeId))
         {
-            issues.AppendLine($"StartNodeId '{graph.StartNodeId}' 不存在。");
+            issues.AppendLine($"StartNodeId '{graph.StartNodeId}' does not exist.");
         }
 
         foreach (KeyValuePair<string, DialogueNodeData> pair in graph.Nodes)
@@ -36,20 +40,17 @@ public static class DialogueGraphValidator
             string id = pair.Key;
             DialogueNodeData node = pair.Value;
 
-            // 节点值为空说明数据映射阶段出现了脏数据。
             if (node == null)
             {
-                issues.AppendLine($"节点 '{id}' 为空。");
+                issues.AppendLine($"Node '{id}' is null.");
                 continue;
             }
 
-            // 校验线性跳转引用合法性。
             if (!string.IsNullOrWhiteSpace(node.nextNodeId) && !graph.Nodes.ContainsKey(node.nextNodeId))
             {
-                issues.AppendLine($"节点 '{id}' 指向缺失的 nextNodeId '{node.nextNodeId}'。");
+                issues.AppendLine($"Node '{id}' references missing nextNodeId '{node.nextNodeId}'.");
             }
 
-            // 校验分支跳转引用合法性。
             if (node.choices != null)
             {
                 for (int i = 0; i < node.choices.Count; i++)
@@ -57,28 +58,27 @@ public static class DialogueGraphValidator
                     DialogueChoiceData choice = node.choices[i];
                     if (choice == null)
                     {
-                        issues.AppendLine($"节点 '{id}' 在索引 {i} 处有空选项。");
+                        issues.AppendLine($"Node '{id}' has a null choice at index {i}.");
                         continue;
                     }
 
                     if (string.IsNullOrWhiteSpace(choice.nextNodeId))
                     {
-                        issues.AppendLine($"节点 '{id}' 的 choice[{i}] nextNodeId 为空。");
+                        issues.AppendLine($"Node '{id}' choice[{i}] has empty nextNodeId.");
                     }
                     else if (!graph.Nodes.ContainsKey(choice.nextNodeId))
                     {
-                        issues.AppendLine(
-                            $"节点 '{id}' 的 choice[{i}] 指向缺失的 nextNodeId '{choice.nextNodeId}'。");
+                        issues.AppendLine($"Node '{id}' choice[{i}] references missing nextNodeId '{choice.nextNodeId}'.");
                     }
                 }
             }
 
-            // 非结束节点必须有可继续路径（线性 next 或分支 choices 之一）。
+            // Non-end nodes should have at least one outgoing path.
             bool hasChoices = node.choices != null && node.choices.Count > 0;
             bool hasLinearNext = !string.IsNullOrWhiteSpace(node.nextNodeId);
             if (!node.isEndNode && !hasChoices && !hasLinearNext)
             {
-                issues.AppendLine($"节点 '{id}' 不是结束节点，但没有 nextNodeId 且没有选项。");
+                issues.AppendLine($"Node '{id}' is not an end node and has no outgoing path.");
             }
         }
 

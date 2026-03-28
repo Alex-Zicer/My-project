@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 9075588015765660365}
   - component: {fileID: 6439184851869706677}
   - component: {fileID: 4639895730692418846}
+  - component: {fileID: 4352294023054770415}
   m_Layer: 0
   m_Name: TurnOffButton
   m_TagString: Untagged
@@ -120,3 +121,22 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4352294023054770415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1256265883050611631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3425d1da858cb61478b7803ff03ae818, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  role: 0
+  clickOverride: {fileID: 11400000, guid: 2b3ba67ec7dac6e4db2e7b0d727ffa46, type: 2}
+  hoverOverride: {fileID: 11400000, guid: a86408c21c676da40a3c80384c324b05, type: 2}
+  muteThisControl: 0
+  enableClickSound: 1
+  enableHoverSound: 1
+  requireToggleOnForClick: 1

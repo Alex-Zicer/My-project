@@ -1,8 +1,9 @@
-// 条件组合模式：用于多条件规则的命中判定。
+﻿// Combiner mode for a list of conditions.
 public enum DialogueConditionMode
 {
-    // 所有启用条件都满足才命中。
+    // All enabled conditions must pass.
     All,
-    // 任意一个启用条件满足即命中。
+
+    // Any enabled condition can pass.
     Any
 }

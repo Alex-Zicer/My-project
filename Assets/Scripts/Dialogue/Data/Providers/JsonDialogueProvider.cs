@@ -1,45 +1,76 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-// JSON 数据提供者：
-// 读取 JSON 文档并映射到 DialogueGraph，便于接入表格导出或外部编辑工具链。
+// JSON dialogue data provider.
 public class JsonDialogueProvider : IDialogueProvider
 {
-    // 与 JSON 结构对应的中间模型，只用于反序列化阶段。
     [Serializable]
     private class DialogueJsonDocument
     {
+        // Dialogue identifier.
         public string dialogueId;
+
+        // Start node identifier.
         public string startNodeId;
+
+        // Node array payload.
         public DialogueJsonNode[] nodes;
     }
 
     [Serializable]
     private class DialogueJsonNode
     {
+        // Node identifier.
         public string nodeId;
+
+        // Speaker display name.
         public string speakerName;
+
+        // Portrait resource path in Resources.
         public string portraitResourcePath;
+
+        // Content text.
         public string content;
+
+        // Linear next node id.
         public string nextNodeId;
+
+        // End node flag.
         public bool isEndNode;
+
+        // Choice payload.
         public DialogueJsonChoice[] choices;
     }
 
     [Serializable]
     private class DialogueJsonChoice
     {
+        // Choice text.
         public string choiceText;
+
+        // Choice target node id.
         public string nextNodeId;
     }
 
+    /// <summary>
+    /// Checks whether this provider can handle the input reference.
+    /// </summary>
+    /// <param name="reference">Dialogue reference.</param>
+    /// <returns>True when source type is JSON.</returns>
     public bool CanHandle(DialogueReference reference)
     {
         return reference != null && reference.sourceType == DialogueSourceType.Json;
     }
 
+    /// <summary>
+    /// Loads a JSON dialogue file and converts it into a dialogue graph.
+    /// </summary>
+    /// <param name="reference">Dialogue reference.</param>
+    /// <param name="graph">Loaded graph output.</param>
+    /// <param name="error">Error message output.</param>
+    /// <returns>True when load and validation both succeed.</returns>
     public bool TryLoad(DialogueReference reference, out DialogueGraph graph, out string error)
     {
         graph = null;
@@ -47,21 +78,20 @@ public class JsonDialogueProvider : IDialogueProvider
 
         if (reference == null)
         {
-            error = "DialogueReference 为空。";
+            error = "DialogueReference is null.";
             return false;
         }
 
         string path = ResolvePath(reference.keyOrPath);
-        // JSON 模式下 keyOrPath 必填；支持相对路径和绝对路径。
         if (string.IsNullOrWhiteSpace(path))
         {
-            error = "当前来源为 JSON，但 keyOrPath 为空。";
+            error = "Source type is JSON but keyOrPath is empty.";
             return false;
         }
 
         if (!File.Exists(path))
         {
-            error = $"未找到对话 JSON 文件: {path}";
+            error = $"JSON file not found: {path}";
             return false;
         }
 
@@ -72,7 +102,7 @@ public class JsonDialogueProvider : IDialogueProvider
         }
         catch (Exception ex)
         {
-            error = $"读取 JSON 文件失败 '{path}': {ex.Message}";
+            error = $"Failed to read JSON file '{path}': {ex.Message}";
             return false;
         }
 
@@ -83,29 +113,29 @@ public class JsonDialogueProvider : IDialogueProvider
         }
         catch (Exception ex)
         {
-            error = $"解析 JSON 文件失败 '{path}': {ex.Message}";
+            error = $"Failed to parse JSON file '{path}': {ex.Message}";
             return false;
         }
 
         if (document == null || document.nodes == null || document.nodes.Length == 0)
         {
-            error = $"对话 JSON '{path}' 没有节点数据。";
+            error = $"JSON '{path}' has no node data.";
             return false;
         }
 
+        // Build node map and validate unique node ids.
         var nodeMap = new Dictionary<string, DialogueNodeData>();
         foreach (DialogueJsonNode jsonNode in document.nodes)
         {
-            // 与 SO Provider 一致：nodeId 是必须且唯一的。
             if (jsonNode == null || string.IsNullOrWhiteSpace(jsonNode.nodeId))
             {
-                error = $"对话 JSON '{path}' 存在 nodeId 为空的节点。";
+                error = $"JSON '{path}' contains a node with empty nodeId.";
                 return false;
             }
 
             if (nodeMap.ContainsKey(jsonNode.nodeId))
             {
-                error = $"对话 JSON '{path}' 存在重复 nodeId '{jsonNode.nodeId}'。";
+                error = $"JSON '{path}' contains duplicate nodeId '{jsonNode.nodeId}'.";
                 return false;
             }
 
@@ -113,7 +143,6 @@ public class JsonDialogueProvider : IDialogueProvider
         }
 
         graph = new DialogueGraph(document.dialogueId, document.startNodeId, nodeMap);
-        // 统一校验，确保不同来源数据具备一致运行质量。
         if (!DialogueGraphValidator.TryValidate(graph, out error))
         {
             graph = null;
@@ -123,9 +152,13 @@ public class JsonDialogueProvider : IDialogueProvider
         return true;
     }
 
+    /// <summary>
+    /// Converts one JSON node payload into runtime node data.
+    /// </summary>
+    /// <param name="jsonNode">JSON node payload.</param>
+    /// <returns>Converted runtime node.</returns>
     private static DialogueNodeData ConvertNode(DialogueJsonNode jsonNode)
     {
-        // 把 JSON 节点映射为运行时节点结构。
         var node = new DialogueNodeData
         {
             nodeId = jsonNode.nodeId,
@@ -139,10 +172,14 @@ public class JsonDialogueProvider : IDialogueProvider
 
         if (jsonNode.choices != null)
         {
-            foreach (DialogueJsonChoice jsonChoice in jsonNode.choices)
+            for (int i = 0; i < jsonNode.choices.Length; i++)
             {
-                // 允许过滤空选项，降低数据清洗成本。
-                if (jsonChoice == null) continue;
+                DialogueJsonChoice jsonChoice = jsonNode.choices[i];
+                if (jsonChoice == null)
+                {
+                    continue;
+                }
+
                 node.choices.Add(new DialogueChoiceData
                 {
                     choiceText = jsonChoice.choiceText,
@@ -154,18 +191,38 @@ public class JsonDialogueProvider : IDialogueProvider
         return node;
     }
 
+    /// <summary>
+    /// Tries to load a portrait from the Resources path.
+    /// </summary>
+    /// <param name="resourcePath">Resource path under Resources.</param>
+    /// <returns>Loaded sprite or null.</returns>
     private static Sprite TryLoadPortrait(string resourcePath)
     {
-        // 头像按 Resources 路径加载；路径为空时返回 null（可无头像）。
-        if (string.IsNullOrWhiteSpace(resourcePath)) return null;
+        if (string.IsNullOrWhiteSpace(resourcePath))
+        {
+            return null;
+        }
+
         return Resources.Load<Sprite>(resourcePath);
     }
 
+    /// <summary>
+    /// Resolves keyOrPath to an absolute file path.
+    /// </summary>
+    /// <param name="keyOrPath">Configured key or path.</param>
+    /// <returns>Absolute path or empty string.</returns>
     private static string ResolvePath(string keyOrPath)
     {
-        // 相对路径默认以 StreamingAssets 为根，便于跨平台打包与热更数据管理。
-        if (string.IsNullOrWhiteSpace(keyOrPath)) return string.Empty;
-        if (Path.IsPathRooted(keyOrPath)) return keyOrPath;
+        if (string.IsNullOrWhiteSpace(keyOrPath))
+        {
+            return string.Empty;
+        }
+
+        if (Path.IsPathRooted(keyOrPath))
+        {
+            return keyOrPath;
+        }
+
         return Path.Combine(Application.streamingAssetsPath, keyOrPath);
     }
 }

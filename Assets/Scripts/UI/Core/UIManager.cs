@@ -115,7 +115,12 @@ public class UIManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        // 子对象挂在已常驻根节点下时无需再次调用，避免 Unity 警告。
+        if (transform.parent == null)
+        if (transform.parent == null)
+        {
+            DontDestroyOnLoad(gameObject);
+        }
         EnsureSubManagers();
     }
 

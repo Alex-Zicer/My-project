@@ -34,6 +34,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public float AttackExitRange => data.attackExitRange;
     public float AttackDamage => data.attackDamage;
     public float AttackRate => data.attackRate;
+    public AudioEventSO AttackHitSfxEvent => data != null ? data.attackHitSfxEvent : null;
     public float HurtDuration => data.hurtDuration;
     public float KnockbackForce => data.knockbackForce;
     public Transform PatrolPoint1 => patrolPoint1;

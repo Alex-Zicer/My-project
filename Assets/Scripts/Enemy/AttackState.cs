@@ -1,10 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class AttackState : EnemyState
 {
     public override EnemyStateType StateType => EnemyStateType.Attack;
 
-    private bool _isAttacking; // 攻击动画播放期间为 true，冷却阶段为 false
+    // 攻击动画执行期为 true，攻击结算后恢复 false。
+    private bool _isAttacking;
 
     public AttackState(EnemyAI enemy) : base(enemy) { }
 
@@ -16,9 +17,7 @@ public class AttackState : EnemyState
     }
 
     /// <summary>
-    /// 玩家死亡切换回巡逻模式
-    /// 时刻保持精灵的正确朝向
-    /// 玩家脱离攻击范围切换回追击状态
+    /// 攻击状态每帧更新：维持朝向、检测退出距离、满足条件时执行攻击。
     /// </summary>
     public override void Update()
     {
@@ -36,7 +35,7 @@ public class AttackState : EnemyState
             return;
         }
 
-        // 冷却统一由 EnemyAI 管理，跨状态切换仍保留
+        // 冷却统一由 EnemyAI 管理，跨状态切换仍保持一致。
         if (enemy.CanAttackNow)
         {
             PerformAttack();
@@ -45,19 +44,25 @@ public class AttackState : EnemyState
 
     /// <summary>
     /// 攻击进行中只能被受击和死亡打断；
-    /// 冷却阶段（_isAttacking == false）额外允许切换到追击状态。
+    /// 非攻击执行期额外允许切回追击状态。
     /// </summary>
     public override bool CanTransitionTo(EnemyStateType targetState)
     {
         if (targetState == EnemyStateType.Hurt || targetState == EnemyStateType.Dead)
+        {
             return true;
+        }
+
         if (!_isAttacking && targetState == EnemyStateType.Chase)
+        {
             return true;
+        }
+
         return false;
     }
 
     /// <summary>
-    /// 执行伤害逻辑计算
+    /// 执行伤害结算，并在命中时播放结果音效。
     /// </summary>
     private void PerformAttack()
     {
@@ -67,6 +72,7 @@ public class AttackState : EnemyState
         {
             damageable.TakeDamage(enemy.AttackDamage);
             enemy.MarkAttackPerformed();
+            // 命中结果音效当前先不触发，后续接入命中音效时再按需恢复。
         }
 
         _isAttacking = false;

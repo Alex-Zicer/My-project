@@ -1,12 +1,16 @@
-// 选项展示模型：
-// 这是运行层传给视图层的轻量数据，避免 UI 直接依赖 DialogueChoiceData。
+﻿// 閫夐」灞曠ず妯″瀷锛?// 杩欐槸杩愯灞備紶缁欒鍥惧眰鐨勮交閲忔暟鎹紝閬垮厤 UI 鐩存帴渚濊禆 DialogueChoiceData銆?
 public struct DialogueChoiceViewModel
 {
-    // 选项索引（回传给 DialogueService 用于定位被选中的分支）。
+    // 閫夐」绱㈠紩锛堝洖浼犵粰 DialogueService 鐢ㄤ簬瀹氫綅琚€変腑鐨勫垎鏀級銆?
     public int Index { get; }
-    // 按钮显示文本。
+    // 鎸夐挳鏄剧ず鏂囨湰銆?
     public string Text { get; }
 
+    /// <summary>
+    /// DialogueChoiceViewModel。
+    /// </summary>
+    /// <param name="index">参数。</param>
+    /// <param name="text">参数。</param>
     public DialogueChoiceViewModel(int index, string text)
     {
         Index = index;

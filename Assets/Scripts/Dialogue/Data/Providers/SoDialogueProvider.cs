@@ -1,14 +1,25 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-// SO 数据提供者：
-// 把 DialogueDataSO 转成运行时可消费的 DialogueGraph，并进行基础合法性校验。
+// ScriptableObject dialogue data provider.
 public class SoDialogueProvider : IDialogueProvider
 {
+    /// <summary>
+    /// Checks whether this provider can handle the input reference.
+    /// </summary>
+    /// <param name="reference">Dialogue reference.</param>
+    /// <returns>True when source type is SO.</returns>
     public bool CanHandle(DialogueReference reference)
     {
         return reference != null && reference.sourceType == DialogueSourceType.So;
     }
 
+    /// <summary>
+    /// Loads a dialogue graph from a ScriptableObject source.
+    /// </summary>
+    /// <param name="reference">Dialogue reference.</param>
+    /// <param name="graph">Loaded graph output.</param>
+    /// <param name="error">Error message output.</param>
+    /// <returns>True when load and validation both succeed.</returns>
     public bool TryLoad(DialogueReference reference, out DialogueGraph graph, out string error)
     {
         graph = null;
@@ -16,47 +27,43 @@ public class SoDialogueProvider : IDialogueProvider
 
         if (reference == null)
         {
-            error = "DialogueReference 为空。";
+            error = "DialogueReference is null.";
             return false;
         }
 
         if (reference.primarySO == null)
         {
-            error = "当前来源为 SO，但 primarySO 未设置。";
+            error = "Source type is SO but primarySO is not assigned.";
             return false;
         }
 
         DialogueDataSO so = reference.primarySO;
-        // 没有节点时无法构成可执行对话图。
         if (so.nodes == null || so.nodes.Count == 0)
         {
-            error = $"对话 SO '{so.name}' 没有节点数据。";
+            error = $"Dialogue SO '{so.name}' has no node data.";
             return false;
         }
 
+        // Build node map and validate unique node ids.
         var nodeMap = new Dictionary<string, DialogueNodeData>();
         foreach (DialogueNodeData node in so.nodes)
         {
-            // nodeId 是节点寻址键，缺失会导致跳转失败。
             if (node == null || string.IsNullOrWhiteSpace(node.nodeId))
             {
-                error = $"对话 SO '{so.name}' 存在 nodeId 为空的节点。";
+                error = $"Dialogue SO '{so.name}' contains a node with empty nodeId.";
                 return false;
             }
 
-            // 同一对话图内 nodeId 必须唯一。
             if (nodeMap.ContainsKey(node.nodeId))
             {
-                error = $"对话 SO '{so.name}' 存在重复 nodeId '{node.nodeId}'。";
+                error = $"Dialogue SO '{so.name}' contains duplicate nodeId '{node.nodeId}'.";
                 return false;
             }
 
-            // 运行时使用深拷贝，避免直接修改资产对象。
             nodeMap.Add(node.nodeId, CloneNode(node));
         }
 
         graph = new DialogueGraph(so.dialogueId, so.startNodeId, nodeMap);
-        // 统一复用图校验器，提前发现断链节点与无效跳转。
         if (!DialogueGraphValidator.TryValidate(graph, out error))
         {
             graph = null;
@@ -66,9 +73,13 @@ public class SoDialogueProvider : IDialogueProvider
         return true;
     }
 
+    /// <summary>
+    /// Deep-copies one dialogue node into runtime data.
+    /// </summary>
+    /// <param name="source">Source node.</param>
+    /// <returns>Cloned node.</returns>
     private static DialogueNodeData CloneNode(DialogueNodeData source)
     {
-        // 仅拷贝运行时必需字段，保持加载过程简单可控。
         var node = new DialogueNodeData
         {
             nodeId = source.nodeId,
@@ -82,10 +93,14 @@ public class SoDialogueProvider : IDialogueProvider
 
         if (source.choices != null)
         {
-            foreach (DialogueChoiceData choice in source.choices)
+            for (int i = 0; i < source.choices.Count; i++)
             {
-                // 允许跳过空选项，防止脏数据直接中断整个加载流程。
-                if (choice == null) continue;
+                DialogueChoiceData choice = source.choices[i];
+                if (choice == null)
+                {
+                    continue;
+                }
+
                 node.choices.Add(new DialogueChoiceData
                 {
                     choiceText = choice.choiceText,

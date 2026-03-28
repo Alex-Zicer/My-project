@@ -1,37 +1,48 @@
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 单个选项按钮视图：
-// 负责把“选项文本 + 索引”绑定到 UI Button 点击事件。
+// 鍗曚釜閫夐」鎸夐挳瑙嗗浘锛?// 璐熻矗鎶娾€滈€夐」鏂囨湰 + 绱㈠紩鈥濈粦瀹氬埌 UI Button 鐐瑰嚮浜嬩欢銆?
 public class DialogueChoiceButtonView : MonoBehaviour
 {
-    // 实际响应点击的按钮组件。
+    // 瀹為檯鍝嶅簲鐐瑰嚮鐨勬寜閽粍浠躲€?
     [SerializeField] private Button button;
-    // 显示选项内容的文本组件。
+    // 鏄剧ず閫夐」鍐呭鐨勬枃鏈粍浠躲€?
     [SerializeField] private TextMeshProUGUI label;
 
-    // 当前按钮对应的选项索引。
+    // 褰撳墠鎸夐挳瀵瑰簲鐨勯€夐」绱㈠紩銆?
     private int _choiceIndex;
-    // 点击后回调给上层（通常是 DialoguePageController）。
+    // 鐐瑰嚮鍚庡洖璋冪粰涓婂眰锛堥€氬父鏄?DialoguePageController锛夈€?
     private Action<int> _clickHandler;
 
+    /// <summary>
+    /// Reset。
+    /// </summary>
     private void Reset()
     {
-        // 在编辑器重置时自动尝试抓取同物体组件，减少手工绑定。
-        if (button == null) button = GetComponent<Button>();
+        // 鍦ㄧ紪杈戝櫒閲嶇疆鏃惰嚜鍔ㄥ皾璇曟姄鍙栧悓鐗╀綋缁勪欢锛屽噺灏戞墜宸ョ粦瀹氥€?
+if (button == null) button = GetComponent<Button>();
         if (label == null) label = GetComponentInChildren<TextMeshProUGUI>();
     }
 
+    /// <summary>
+    /// Awake。
+    /// </summary>
     private void Awake()
     {
-        // 运行时兜底：如果未在 Inspector 绑定，自动查找。
-        if (button == null) button = GetComponent<Button>();
+        // 杩愯鏃跺厹搴曪細濡傛灉鏈湪 Inspector 缁戝畾锛岃嚜鍔ㄦ煡鎵俱€?
+if (button == null) button = GetComponent<Button>();
         if (label == null) label = GetComponentInChildren<TextMeshProUGUI>();
     }
 
-    // 初始化按钮显示与点击行为。
+    // 鍒濆鍖栨寜閽樉绀轰笌鐐瑰嚮琛屼负銆?
+    /// <summary>
+    /// Setup。
+    /// </summary>
+    /// <param name="choiceIndex">参数。</param>
+    /// <param name="text">参数。</param>
+    /// <param name="clickHandler">参数。</param>
     public void Setup(int choiceIndex, string text, Action<int> clickHandler)
     {
         _choiceIndex = choiceIndex;
@@ -40,15 +51,18 @@ public class DialogueChoiceButtonView : MonoBehaviour
         if (label != null) label.text = text ?? string.Empty;
         if (button != null)
         {
-            // 先清再绑，避免复用按钮时重复订阅。
-            button.onClick.RemoveAllListeners();
+            // 鍏堟竻鍐嶇粦锛岄伩鍏嶅鐢ㄦ寜閽椂閲嶅璁㈤槄銆?
+button.onClick.RemoveAllListeners();
             button.onClick.AddListener(OnClick);
         }
     }
 
+    /// <summary>
+    /// OnClick。
+    /// </summary>
     private void OnClick()
     {
-        // 将索引回传给上层，具体跳转逻辑由运行层决定。
-        _clickHandler?.Invoke(_choiceIndex);
+        // 灏嗙储寮曞洖浼犵粰涓婂眰锛屽叿浣撹烦杞€昏緫鐢辫繍琛屽眰鍐冲畾銆?
+_clickHandler?.Invoke(_choiceIndex);
     }
 }

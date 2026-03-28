@@ -1,84 +1,98 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 对话页面控制器（IDialogueView 的默认实现）：
-// 负责把 DialogueService 的指令映射到具体 UI 组件，并把用户输入回传给 Service。
+// 瀵硅瘽椤甸潰鎺у埗鍣紙IDialogueView 鐨勯粯璁ゅ疄鐜帮級锛?// 璐熻矗鎶?DialogueService 鐨勬寚浠ゆ槧灏勫埌鍏蜂綋 UI 缁勪欢锛屽苟鎶婄敤鎴疯緭鍏ュ洖浼犵粰 Service銆?
 public class DialoguePageController : MonoBehaviour, IDialogueView
 {
-    [Header("界面引用")]
-    // 可选：如果项目使用 UIPage 管理，这里绑定页面对象。
+    [Header("鐣岄潰寮曠敤")]
+    // 鍙€夛細濡傛灉椤圭洰浣跨敤 UIPage 绠＄悊锛岃繖閲岀粦瀹氶〉闈㈠璞°€?
     [SerializeField] private UIPage page;
-    // 说话人名文本。
+    // 璇磋瘽浜哄悕鏂囨湰銆?
     [SerializeField] private TextMeshProUGUI speakerText;
-    // 正文文本。
+    // 姝ｆ枃鏂囨湰銆?
     [SerializeField] private TextMeshProUGUI contentText;
-    // 头像图片（可为空）。
+    // 澶村儚鍥剧墖锛堝彲涓虹┖锛夈€?
     [SerializeField] private Image portraitImage;
-    // 动态选项按钮挂载根节点。
+    // 鍔ㄦ€侀€夐」鎸夐挳鎸傝浇鏍硅妭鐐广€?
     [SerializeField] private Transform choicesRoot;
-    // 选项按钮预制体。
+    // 閫夐」鎸夐挳棰勫埗浣撱€?
     [SerializeField] private DialogueChoiceButtonView choiceButtonPrefab;
 
-    [Header("输入设置")]
-    // 推进对话的主按键。
+    [Header("杈撳叆璁剧疆")]
+    // 鎺ㄨ繘瀵硅瘽鐨勪富鎸夐敭銆?
     [SerializeField] private KeyCode nextKey = KeyCode.E;
-    // 是否允许空格键作为推进键。
+    // 鏄惁鍏佽绌烘牸閿綔涓烘帹杩涢敭銆?
     [SerializeField] private bool allowSpaceAsNext = true;
-    // 是否允许回车键作为推进键。
+    // 鏄惁鍏佽鍥炶溅閿綔涓烘帹杩涢敭銆?
     [SerializeField] private bool allowReturnAsNext = true;
 
-    // 向运行层发送“下一步请求”。
+    // 鍚戣繍琛屽眰鍙戦€佲€滀笅涓€姝ヨ姹傗€濄€?
     public event Action OnNextRequested;
-    // 向运行层发送“选项被选择”。
+    // 鍚戣繍琛屽眰鍙戦€佲€滈€夐」琚€夋嫨鈥濄€?
     public event Action<int> OnChoiceSelected;
 
-    // 当前实例化出的全部选项按钮，用于统一回收。
+    // 褰撳墠瀹炰緥鍖栧嚭鐨勫叏閮ㄩ€夐」鎸夐挳锛岀敤浜庣粺涓€鍥炴敹銆?
     private readonly List<DialogueChoiceButtonView> _spawnedChoices = new List<DialogueChoiceButtonView>();
-    // 页面是否处于打开状态。
+    // 椤甸潰鏄惁澶勪簬鎵撳紑鐘舵€併€?
     private bool _isOpen;
-    // 是否正在展示选项（展示选项时不响应 Next 键）。
+    // 鏄惁姝ｅ湪灞曠ず閫夐」锛堝睍绀洪€夐」鏃朵笉鍝嶅簲 Next 閿級銆?
     private bool _showingChoices;
 
+    /// <summary>
+    /// Reset。
+    /// </summary>
     private void Reset()
     {
-        // 编辑器下自动填充 page 引用。
-        if (page == null) page = GetComponent<UIPage>();
+        // 缂栬緫鍣ㄤ笅鑷姩濉厖 page 寮曠敤銆?
+if (page == null) page = GetComponent<UIPage>();
     }
 
+    /// <summary>
+    /// Awake。
+    /// </summary>
     private void Awake()
     {
-        // 运行时兜底自动获取 page。
-        if (page == null) page = GetComponent<UIPage>();
+        // 杩愯鏃跺厹搴曡嚜鍔ㄨ幏鍙?page銆?
+if (page == null) page = GetComponent<UIPage>();
     }
 
+    /// <summary>
+    /// OnEnable。
+    /// </summary>
     private void OnEnable()
     {
-        // 页面启用即绑定为当前 View。
-        _isOpen = true;
+        // 椤甸潰鍚敤鍗崇粦瀹氫负褰撳墠 View銆?
+_isOpen = true;
         DialogueService.Instance.BindView(this);
     }
 
+    /// <summary>
+    /// OnDisable。
+    /// </summary>
     private void OnDisable()
     {
-        // 页面禁用时清理本地状态，防止旧选项残留。
-        _isOpen = false;
+        // 椤甸潰绂佺敤鏃舵竻鐞嗘湰鍦扮姸鎬侊紝闃叉鏃ч€夐」娈嬬暀銆?
+_isOpen = false;
         _showingChoices = false;
         ClearChoices();
 
         if (DialogueService.HasInstance)
         {
-            // 解绑时若对话在进行中，Service 会安全结束流程。
-            DialogueService.Instance.UnbindView(this);
+            // 瑙ｇ粦鏃惰嫢瀵硅瘽鍦ㄨ繘琛屼腑锛孲ervice 浼氬畨鍏ㄧ粨鏉熸祦绋嬨€?
+DialogueService.Instance.UnbindView(this);
         }
     }
 
+    /// <summary>
+    /// Update。
+    /// </summary>
     private void Update()
     {
-        // 未打开或正在选项阶段时，不处理“下一步”按键。
-        if (!_isOpen || _showingChoices) return;
+        // 鏈墦寮€鎴栨鍦ㄩ€夐」闃舵鏃讹紝涓嶅鐞嗏€滀笅涓€姝モ€濇寜閿€?
+if (!_isOpen || _showingChoices) return;
 
         bool pressed = Input.GetKeyDown(nextKey);
         if (allowSpaceAsNext) pressed |= Input.GetKeyDown(KeyCode.Space);
@@ -90,49 +104,69 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
         }
     }
 
+    /// <summary>
+    /// Open。
+    /// </summary>
     public void Open()
     {
-        // 优先走 UIPage 的开页逻辑，未绑定 page 时退化为 SetActive。
-        if (page != null) page.Open();
+        // 浼樺厛璧?UIPage 鐨勫紑椤甸€昏緫锛屾湭缁戝畾 page 鏃堕€€鍖栦负 SetActive銆?
+if (page != null) page.Open();
         else gameObject.SetActive(true);
         _isOpen = true;
     }
 
+    /// <summary>
+    /// Close。
+    /// </summary>
     public void Close()
     {
-        // 关页前先清理选项实例，避免下次打开出现重复。
-        ClearChoices();
+        // 鍏抽〉鍓嶅厛娓呯悊閫夐」瀹炰緥锛岄伩鍏嶄笅娆℃墦寮€鍑虹幇閲嶅銆?
+ClearChoices();
         if (page != null) page.Close();
         else gameObject.SetActive(false);
         _isOpen = false;
         _showingChoices = false;
     }
 
+    /// <summary>
+    /// SetSpeaker。
+    /// </summary>
+    /// <param name="name">参数。</param>
+    /// <param name="portrait">参数。</param>
     public void SetSpeaker(string name, Sprite portrait)
     {
         if (speakerText != null) speakerText.text = name ?? string.Empty;
 
         if (portraitImage != null)
         {
-            // 无头像时隐藏图片组件，避免显示旧头像。
-            portraitImage.sprite = portrait;
+            // 鏃犲ご鍍忔椂闅愯棌鍥剧墖缁勪欢锛岄伩鍏嶆樉绀烘棫澶村儚銆?
+portraitImage.sprite = portrait;
             portraitImage.enabled = portrait != null;
         }
     }
 
+    /// <summary>
+    /// SetContent。
+    /// </summary>
+    /// <param name="text">参数。</param>
+    /// <param name="isTyping">参数。</param>
     public void SetContent(string text, bool isTyping)
     {
-        // 当前实现不区分 isTyping 样式；若后续要做闪烁光标可用该参数扩展。
-        if (contentText != null) contentText.text = text ?? string.Empty;
+        // 褰撳墠瀹炵幇涓嶅尯鍒?isTyping 鏍峰紡锛涜嫢鍚庣画瑕佸仛闂儊鍏夋爣鍙敤璇ュ弬鏁版墿灞曘€?
+if (contentText != null) contentText.text = text ?? string.Empty;
     }
 
+    /// <summary>
+    /// ShowChoices。
+    /// </summary>
+    /// <param name="choices">参数。</param>
     public void ShowChoices(IReadOnlyList<DialogueChoiceViewModel> choices)
     {
         ClearChoices();
         _showingChoices = choices != null && choices.Count > 0;
 
-        // 缺少必要引用时直接返回，避免空引用异常。
-        if (!_showingChoices || choicesRoot == null || choiceButtonPrefab == null)
+        // 缂哄皯蹇呰寮曠敤鏃剁洿鎺ヨ繑鍥烇紝閬垮厤绌哄紩鐢ㄥ紓甯搞€?
+if (!_showingChoices || choicesRoot == null || choiceButtonPrefab == null)
         {
             return;
         }
@@ -146,10 +180,13 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
         }
     }
 
+    /// <summary>
+    /// ClearChoices。
+    /// </summary>
     public void ClearChoices()
     {
-        // 销毁旧按钮实例，确保每次展示的选项与当前节点一致。
-        for (int i = 0; i < _spawnedChoices.Count; i++)
+        // 閿€姣佹棫鎸夐挳瀹炰緥锛岀‘淇濇瘡娆″睍绀虹殑閫夐」涓庡綋鍓嶈妭鐐逛竴鑷淬€?
+for (int i = 0; i < _spawnedChoices.Count; i++)
         {
             if (_spawnedChoices[i] != null)
             {
@@ -160,9 +197,13 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
         _showingChoices = false;
     }
 
+    /// <summary>
+    /// HandleChoiceClicked。
+    /// </summary>
+    /// <param name="index">参数。</param>
     private void HandleChoiceClicked(int index)
     {
-        // 将选择结果回传给运行层处理跳转。
-        OnChoiceSelected?.Invoke(index);
+        // 灏嗛€夋嫨缁撴灉鍥炰紶缁欒繍琛屽眰澶勭悊璺宠浆銆?
+OnChoiceSelected?.Invoke(index);
     }
 }

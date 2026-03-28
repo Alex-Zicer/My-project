@@ -1,32 +1,43 @@
-using System;
+﻿using System;
 
-// 状态写回描述：对话结束后把某个状态键写成指定值。
 [Serializable]
+// State write-back entry applied after dialogue completion.
 public class DialogueStateMutation
 {
-    // 要写入的状态键。
+    // Target key to write.
     public string key;
-    // 要写入的数据类型。
+
+    // Target value type.
     public DialogueConditionValueType valueType = DialogueConditionValueType.Bool;
 
-    // 要写入的布尔值（valueType=Bool 时使用）。
+    // Bool value when valueType is Bool.
     public bool boolValue = true;
-    // 要写入的整数值（valueType=Int 时使用）。
+
+    // Int value when valueType is Int.
     public int intValue;
-    // 要写入的字符串值（valueType=String 时使用）。
+
+    // String value when valueType is String.
     public string stringValue = string.Empty;
 
-    // 判断该写回项是否可执行（至少要有 key）。
+    /// <summary>
+    /// Checks whether this mutation is configured.
+    /// </summary>
+    /// <returns>True when key is valid.</returns>
     public bool IsConfigured()
     {
         return !string.IsNullOrWhiteSpace(key);
     }
 
-    // 把配置值写入游戏状态。
+    /// <summary>
+    /// Applies this mutation into a game-state writer.
+    /// </summary>
+    /// <param name="stateWriter">State writer.</param>
     public void Apply(IDialogueGameStateWriter stateWriter)
     {
-        if (stateWriter == null) return;
-        if (!IsConfigured()) return;
+        if (stateWriter == null || !IsConfigured())
+        {
+            return;
+        }
 
         switch (valueType)
         {

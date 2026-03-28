@@ -269,7 +269,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3425d1da858cb61478b7803ff03ae818, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  soundType: 0
+  role: 0
+  clickOverride: {fileID: 11400000, guid: 2b3ba67ec7dac6e4db2e7b0d727ffa46, type: 2}
+  hoverOverride: {fileID: 11400000, guid: a86408c21c676da40a3c80384c324b05, type: 2}
+  muteThisControl: 0
+  enableClickSound: 1
+  enableHoverSound: 1
+  requireToggleOnForClick: 1
 --- !u!114 &4414645693593958499
 MonoBehaviour:
   m_ObjectHideFlags: 0

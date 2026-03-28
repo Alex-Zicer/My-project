@@ -1,10 +1,12 @@
-// 条件值类型：决定读取和比较时使用哪种数据类型。
+﻿// Value type used by condition/mutation data.
 public enum DialogueConditionValueType
 {
-    // 布尔值。
+    // Boolean value.
     Bool,
-    // 整数值。
+
+    // Integer value.
     Int,
-    // 字符串值。
+
+    // String value.
     String
 }

@@ -1,24 +1,33 @@
-// 条件比较方式：用于条件评估时的比较规则。
+﻿// Comparison mode used by dialogue conditions.
 public enum DialogueConditionComparison
 {
-    // 等于。
+    // Equal to expected value.
     Equals,
-    // 不等于。
+
+    // Not equal to expected value.
     NotEquals,
-    // 大于。
+
+    // Greater than expected value.
     Greater,
-    // 大于等于。
+
+    // Greater than or equal to expected value.
     GreaterOrEqual,
-    // 小于。
+
+    // Less than expected value.
     Less,
-    // 小于等于。
+
+    // Less than or equal to expected value.
     LessOrEqual,
-    // 为真（布尔专用）。
+
+    // Current bool is true.
     IsTrue,
-    // 为假（布尔专用）。
+
+    // Current bool is false.
     IsFalse,
-    // 键存在。
+
+    // Key exists in state.
     Exists,
-    // 键不存在。
+
+    // Key does not exist in state.
     NotExists
 }

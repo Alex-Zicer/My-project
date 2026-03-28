@@ -1,38 +1,66 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-// 内存版进度存储：当前会话有效，适合先联通流程；后续可替换为持久化存档实现。
+// 鍐呭瓨鐗堣繘搴﹀瓨鍌細褰撳墠浼氳瘽鏈夋晥锛岄€傚悎鍏堣仈閫氭祦绋嬶紱鍚庣画鍙浛鎹负鎸佷箙鍖栧瓨妗ｅ疄鐜般€?
 public class DialogueMemoryProgressStore : IDialogueProgressStore
 {
-    // 首次播放记录集合。
+    // 棣栨鎾斁璁板綍闆嗗悎銆?
     private readonly HashSet<string> _firstPlayed = new HashSet<string>();
-    // 重复播放记录集合。
+    // 閲嶅鎾斁璁板綍闆嗗悎銆?
     private readonly HashSet<string> _repeatPlayed = new HashSet<string>();
 
-    // 判断某规则的首次对话是否已经播放过。
+    // 鍒ゆ柇鏌愯鍒欑殑棣栨瀵硅瘽鏄惁宸茬粡鎾斁杩囥€?
+    /// <summary>
+    /// HasPlayedFirst。
+    /// </summary>
+    /// <param name="npcId">参数。</param>
+    /// <param name="profileId">参数。</param>
+    /// <param name="ruleId">参数。</param>
     public bool HasPlayedFirst(string npcId, string profileId, string ruleId)
     {
         return _firstPlayed.Contains(BuildKey(npcId, profileId, ruleId));
     }
 
-    // 判断某规则的重复对话是否已经播放过。
+    // 鍒ゆ柇鏌愯鍒欑殑閲嶅瀵硅瘽鏄惁宸茬粡鎾斁杩囥€?
+    /// <summary>
+    /// HasPlayedRepeat。
+    /// </summary>
+    /// <param name="npcId">参数。</param>
+    /// <param name="profileId">参数。</param>
+    /// <param name="ruleId">参数。</param>
     public bool HasPlayedRepeat(string npcId, string profileId, string ruleId)
     {
         return _repeatPlayed.Contains(BuildKey(npcId, profileId, ruleId));
     }
 
-    // 记录某规则的首次对话已播放。
+    // 璁板綍鏌愯鍒欑殑棣栨瀵硅瘽宸叉挱鏀俱€?
+    /// <summary>
+    /// MarkPlayedFirst。
+    /// </summary>
+    /// <param name="npcId">参数。</param>
+    /// <param name="profileId">参数。</param>
+    /// <param name="ruleId">参数。</param>
     public void MarkPlayedFirst(string npcId, string profileId, string ruleId)
     {
         _firstPlayed.Add(BuildKey(npcId, profileId, ruleId));
     }
 
-    // 记录某规则的重复对话已播放。
+    // 璁板綍鏌愯鍒欑殑閲嶅瀵硅瘽宸叉挱鏀俱€?
+    /// <summary>
+    /// MarkPlayedRepeat。
+    /// </summary>
+    /// <param name="npcId">参数。</param>
+    /// <param name="profileId">参数。</param>
+    /// <param name="ruleId">参数。</param>
     public void MarkPlayedRepeat(string npcId, string profileId, string ruleId)
     {
         _repeatPlayed.Add(BuildKey(npcId, profileId, ruleId));
     }
 
-    // 清理指定 NPC 的全部对话进度。
+    // 娓呯悊鎸囧畾 NPC 鐨勫叏閮ㄥ璇濊繘搴︺€?
+    /// <summary>
+    /// ResetNpc。
+    /// </summary>
+    /// <param name="npcId">参数。</param>
     public void ResetNpc(string npcId)
     {
         if (string.IsNullOrWhiteSpace(npcId)) return;
@@ -41,14 +69,23 @@ public class DialogueMemoryProgressStore : IDialogueProgressStore
         RemoveByPrefix(_repeatPlayed, prefix);
     }
 
-    // 清理全部 NPC 的对话进度。
+    // 娓呯悊鍏ㄩ儴 NPC 鐨勫璇濊繘搴︺€?
+    /// <summary>
+    /// ResetAll。
+    /// </summary>
     public void ResetAll()
     {
         _firstPlayed.Clear();
         _repeatPlayed.Clear();
     }
 
-    // 把 npc/profile/rule 组合成稳定 key，用于 HashSet 存取。
+    // 鎶?npc/profile/rule 缁勫悎鎴愮ǔ瀹?key锛岀敤浜?HashSet 瀛樺彇銆?
+    /// <summary>
+    /// BuildKey。
+    /// </summary>
+    /// <param name="npcId">参数。</param>
+    /// <param name="profileId">参数。</param>
+    /// <param name="ruleId">参数。</param>
     private static string BuildKey(string npcId, string profileId, string ruleId)
     {
         string safeNpc = string.IsNullOrWhiteSpace(npcId) ? "__npc__" : npcId;
@@ -57,7 +94,12 @@ public class DialogueMemoryProgressStore : IDialogueProgressStore
         return safeNpc + "::" + safeProfile + "::" + safeRule;
     }
 
-    // 删除指定前缀的全部记录（用于按 NPC 清理进度）。
+    // 鍒犻櫎鎸囧畾鍓嶇紑鐨勫叏閮ㄨ褰曪紙鐢ㄤ簬鎸?NPC 娓呯悊杩涘害锛夈€?
+    /// <summary>
+    /// RemoveByPrefix。
+    /// </summary>
+    /// <param name="set">参数。</param>
+    /// <param name="prefix">参数。</param>
     private static void RemoveByPrefix(HashSet<string> set, string prefix)
     {
         if (set == null || set.Count == 0) return;

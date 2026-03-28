@@ -172,7 +172,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 200, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3899560879596514307
 CanvasRenderer:
@@ -255,19 +255,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5756034768063706437}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: CreateClickEffect
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &-2363687985823811166
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -280,4 +268,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3425d1da858cb61478b7803ff03ae818, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  soundType: 0
+  role: 0
+  clickOverride: {fileID: 11400000, guid: 2b3ba67ec7dac6e4db2e7b0d727ffa46, type: 2}
+  hoverOverride: {fileID: 11400000, guid: a86408c21c676da40a3c80384c324b05, type: 2}
+  muteThisControl: 0
+  enableClickSound: 1
+  enableHoverSound: 1
+  requireToggleOnForClick: 1

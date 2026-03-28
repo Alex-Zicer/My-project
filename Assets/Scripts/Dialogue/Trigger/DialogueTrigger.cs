@@ -1,76 +1,106 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
-// 2D 对话触发器：负责范围检测、交互触发、提示显示，以及可选的 Profile 路由入口。
 [RequireComponent(typeof(BoxCollider2D))]
+// 2D dialogue trigger for player interaction and optional profile routing.
 public class DialogueTrigger : MonoBehaviour
 {
-    [Header("对话配置（路由模式）")]
-    // 是否启用 Profile 路由模式。
+    [Header("Dialogue Config (Routing)")]
+    // Whether profile routing is enabled.
     [SerializeField] private bool useProfileRouting = true;
-    // 当前 NPC 标识（用于路由与进度记录）。
+
+    // NPC id used by router/progress store.
     [SerializeField] private string npcId = "npc_001";
-    // NPC 对话规则配置。
+
+    // Dialogue profile for routing mode.
     [SerializeField] private NpcDialogueProfileSO dialogueProfile;
 
-    [Header("对话配置（兼容模式）")]
-    // 旧版单引用对话（未启用路由时使用）。
+    [Header("Dialogue Config (Legacy)")]
+    // Direct dialogue reference when routing is disabled.
     [SerializeField] private DialogueReference dialogueReference = new DialogueReference();
-    // 旧版一次性触发开关（仅兼容模式生效）。
+
+    // One-shot flag in legacy mode.
     [SerializeField] private bool oneShot;
 
-    [Header("交互设置")]
-    // 交互按键。
+    [Header("Interaction")]
+    // Interaction key.
     [SerializeField] private KeyCode interactKey = KeyCode.E;
-    // 提示跟随原点（为空时回退当前物体 transform）。
+
+    // Interaction anchor transform.
     [SerializeField] private Transform interactOrigin;
-    // 触发范围碰撞体（必须为 Trigger）。
+
+    // Trigger collider zone.
     [SerializeField] private BoxCollider2D triggerZone;
 
-    [Header("交互提示（可选）")]
-    // 交互提示根节点（可为 world-space UI 或普通物体）。
+    [Header("Hint (Optional)")]
+    // Root object for interaction hint.
     [SerializeField] private GameObject interactHintRoot;
-    // 是否跟随交互原点。
+
+    // Whether hint follows interaction anchor.
     [SerializeField] private bool followInteractOrigin = true;
-    // 提示位置偏移。
+
+    // Hint position offset.
     [SerializeField] private Vector3 hintOffset = new Vector3(0f, 2f, 0f);
-    // 提示文本格式，{0} 会替换为按键名。
-    [SerializeField] private string hintFormat = "[{0}] 交互";
-    // 提示文本组件（可选）。
+
+    // Hint text format. {0} is key name.
+    [SerializeField] private string hintFormat = "[{0}] Interact";
+
+    // Hint TMP text.
     [SerializeField] private TMP_Text hintText;
 
-    // 兼容模式下是否已触发过。
+    // Legacy one-shot runtime flag.
     private bool _hasTriggered;
-    // 玩家是否在触发范围内。
+
+    // Whether player is inside trigger range.
     private bool _playerInRange;
-    // 当前提示是否可见。
+
+    // Current hint visibility cache.
     private bool _hintVisible;
 
-    // 初始化触发器与提示文案。
+    /// <summary>
+    /// Initializes trigger references and hint state.
+    /// </summary>
     private void Awake()
     {
-        if (interactOrigin == null) interactOrigin = transform;
-        if (triggerZone == null) triggerZone = GetComponent<BoxCollider2D>();
-        if (triggerZone != null) triggerZone.isTrigger = true;
+        if (interactOrigin == null)
+        {
+            interactOrigin = transform;
+        }
+
+        if (triggerZone == null)
+        {
+            triggerZone = GetComponent<BoxCollider2D>();
+        }
+
+        if (triggerZone != null)
+        {
+            triggerZone.isTrigger = true;
+        }
 
         RefreshHintText();
         SetHintVisible(false, true);
     }
 
-    // 启用组件时重置提示可见性。
+    /// <summary>
+    /// Resets hint state on enable.
+    /// </summary>
     private void OnEnable()
     {
         SetHintVisible(false, true);
     }
 
-    // 禁用组件时清理范围状态并隐藏提示。
+    /// <summary>
+    /// Clears range state and hint on disable.
+    /// </summary>
     private void OnDisable()
     {
         _playerInRange = false;
         SetHintVisible(false, true);
     }
 
-    // 每帧处理交互输入与提示显示。
+    /// <summary>
+    /// Handles interaction input and dialogue start.
+    /// </summary>
     private void Update()
     {
         bool isDialogueRunning = DialogueService.HasInstance && DialogueService.Instance.IsRunning;
@@ -81,6 +111,7 @@ public class DialogueTrigger : MonoBehaviour
             SetHintVisible(false);
             return;
         }
+
         if (!_playerInRange)
         {
             SetHintVisible(false);
@@ -94,11 +125,20 @@ public class DialogueTrigger : MonoBehaviour
         }
 
         SetHintVisible(true);
-        if (_hintVisible) RefreshHintTransform();
+        if (_hintVisible)
+        {
+            RefreshHintTransform();
+        }
 
-        if (!Input.GetKeyDown(interactKey)) return;
+        if (!Input.GetKeyDown(interactKey))
+        {
+            return;
+        }
 
-        bool started = useRouting ? TryStartByProfile() : DialogueService.Instance.StartDialogue(dialogueReference);
+        bool started = useRouting
+            ? TryStartByProfile()
+            : DialogueService.Instance.StartDialogue(dialogueReference);
+
         if (started && !useRouting && oneShot)
         {
             _hasTriggered = true;
@@ -110,27 +150,44 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    // 判断当前是否应使用 Profile 路由模式。
+    /// <summary>
+    /// Checks whether profile routing can be used.
+    /// </summary>
+    /// <returns>True when routing config is valid.</returns>
     private bool IsUsingProfileRouting()
     {
-        if (!useProfileRouting) return false;
-        if (dialogueProfile == null) return false;
+        if (!useProfileRouting)
+        {
+            return false;
+        }
+
+        if (dialogueProfile == null)
+        {
+            return false;
+        }
+
         return !string.IsNullOrWhiteSpace(npcId);
     }
 
-    // 通过路由服务解析并启动本次对话。
+    /// <summary>
+    /// Resolves route by profile and starts dialogue.
+    /// </summary>
+    /// <returns>True when dialogue starts successfully.</returns>
     private bool TryStartByProfile()
     {
         if (!DialogueRouterService.Instance.TryResolve(npcId, dialogueProfile, out DialogueRouteResult route, out string error))
         {
-            Debug.LogWarning($"[DialogueTrigger] NPC '{npcId}' 路由失败: {error}");
+            Debug.LogWarning($"[DialogueTrigger] Failed to resolve NPC '{npcId}': {error}");
             return false;
         }
 
         return DialogueService.Instance.StartDialogue(route.DialogueReference, route);
     }
 
-    // 玩家进入触发范围时标记可交互。
+    /// <summary>
+    /// Marks player as in range.
+    /// </summary>
+    /// <param name="other">Trigger collider.</param>
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other != null && other.CompareTag("Player"))
@@ -139,7 +196,10 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    // 玩家离开触发范围时取消交互并隐藏提示。
+    /// <summary>
+    /// Marks player as out of range.
+    /// </summary>
+    /// <param name="other">Trigger collider.</param>
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other != null && other.CompareTag("Player"))
@@ -149,11 +209,22 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    // 统一控制提示显隐，避免重复 SetActive。
+    /// <summary>
+    /// Sets hint visibility with cached state.
+    /// </summary>
+    /// <param name="visible">Target visibility.</param>
+    /// <param name="force">Whether to force update.</param>
     private void SetHintVisible(bool visible, bool force = false)
     {
-        if (interactHintRoot == null) return;
-        if (!force && _hintVisible == visible) return;
+        if (interactHintRoot == null)
+        {
+            return;
+        }
+
+        if (!force && _hintVisible == visible)
+        {
+            return;
+        }
 
         _hintVisible = visible;
         interactHintRoot.SetActive(visible);
@@ -164,19 +235,28 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    // 根据原点和偏移更新提示位置。
+    /// <summary>
+    /// Updates hint world position.
+    /// </summary>
     private void RefreshHintTransform()
     {
-        if (interactHintRoot == null) return;
-        if (!followInteractOrigin) return;
+        if (interactHintRoot == null || !followInteractOrigin)
+        {
+            return;
+        }
 
         interactHintRoot.transform.position = interactOrigin.position + hintOffset;
     }
 
-    // 根据交互键刷新提示文本。
+    /// <summary>
+    /// Refreshes hint label text.
+    /// </summary>
     private void RefreshHintText()
     {
-        if (hintText == null) return;
+        if (hintText == null)
+        {
+            return;
+        }
 
         string keyName = interactKey.ToString().ToUpperInvariant();
         if (string.IsNullOrWhiteSpace(hintFormat))
@@ -190,21 +270,44 @@ public class DialogueTrigger : MonoBehaviour
             : hintFormat + " " + keyName;
     }
 
-    // 在编辑器参数变化时自动修正关键引用和配置。
+    /// <summary>
+    /// Keeps serialized references valid in editor.
+    /// </summary>
     private void OnValidate()
     {
-        if (interactOrigin == null) interactOrigin = transform;
-        if (triggerZone == null) triggerZone = GetComponent<BoxCollider2D>();
-        if (triggerZone != null) triggerZone.isTrigger = true;
-        if (string.IsNullOrWhiteSpace(npcId)) npcId = gameObject != null ? gameObject.name : "npc_001";
+        if (interactOrigin == null)
+        {
+            interactOrigin = transform;
+        }
+
+        if (triggerZone == null)
+        {
+            triggerZone = GetComponent<BoxCollider2D>();
+        }
+
+        if (triggerZone != null)
+        {
+            triggerZone.isTrigger = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(npcId))
+        {
+            npcId = gameObject != null ? gameObject.name : "npc_001";
+        }
+
         RefreshHintText();
     }
 
-    // 选中物体时绘制 Trigger 范围，便于关卡调试。
+    /// <summary>
+    /// Draws trigger bounds for scene debugging.
+    /// </summary>
     private void OnDrawGizmosSelected()
     {
         BoxCollider2D zone = triggerZone != null ? triggerZone : GetComponent<BoxCollider2D>();
-        if (zone == null) return;
+        if (zone == null)
+        {
+            return;
+        }
 
         Gizmos.color = Color.cyan;
         Matrix4x4 old = Gizmos.matrix;
@@ -212,5 +315,4 @@ public class DialogueTrigger : MonoBehaviour
         Gizmos.DrawWireCube(zone.offset, zone.size);
         Gizmos.matrix = old;
     }
-
 }

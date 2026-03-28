@@ -1,18 +1,49 @@
-// 对话进度存储接口：抽象“首次/重复是否已播放”的读写行为。
+﻿// 瀵硅瘽杩涘害瀛樺偍鎺ュ彛锛氭娊璞♀€滈娆?閲嶅鏄惁宸叉挱鏀锯€濈殑璇诲啓琛屼负銆?
 public interface IDialogueProgressStore
 {
-    // 是否已经播放过该规则的首次对话。
-    bool HasPlayedFirst(string npcId, string profileId, string ruleId);
-    // 是否已经播放过该规则的重复对话。
-    bool HasPlayedRepeat(string npcId, string profileId, string ruleId);
+    // 鏄惁宸茬粡鎾斁杩囪瑙勫垯鐨勯娆″璇濄€?
+/// <summary>
+/// HasPlayedFirst。
+/// </summary>
+/// <param name="npcId">参数。</param>
+/// <param name="profileId">参数。</param>
+/// <param name="ruleId">参数。</param>
+bool HasPlayedFirst(string npcId, string profileId, string ruleId);
+    // 鏄惁宸茬粡鎾斁杩囪瑙勫垯鐨勯噸澶嶅璇濄€?
+/// <summary>
+/// HasPlayedRepeat。
+/// </summary>
+/// <param name="npcId">参数。</param>
+/// <param name="profileId">参数。</param>
+/// <param name="ruleId">参数。</param>
+bool HasPlayedRepeat(string npcId, string profileId, string ruleId);
 
-    // 标记该规则首次对话已播放。
-    void MarkPlayedFirst(string npcId, string profileId, string ruleId);
-    // 标记该规则重复对话已播放。
-    void MarkPlayedRepeat(string npcId, string profileId, string ruleId);
+    // 鏍囪璇ヨ鍒欓娆″璇濆凡鎾斁銆?
+/// <summary>
+/// MarkPlayedFirst。
+/// </summary>
+/// <param name="npcId">参数。</param>
+/// <param name="profileId">参数。</param>
+/// <param name="ruleId">参数。</param>
+void MarkPlayedFirst(string npcId, string profileId, string ruleId);
+    // 鏍囪璇ヨ鍒欓噸澶嶅璇濆凡鎾斁銆?
+/// <summary>
+/// MarkPlayedRepeat。
+/// </summary>
+/// <param name="npcId">参数。</param>
+/// <param name="profileId">参数。</param>
+/// <param name="ruleId">参数。</param>
+void MarkPlayedRepeat(string npcId, string profileId, string ruleId);
 
-    // 清理某个 NPC 的进度。
-    void ResetNpc(string npcId);
-    // 清理全部进度。
-    void ResetAll();
+    // 娓呯悊鏌愪釜 NPC 鐨勮繘搴︺€?
+/// <summary>
+/// ResetNpc。
+/// </summary>
+/// <param name="npcId">参数。</param>
+void ResetNpc(string npcId);
+    // 娓呯悊鍏ㄩ儴杩涘害銆?
+/// <summary>
+/// ResetAll。
+/// </summary>
+void ResetAll();
 }

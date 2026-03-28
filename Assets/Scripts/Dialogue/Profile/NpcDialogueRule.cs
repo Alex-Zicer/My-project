@@ -1,63 +1,94 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-// NPC 对话规则：用于根据剧情状态选择首播/重复对话，并在完成后回写状态。
 [Serializable]
+// Rule item inside an NPC dialogue profile.
 public class NpcDialogueRule
 {
-    // 规则标识（建议在同一 Profile 内唯一）。
+    // Rule identifier.
     public string ruleId = "rule";
-    // 是否启用该规则。
+
+    // Whether this rule is enabled.
     public bool enabled = true;
-    // 规则优先级（越大越先匹配）。
+
+    // Higher value means higher priority.
     public int priority;
 
-    // 条件组合模式（All/Any）。
+    // Condition combiner mode.
     public DialogueConditionMode conditionMode = DialogueConditionMode.All;
-    // 命中该规则需要满足的条件列表。
+
+    // Condition list.
     public List<DialogueCondition> conditions = new List<DialogueCondition>();
 
-    // 首次命中时使用的对话引用。
+    // First-time dialogue reference.
     public DialogueReference firstDialogueReference = new DialogueReference();
-    // 首次对话在“首次之后”是否还能继续使用（当未配置 repeat 对话时生效）。
+
+    // First dialogue repeat policy when repeat reference is not configured.
     public DialogueRepeatPolicy firstRepeatPolicy = DialogueRepeatPolicy.Once;
 
-    // 首次之后使用的重复对话引用（可选）。
+    // Repeat dialogue reference.
     public DialogueReference repeatDialogueReference = new DialogueReference();
-    // 重复对话是否允许再次重复。
+
+    // Repeat dialogue repeat policy.
     public DialogueRepeatPolicy repeatRepeatPolicy = DialogueRepeatPolicy.Repeatable;
 
-    // 首次对话结束后的状态写回列表（可选）。
+    // State mutations applied after first dialogue completion.
     public List<DialogueStateMutation> onFirstCompleted = new List<DialogueStateMutation>();
-    // 重复对话结束后的状态写回列表（可选）。
+
+    // State mutations applied after repeat dialogue completion.
     public List<DialogueStateMutation> onRepeatCompleted = new List<DialogueStateMutation>();
 
-    // 根据 conditionMode 评估本规则是否命中当前游戏状态。
+    /// <summary>
+    /// Evaluates whether current game state matches this rule.
+    /// </summary>
+    /// <param name="stateReader">State reader.</param>
+    /// <returns>True when rule matches.</returns>
     public bool IsMatch(IDialogueGameStateReader stateReader)
     {
-        if (!enabled) return false;
-        if (conditions == null || conditions.Count == 0) return true;
+        if (!enabled)
+        {
+            return false;
+        }
+
+        if (conditions == null || conditions.Count == 0)
+        {
+            return true;
+        }
 
         bool hasEvaluatedAny = false;
-
         if (conditionMode == DialogueConditionMode.All)
         {
             for (int i = 0; i < conditions.Count; i++)
             {
                 DialogueCondition condition = conditions[i];
-                if (condition == null || !condition.enabled) continue;
+                if (condition == null || !condition.enabled)
+                {
+                    continue;
+                }
+
                 hasEvaluatedAny = true;
-                if (!condition.Evaluate(stateReader)) return false;
+                if (!condition.Evaluate(stateReader))
+                {
+                    return false;
+                }
             }
+
             return true;
         }
 
         for (int i = 0; i < conditions.Count; i++)
         {
             DialogueCondition condition = conditions[i];
-            if (condition == null || !condition.enabled) continue;
+            if (condition == null || !condition.enabled)
+            {
+                continue;
+            }
+
             hasEvaluatedAny = true;
-            if (condition.Evaluate(stateReader)) return true;
+            if (condition.Evaluate(stateReader))
+            {
+                return true;
+            }
         }
 
         return !hasEvaluatedAny;

@@ -846,6 +846,7 @@ GameObject:
   - component: {fileID: 785074052}
   - component: {fileID: 785074051}
   - component: {fileID: 785074053}
+  - component: {fileID: 785074054}
   m_Layer: 0
   m_Name: Swordman
   m_TagString: Untagged
@@ -986,6 +987,20 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.4729266, y: 2.4411006}
   m_EdgeRadius: 0
+--- !u!114 &785074054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 785074049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09285c9a0cdb9724e9d50c0c021f3456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  muteThisEmitter: 0
+  logWarningWhenMissingKey: 1
 --- !u!1 &810011305
 GameObject:
   m_ObjectHideFlags: 0
@@ -3306,7 +3321,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3431039742037803902, guid: 6989d9ced7c6d924fb2c90490e7098e7, type: 3}
   m_PrefabInstance: {fileID: 1104401716050300967}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1104401716050300969}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e00c5c10ef6cc0459c0e48c8e211d06, type: 3}
@@ -4937,13 +4952,35 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6813550590934073966, guid: 6989d9ced7c6d924fb2c90490e7098e7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1104401716050300970}
   m_SourcePrefab: {fileID: 100100000, guid: 6989d9ced7c6d924fb2c90490e7098e7, type: 3}
 --- !u!4 &1104401716050300968 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3781746723522268059, guid: 6989d9ced7c6d924fb2c90490e7098e7, type: 3}
   m_PrefabInstance: {fileID: 1104401716050300967}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1104401716050300969 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6813550590934073966, guid: 6989d9ced7c6d924fb2c90490e7098e7, type: 3}
+  m_PrefabInstance: {fileID: 1104401716050300967}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1104401716050300970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104401716050300969}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09285c9a0cdb9724e9d50c0c021f3456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  muteThisEmitter: 0
+  logWarningWhenMissingKey: 1
 --- !u!1001 &2483422439120571263
 PrefabInstance:
   m_ObjectHideFlags: 0
