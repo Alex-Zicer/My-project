@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// 全局音频服务：统一提供 UI、SFX 与 BGM 的播放入口。
 /// </summary>
+[RequireComponent(typeof(AudioVolumePresenter))]
 public class AudioService : MonoBehaviour
 {
     // 默认的 AudioCatalog 资源路径。
@@ -55,6 +57,11 @@ public class AudioService : MonoBehaviour
     // SFX 池最大数量。
     [SerializeField] private int maxSfxPoolSize = 24;
 
+    // 音频路由：UI/SFX 统一走 SFX 组，BGM 走 BGM 组。
+    [Header("Mixer Routing")]
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+    [SerializeField] private AudioMixerGroup bgmMixerGroup;
+
     // 复用的 SFX AudioSource 池。
     private readonly List<AudioSource> sfxSourcePool = new List<AudioSource>();
 
@@ -75,6 +82,12 @@ public class AudioService : MonoBehaviour
 
     // 当前 BGM 事件只读暴露。
     public AudioEventSO CurrentBgm => currentBgm;
+
+    // SFX 混音组只读暴露（供音量模块解析 Mixer）。
+    public AudioMixerGroup SfxMixerGroup => sfxMixerGroup;
+
+    // BGM 混音组只读暴露（供音量模块解析 Mixer）。
+    public AudioMixerGroup BgmMixerGroup => bgmMixerGroup;
 
     /// <summary>
     /// 单例初始化与核心资源准备。
@@ -129,11 +142,13 @@ public class AudioService : MonoBehaviour
         uiSource.playOnAwake = false;
         uiSource.loop = false;
         uiSource.spatialBlend = 0f;
+        uiSource.outputAudioMixerGroup = sfxMixerGroup;
 
         bgmSource = gameObject.AddComponent<AudioSource>();
         bgmSource.playOnAwake = false;
         bgmSource.loop = true;
         bgmSource.spatialBlend = 0f;
+        bgmSource.outputAudioMixerGroup = bgmMixerGroup;
     }
 
     /// <summary>
@@ -157,6 +172,7 @@ public class AudioService : MonoBehaviour
         source.playOnAwake = false;
         source.loop = false;
         source.spatialBlend = 0f;
+        source.outputAudioMixerGroup = sfxMixerGroup;
         return source;
     }
 

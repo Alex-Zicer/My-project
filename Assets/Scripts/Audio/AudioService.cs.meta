@@ -3,7 +3,11 @@ guid: 63ba0df7934f5a54b99a4d0a9bd66e8f
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - catalog: {instanceID: 0}
+  - uiDefaultProfile: {instanceID: 0}
+  - sfxMixerGroup: {fileID: 3569050520287618229, guid: 69f2fec7b0cfd5842bf12b262da935dd, type: 2}
+  - bgmMixerGroup: {fileID: -8959361144212118119, guid: 69f2fec7b0cfd5842bf12b262da935dd, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
