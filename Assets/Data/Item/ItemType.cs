@@ -1,4 +1,4 @@
-public enum ItemType
+﻿public enum ItemType
 {
     Weapon,
     Armor,

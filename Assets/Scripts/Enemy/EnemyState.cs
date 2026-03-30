@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 敌人状态基类。组件引用由 EnemyAI 在 Awake 时缓存后传入，不在构造函数里 GetComponent/Find。

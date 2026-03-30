@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 所有物品的 SO 基类。存储物品共有的通用信息（名称、图标、描述、分类等），

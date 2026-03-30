@@ -1,4 +1,4 @@
-/// <summary>
+﻿/// <summary>
 /// 敌人状态类型枚举，顺序不影响逻辑。
 /// </summary>
 public enum EnemyStateType

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 挂在主菜单场景内的对象上，供 Button.OnClick 调用。

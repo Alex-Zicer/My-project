@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 场景中的可拾取物品组件。挂在掉落物 GameObject 上，需要配合一个设为 IsTrigger 的 Collider2D 使用。

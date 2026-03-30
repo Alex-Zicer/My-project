@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 主菜单页面管理器。只管理主菜单场景下的页面（如主菜单页、设置页等），由 UIManager 统一调度。

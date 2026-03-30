@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 防具数据 SO。继承 ItemDataBase 获得通用物品信息，
