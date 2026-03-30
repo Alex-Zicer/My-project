@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
@@ -52,7 +53,7 @@ public class AudioVolumePresenter : MonoBehaviour
     public static AudioVolumePresenter Instance => instance;
 
     /// <summary>
-    /// 初始化 Presenter，并立即应用已保存音量。
+    /// 初始化 Presenter。
     /// </summary>
     private void Awake()
     {
@@ -73,9 +74,6 @@ public class AudioVolumePresenter : MonoBehaviour
             defaultSfx,
             defaultBgm,
             minDb);
-
-        // 即使设置页是禁用状态，也要先应用存档音量。
-        model.ApplySavedToMixer();
     }
 
     /// <summary>
@@ -84,6 +82,15 @@ public class AudioVolumePresenter : MonoBehaviour
     private void OnEnable()
     {
         SceneManager.sceneLoaded += HandleSceneLoaded;
+        TryBindDefaultView();
+    }
+
+    /// <summary>
+    /// 在首场景启动完成后应用存档音量。
+    /// </summary>
+    private void Start()
+    {
+        model?.ApplySavedToMixer();
         TryBindDefaultView();
     }
 
@@ -112,9 +119,12 @@ public class AudioVolumePresenter : MonoBehaviour
             return;
         }
 
+        AudioVolumeSnapshot snapshot = model.LoadSnapshot();
+
         if (boundView == view)
         {
-            boundView.SetValuesWithoutNotify(model.LoadSnapshot());
+            boundView.SetValuesWithoutNotify(snapshot);
+            model.ApplySnapshotToMixer(snapshot);
             return;
         }
 
@@ -123,7 +133,8 @@ public class AudioVolumePresenter : MonoBehaviour
         boundView.MasterValueChanged += SetMasterVolume;
         boundView.SfxValueChanged += SetSfxVolume;
         boundView.BgmValueChanged += SetBgmVolume;
-        boundView.SetValuesWithoutNotify(model.LoadSnapshot());
+        boundView.SetValuesWithoutNotify(snapshot);
+        model.ApplySnapshotToMixer(snapshot);
     }
 
     /// <summary>
@@ -168,23 +179,51 @@ public class AudioVolumePresenter : MonoBehaviour
     }
 
     /// <summary>
-    /// 场景加载后重连默认 View。
+    /// 场景加载后，下一帧重应用音量并重连默认 View。
     /// </summary>
     /// <param name="scene">已加载场景。</param>
     /// <param name="mode">加载模式。</param>
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        StartCoroutine(ApplySavedNextFrame());
+    }
+
+    /// <summary>
+    /// 等待一帧，确保目标场景中的音频对象初始化完成后再应用音量。
+    /// </summary>
+    private IEnumerator ApplySavedNextFrame()
+    {
+        yield return null;
+        model?.ApplySavedToMixer();
         TryBindDefaultView();
     }
 
     /// <summary>
-    /// 尝试绑定默认 View；若为空则自动查找。
+    /// 尝试绑定默认 View；若为空则自动查找（包含未激活对象）。
     /// </summary>
     private void TryBindDefaultView()
     {
         if (defaultView == null)
         {
-            defaultView = FindFirstObjectByType<AudioVolumeSetting>();
+            AudioVolumeSetting[] allViews = FindObjectsByType<AudioVolumeSetting>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+            Scene activeScene = SceneManager.GetActiveScene();
+            for (int i = 0; i < allViews.Length; i++)
+            {
+                AudioVolumeSetting candidate = allViews[i];
+                if (candidate != null && candidate.gameObject.scene == activeScene)
+                {
+                    defaultView = candidate;
+                    break;
+                }
+            }
+
+            if (defaultView == null && allViews.Length > 0)
+            {
+                defaultView = allViews[0];
+            }
         }
 
         BindView(defaultView);

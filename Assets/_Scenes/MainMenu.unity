@@ -915,6 +915,7 @@ GameObject:
   m_Component:
   - component: {fileID: 719965275}
   - component: {fileID: 719965276}
+  - component: {fileID: 719965277}
   m_Layer: 0
   m_Name: AudioService
   m_TagString: Untagged
@@ -955,6 +956,27 @@ MonoBehaviour:
   maxSfxPoolSize: 24
   sfxMixerGroup: {fileID: 3569050520287618229, guid: 69f2fec7b0cfd5842bf12b262da935dd, type: 2}
   bgmMixerGroup: {fileID: -8959361144212118119, guid: 69f2fec7b0cfd5842bf12b262da935dd, type: 2}
+--- !u!114 &719965277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 719965274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9882793e9d6d7024bbf51987d1b57eab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioMixer: {fileID: 24100000, guid: 69f2fec7b0cfd5842bf12b262da935dd, type: 2}
+  masterParamName: MasterVol
+  sfxParamName: SfxVol
+  bgmParamName: BgmVol
+  defaultMaster: 1
+  defaultSfx: 1
+  defaultBgm: 1
+  minDb: -80
+  defaultView: {fileID: 0}
 --- !u!1 &813595173 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4026781621125825546, guid: 04011df292068e14b99b23b4a67ce92d, type: 3}
@@ -972,17 +994,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b98cf4a2e2d4374ea1bc0da603d4514, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  audioMixer: {fileID: 24100000, guid: 69f2fec7b0cfd5842bf12b262da935dd, type: 2}
-  masterParamName: MasterVol
-  sfxParamName: SfxVol
-  bgmParamName: BgmVol
   masterSlider: {fileID: 912440172}
   sfxSlider: {fileID: 240612973}
   bgmSlider: {fileID: 2088961236}
-  defaultMaster: 1
-  defaultSfx: 1
-  defaultBgm: 1
-  minDb: -80
+  presenter: {fileID: 719965277}
 --- !u!1001 &855633410
 PrefabInstance:
   m_ObjectHideFlags: 0

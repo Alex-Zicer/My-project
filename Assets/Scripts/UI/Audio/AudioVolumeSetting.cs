@@ -76,51 +76,6 @@ public class AudioVolumeSetting : MonoBehaviour
     }
 
     /// <summary>
-    /// 兼容旧版 UnityEvent 绑定：设置 Master 音量。
-    /// </summary>
-    /// <param name="value">线性音量（0~1）。</param>
-    public void SetMasterVolume(float value)
-    {
-        if (EnsurePresenter())
-        {
-            presenter.SetMasterVolume(value);
-            return;
-        }
-
-        MasterValueChanged?.Invoke(value);
-    }
-
-    /// <summary>
-    /// 兼容旧版 UnityEvent 绑定：设置 SFX 音量。
-    /// </summary>
-    /// <param name="value">线性音量（0~1）。</param>
-    public void SetSfxVolume(float value)
-    {
-        if (EnsurePresenter())
-        {
-            presenter.SetSfxVolume(value);
-            return;
-        }
-
-        SfxValueChanged?.Invoke(value);
-    }
-
-    /// <summary>
-    /// 兼容旧版 UnityEvent 绑定：设置 BGM 音量。
-    /// </summary>
-    /// <param name="value">线性音量（0~1）。</param>
-    public void SetBgmVolume(float value)
-    {
-        if (EnsurePresenter())
-        {
-            presenter.SetBgmVolume(value);
-            return;
-        }
-
-        BgmValueChanged?.Invoke(value);
-    }
-
-    /// <summary>
     /// 注册一次滑块回调，避免重复注册。
     /// </summary>
     private void RegisterSliderCallbacks()
