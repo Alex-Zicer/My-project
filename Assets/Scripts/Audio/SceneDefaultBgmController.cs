@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using System.Collections;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -24,6 +25,8 @@ public class SceneDefaultBgmController : MonoBehaviour
 
     // 是否已提示过“未找到 SceneBgmProfile”。
     private bool hasWarnedMissingProfile;
+    // 延迟播放协程：用于等待 SceneLoader 完成黑屏预热流程后再播 BGM。
+    private Coroutine deferredPlayCoroutine;
 
     /// <summary>
     /// 自动补齐控制器：若场景里没有则创建一个常驻实例。
@@ -88,7 +91,7 @@ public class SceneDefaultBgmController : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        ApplySceneDefaultBgm(SceneManager.GetActiveScene().name);
+        ScheduleApplySceneDefaultBgm(SceneManager.GetActiveScene().name);
     }
 
     /// <summary>
@@ -96,7 +99,7 @@ public class SceneDefaultBgmController : MonoBehaviour
     /// </summary>
     public void RefreshCurrentSceneBgm()
     {
-        ApplySceneDefaultBgm(SceneManager.GetActiveScene().name);
+        ScheduleApplySceneDefaultBgm(SceneManager.GetActiveScene().name);
     }
 
     /// <summary>
@@ -106,7 +109,45 @@ public class SceneDefaultBgmController : MonoBehaviour
     /// <param name="mode">加载模式。</param>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        ApplySceneDefaultBgm(scene.name);
+        ScheduleApplySceneDefaultBgm(scene.name);
+    }
+
+    /// <summary>
+    /// 根据场景加载器状态决定立即播放或延后播放默认 BGM。
+    /// </summary>
+    /// <param name="sceneName">场景名。</param>
+    private void ScheduleApplySceneDefaultBgm(string sceneName)
+    {
+        SceneLoader loader = FindFirstObjectByType<SceneLoader>();
+        if (loader != null && loader.IsLoading)
+        {
+            if (deferredPlayCoroutine != null)
+            {
+                StopCoroutine(deferredPlayCoroutine);
+            }
+
+            deferredPlayCoroutine = StartCoroutine(WaitLoaderAndApplyBgm(loader, sceneName));
+            return;
+        }
+
+        ApplySceneDefaultBgm(sceneName);
+    }
+
+    /// <summary>
+    /// 等待 SceneLoader 完成后，再应用目标场景默认 BGM。
+    /// </summary>
+    /// <param name="loader">场景加载器。</param>
+    /// <param name="sceneName">目标场景名。</param>
+    /// <returns></returns>
+    private IEnumerator WaitLoaderAndApplyBgm(SceneLoader loader, string sceneName)
+    {
+        while (loader != null && loader.IsLoading)
+        {
+            yield return null;
+        }
+
+        deferredPlayCoroutine = null;
+        ApplySceneDefaultBgm(sceneName);
     }
 
     /// <summary>

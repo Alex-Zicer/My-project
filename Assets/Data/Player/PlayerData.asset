@@ -20,7 +20,7 @@ MonoBehaviour:
   hitShakeIntensity: 0.3
   hitShakeFrequency: 1
   hitShakeDuration: 0.2
-  attackHitStopDuration: 0.1
-  attackShakeIntensity: 0.2
+  attackHitStopDuration: 0.2
+  attackShakeIntensity: 1
   attackShakeFrequency: 1
   attackShakeDuration: 0.1

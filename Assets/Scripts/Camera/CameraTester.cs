@@ -6,35 +6,35 @@
 /// </summary>
 public class CameraTester : MonoBehaviour
 {
-    /// <summary>
-    /// 目标相机控制器引用。
-    /// 需要在 Inspector 中绑定到场景内的 CameraController。
-    /// </summary>
-    public CameraController cameraController;
+    [Header("调试参数")]
+    public float shakeIntensity = 2f;
+    public float shakeFrequency = 4f;
+    public float shakeDuration = 0.15f;
+    public float hitStopDuration = 0.05f;
 
     private void Update()
     {
-        if (cameraController == null) return;
+        if (CameraManager.Instance == null) return;
 
         // 按 J：仅触发抖动。
         if (Input.GetKeyDown(KeyCode.J))
         {
-            cameraController.TriggerShake();
+            CameraManager.Instance.Shake(shakeIntensity, shakeFrequency, shakeDuration);
             Debug.Log("触发抖动。");
         }
 
         // 按 K：仅触发帧冻结（常用于观察停顿感）。
         if (Input.GetKeyDown(KeyCode.K))
         {
-            cameraController.TriggerFreeze();
+            CameraManager.Instance.HitStop(hitStopDuration);
             Debug.Log("触发帧冻结。");
         }
 
         // 按 L：同时触发抖动 + 冻结，模拟重击反馈。
         if (Input.GetKeyDown(KeyCode.L))
         {
-            cameraController.TriggerShake();
-            cameraController.TriggerFreeze();
+            CameraManager.Instance.Shake(shakeIntensity, shakeFrequency, shakeDuration);
+            CameraManager.Instance.HitStop(hitStopDuration);
             Debug.Log("触发组合反馈（抖动 + 冻结）。");
         }
     }

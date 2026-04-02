@@ -43,6 +43,9 @@ public class AudioEventSO : ScriptableObject
     // 只读冷却秒数。
     public float CooldownSeconds => cooldownSeconds;
 
+    // 只读音频片段列表（供预热系统读取）。
+    public IReadOnlyList<AudioClip> ClipVariants => clipVariants;
+
     /// <summary>
     /// 随机选择一个可播放的音频片段。
     /// </summary>
@@ -84,3 +87,4 @@ public class AudioEventSO : ScriptableObject
         return Random.Range(min, max);
     }
 }
+

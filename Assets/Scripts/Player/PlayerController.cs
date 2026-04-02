@@ -29,10 +29,12 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     //用于ICharacterController接口的事件，其他系统可以订阅这些事件来响应玩家的跳跃和着陆行为
     public event Action OnJump;
     public event Action OnAttack;
-    public event Action OnHit;       // 玩家受击（镜头抖动）
-    public event Action OnAttackHit; // 攻击命中敌人（帧冻结 + 镜头抖动）
+    public event Action OnHit;       // 玩家受击事件（当前不用于相机反馈）。
+    public event Action OnAttackHit; // 攻击命中敌人事件（用于帧冻结 + 镜头抖动）。
 
-    /// <summary> 供 PlayerAttackState 调用，触发攻击命中反馈事件 </summary>
+    /// <summary>
+    /// 供 PlayerAttackState 调用，广播“攻击命中敌人”反馈事件。
+    /// </summary>
     public void NotifyAttackHit() => OnAttackHit?.Invoke();
 
     #endregion
@@ -55,7 +57,6 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public bool IsGround { get; private set; }
     public bool IsDead => StateMachine.CurrentStateType == PlayerStateType.Dead;
     public bool IsInputEnabled => inputActions != null && inputActions.Player.enabled;
-
 
 
     private void Awake()

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -234,6 +235,60 @@ public class AudioService : MonoBehaviour
 
         PlayWithSource(evt, source);
     }
+    /// <summary>
+    /// 预热一组音效事件涉及的音频片段，减少首播卡顿。
+    /// </summary>
+    /// <param name="eventsToWarmup">需要预热的音效事件列表。</param>
+    /// <param name="reportProgress">进度回调（0~1）。</param>
+    /// <returns></returns>
+    public IEnumerator PrewarmAudioEvents(IReadOnlyList<AudioEventSO> eventsToWarmup, Action<float> reportProgress = null)
+    {
+        if (eventsToWarmup == null || eventsToWarmup.Count == 0)
+        {
+            reportProgress?.Invoke(1f);
+            yield break;
+        }
+
+        List<AudioClip> uniqueClips = CollectUniqueClips(eventsToWarmup);
+        if (uniqueClips.Count == 0)
+        {
+            reportProgress?.Invoke(1f);
+            yield break;
+        }
+
+        for (int i = 0; i < uniqueClips.Count; i++)
+        {
+            AudioClip clip = uniqueClips[i];
+            if (clip == null)
+            {
+                reportProgress?.Invoke((i + 1f) / uniqueClips.Count);
+                continue;
+            }
+
+            // 仅在未加载时主动触发加载。
+            if (clip.loadState == AudioDataLoadState.Unloaded)
+            {
+                clip.LoadAudioData();
+            }
+
+            // 严格等待：只有片段真正 Loaded 才算预热完成。
+            // 这样 SceneLoader 的“黑屏预热阶段”不会提前放行到 FadeIn。
+            while (clip.loadState != AudioDataLoadState.Loaded)
+            {
+                // 若加载失败或回到未加载态，则重试加载，直到成功。
+                if (clip.loadState == AudioDataLoadState.Failed ||
+                    clip.loadState == AudioDataLoadState.Unloaded)
+                {
+                    clip.LoadAudioData();
+                }
+
+                yield return null;
+            }
+
+            reportProgress?.Invoke((i + 1f) / uniqueClips.Count);
+            yield return null;
+        }
+    }
 
     /// <summary>
     /// 播放 BGM；当前版本仅提供基础播放与渐变能力。
@@ -340,6 +395,33 @@ public class AudioService : MonoBehaviour
         AudioSource source = CreateSfxSource();
         sfxSourcePool.Add(source);
         return source;
+    }
+
+    /// <summary>
+    /// 从事件列表中提取不重复的音频片段集合。
+    /// </summary>
+    /// <param name="eventsToWarmup">音效事件列表。</param>
+    /// <returns>去重后的片段列表。</returns>
+    private List<AudioClip> CollectUniqueClips(IReadOnlyList<AudioEventSO> eventsToWarmup)
+    {
+        var result = new List<AudioClip>();
+        var seen = new HashSet<AudioClip>();
+
+        for (int i = 0; i < eventsToWarmup.Count; i++)
+        {
+            AudioEventSO evt = eventsToWarmup[i];
+            if (evt == null || evt.ClipVariants == null) continue;
+
+            IReadOnlyList<AudioClip> variants = evt.ClipVariants;
+            for (int j = 0; j < variants.Count; j++)
+            {
+                AudioClip clip = variants[j];
+                if (clip == null || !seen.Add(clip)) continue;
+                result.Add(clip);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>

@@ -229,6 +229,7 @@ public class PlayerAttackState : PlayerStateBase
 
             if (hit.TryGetComponent<IDamageable>(out IDamageable damageable))
             {
+                // 先结算伤害，再把该目标记入已命中缓存，避免同一段重复结算。
                 damageable.TakeDamage(data.damage);
                 hitTargets.Add(hit);
             }
@@ -239,6 +240,7 @@ public class PlayerAttackState : PlayerStateBase
             // 命中结果音效当前不在这里触发，先统一由动画关键帧事件负责动作音效。
             // 后续需要命中音效时，可在此处恢复 data.hitSfxEvent 的播放逻辑（保持空值判断）。
 
+            // 只要本段攻击命中了至少一个目标，就广播一次命中反馈事件。
             player.NotifyAttackHit();
         }
     }
