@@ -5,7 +5,9 @@
   <Project Path="Unity.2D.Tilemap.Editor.csproj" />
   <Project Path="Unity.TextMeshPro.Editor.csproj" />
   <Project Path="Unity.InputSystem.csproj" />
+  <Project Path="MCPForUnity.Editor.csproj" />
   <Project Path="Unity.2D.Aseprite.Editor.csproj" />
+  <Project Path="MCPForUnity.Runtime.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.VisualScripting.Flow.csproj" />
   <Project Path="UnityEditor.UI.csproj" />
