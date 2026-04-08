@@ -69,7 +69,7 @@ public class InGamePageManager : BasePageManager
         IsPause = false;
         Time.timeScale = 1;
         SetPlayerInputEnabled(true);
-        Back();
+        CloseCurrentPage();
     }
 
     // 打开对话页：

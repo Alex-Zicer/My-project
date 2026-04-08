@@ -8,6 +8,8 @@ public abstract class SaveableBehaviour : MonoBehaviour, ISaveable
 {
     // 对象唯一 ID（建议在 Inspector 固定，不要随意变更）。
     [SerializeField] private string _uniqueId;
+    // 当前对象是否已注册到 SaveManager。
+    private bool _isRegistered;
 
     /// <summary>
     /// 获取对象唯一 ID。
@@ -22,6 +24,7 @@ public abstract class SaveableBehaviour : MonoBehaviour, ISaveable
     {
         EnsureUniqueIdIfNeeded();
         SaveManager.Instance.Register(_uniqueId, this);
+        _isRegistered = true;
     }
 
     /// <summary>
@@ -29,12 +32,18 @@ public abstract class SaveableBehaviour : MonoBehaviour, ISaveable
     /// </summary>
     protected virtual void OnDestroy()
     {
+        if (!_isRegistered)
+        {
+            return;
+        }
+
         if (!SaveManager.HasInstance)
         {
             return;
         }
 
         SaveManager.Instance.Unregister(_uniqueId);
+        _isRegistered = false;
     }
 
     /// <summary>

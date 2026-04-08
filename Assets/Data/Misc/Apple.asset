@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 594c3646d605d5247b8be79133d92e32, type: 3}
   m_Name: Apple
   m_EditorClassIdentifier: 
+  itemId: 2c6ea7ea236c484ca07bc3d76b473d3d
   itemName: "\u82F9\u679C"
   icon: {fileID: 21300000, guid: 60c1d42986dc0094c808b9e135f31ba2, type: 3}
   description: "\u8FD9\u662F\u4E00\u4E2A\u82F9\u679C"

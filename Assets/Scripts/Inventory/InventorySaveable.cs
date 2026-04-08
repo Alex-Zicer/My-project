@@ -45,6 +45,14 @@ public class InventorySaveable : SaveableBehaviour
     /// </summary>
     protected override void Awake()
     {
+        // 若当前组件挂在重复的 Inventory 副本上，则跳过注册。
+        // 典型场景：返回主菜单后，场景内又创建了一份 Inventory，而真正生效的是常驻单例 Inventory.Instance。
+        Inventory localInventory = GetComponent<Inventory>();
+        if (localInventory != null && Inventory.Instance != null && Inventory.Instance != localInventory)
+        {
+            return;
+        }
+
         FindInventoryIfNeeded();
         base.Awake();
     }
@@ -126,10 +134,11 @@ public class InventorySaveable : SaveableBehaviour
         }
 
         ItemDatabaseSO database = GetItemDatabase();
+        Dictionary<string, ItemDataBase> fallbackItemById = BuildFallbackItemLookup();
+
         if (database == null)
         {
-            Debug.LogWarning("[InventorySaveable] RestoreState 失败：未加载到 ItemDatabaseSO。");
-            return;
+            Debug.LogWarning("[InventorySaveable] 未加载到 ItemDatabaseSO，将尝试使用运行时回退映射恢复背包。");
         }
 
         List<InventoryItem> restoredItems = new List<InventoryItem>();
@@ -144,7 +153,7 @@ public class InventorySaveable : SaveableBehaviour
             }
 
             int count = Mathf.Max(savedItem.count, MinItemCount);
-            ItemDataBase itemData = database.GetItemById(savedItem.itemId);
+            ItemDataBase itemData = ResolveItemData(savedItem.itemId, database, fallbackItemById);
             if (itemData == null)
             {
                 Debug.LogWarning($"[InventorySaveable] 找不到 itemId={savedItem.itemId} 对应的物品，已跳过。");
@@ -155,6 +164,11 @@ public class InventorySaveable : SaveableBehaviour
         }
 
         _inventory.ReplaceAllItems(restoredItems);
+
+        if (savedItems.Count > 0 && restoredItems.Count == 0)
+        {
+            Debug.LogWarning("[InventorySaveable] 读档完成但未恢复任何背包物品，请检查 ItemDatabase 或物品 itemId 配置。");
+        }
     }
 
     /// <summary>
@@ -234,6 +248,103 @@ public class InventorySaveable : SaveableBehaviour
         }
 
         return _itemDatabase;
+    }
+
+    /// <summary>
+    /// 通过数据库与回退映射解析 itemId 对应的物品数据。
+    /// </summary>
+    /// <param name="itemId">物品唯一 ID。</param>
+    /// <param name="database">运行时数据库。</param>
+    /// <param name="fallbackItemById">回退映射。</param>
+    /// <returns>匹配到的物品数据；找不到返回 null。</returns>
+    private static ItemDataBase ResolveItemData(
+        string itemId,
+        ItemDatabaseSO database,
+        Dictionary<string, ItemDataBase> fallbackItemById)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return null;
+        }
+
+        if (database != null)
+        {
+            ItemDataBase databaseItem = database.GetItemById(itemId);
+            if (databaseItem != null)
+            {
+                return databaseItem;
+            }
+        }
+
+        if (fallbackItemById != null && fallbackItemById.TryGetValue(itemId, out ItemDataBase fallbackItem))
+        {
+            return fallbackItem;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 构建运行时 itemId 映射（用于数据库缺失时的回退恢复）。
+    /// 数据来源：当前背包 + 当前场景 ItemPickup。
+    /// </summary>
+    /// <returns>itemId 到 ItemDataBase 的映射表。</returns>
+    private Dictionary<string, ItemDataBase> BuildFallbackItemLookup()
+    {
+        Dictionary<string, ItemDataBase> itemById = new Dictionary<string, ItemDataBase>();
+
+        if (_inventory != null)
+        {
+            IReadOnlyList<InventoryItem> inventoryItems = _inventory.Items;
+            for (int index = 0; index < inventoryItems.Count; index++)
+            {
+                InventoryItem inventoryItem = inventoryItems[index];
+                if (inventoryItem == null)
+                {
+                    continue;
+                }
+
+                AddItemToLookup(itemById, inventoryItem.ItemData);
+            }
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        ItemPickup[] pickups = FindObjectsByType<ItemPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+        ItemPickup[] pickups = FindObjectsOfType<ItemPickup>(true);
+#endif
+        for (int index = 0; index < pickups.Length; index++)
+        {
+            ItemPickup pickup = pickups[index];
+            if (pickup == null)
+            {
+                continue;
+            }
+
+            AddItemToLookup(itemById, pickup.ItemData);
+        }
+
+        return itemById;
+    }
+
+    /// <summary>
+    /// 把单个物品加入映射表。
+    /// </summary>
+    /// <param name="itemById">目标映射。</param>
+    /// <param name="itemData">物品数据。</param>
+    private static void AddItemToLookup(Dictionary<string, ItemDataBase> itemById, ItemDataBase itemData)
+    {
+        if (itemById == null || itemData == null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(itemData.itemId))
+        {
+            return;
+        }
+
+        itemById[itemData.itemId] = itemData;
     }
 
     /// <summary>

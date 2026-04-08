@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82b04b5c2cb387648a977ca661aec19f, type: 3}
   m_Name: RoyalTunic
   m_EditorClassIdentifier: 
+  itemId: 16f948a55a1e49a6a0fef15daa48c545
   itemName: "\u7687\u5BB6\u675F\u8170\u5916\u8863"
   icon: {fileID: 21300000, guid: e29f293938fc0494d87d11a7532e32ea, type: 3}
   description: 

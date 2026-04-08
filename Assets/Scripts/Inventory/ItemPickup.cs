@@ -16,6 +16,11 @@ public class ItemPickup : MonoBehaviour
     [SerializeField] private int amount = 1;
 
     /// <summary>
+    /// 只读访问掉落物对应的物品数据（供存档系统回退映射使用）。
+    /// </summary>
+    public ItemDataBase ItemData => itemData;
+
+    /// <summary>
     /// Unity 物理回调：当带有 Collider2D 的对象进入本触发器时执行。
     /// 只响应标签为 "Player" 的对象，完成拾取逻辑后销毁自身。
     /// </summary>

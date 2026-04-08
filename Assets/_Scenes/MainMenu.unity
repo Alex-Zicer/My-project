@@ -1634,7 +1634,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
@@ -1651,7 +1651,7 @@ PrefabInstance:
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1373579055}
+      objectReference: {fileID: 1369325044}
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
@@ -1674,7 +1674,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: LoadGame
+      value: LoadGamePlayFromSave
       objectReference: {fileID: 0}
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
@@ -1686,7 +1686,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: SaveGameButton, Assembly-CSharp
+      value: MainMenuButtonActions, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 3984479758397647332, guid: 373ba0dd4bcdd6a4fb3353dcb146e088, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
