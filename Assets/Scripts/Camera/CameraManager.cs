@@ -5,6 +5,8 @@ using Cinemachine;
 
 public class CameraManager : MonoBehaviour
 {
+    private const int MaxRebindRetryFrames = 30; // 切场景后重试绑定玩家的最大帧数。
+
     // 全局单例，供调试器或其他系统直接调用相机反馈。
     public static CameraManager Instance { get; private set; }
 
@@ -18,6 +20,8 @@ public class CameraManager : MonoBehaviour
     // 分别持有协程引用，防止 Shake 和 HitStop 互相打断。
     private Coroutine _shakeCoroutine;
     private Coroutine _hitStopCoroutine;
+    // 场景切换后的玩家重绑协程引用。
+    private Coroutine _rebindCoroutine;
     // 当前是否处于帧冻结阶段。
     private bool _isHitStopping;
     // 进入帧冻结前的时间缩放值，用于冻结结束后恢复。
@@ -39,7 +43,11 @@ public class CameraManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
-        else Destroy(gameObject);
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
 
         if (playerCamera == null)
         {
@@ -69,8 +77,8 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        // Start 里找 Player，确保 PlayerController.Awake 已执行完毕
-        BindPlayer(FindObjectOfType<PlayerController>());
+        // Start 里找 Player，确保 PlayerController.Awake 已执行完毕。
+        StartRebindPlayerFlow();
     }
 
     /// <summary>
@@ -96,8 +104,7 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        UnbindPlayer();
-        BindPlayer(FindObjectOfType<PlayerController>());
+        StartRebindPlayerFlow();
     }
 
     /// <summary>
@@ -106,8 +113,19 @@ public class CameraManager : MonoBehaviour
     /// <param name="player">当前场景玩家。</param>
     private void BindPlayer(PlayerController player)
     {
+        if (_player != null)
+        {
+            _player.OnAttackHit -= OnAttackHit;
+        }
+
         _player = player;
-        if (_player == null) return;
+        UpdateCameraFollowTarget(_player != null ? _player.transform : null);
+
+        if (_player == null)
+        {
+            return;
+        }
+
         _player.OnAttackHit += OnAttackHit;
     }
 
@@ -119,6 +137,7 @@ public class CameraManager : MonoBehaviour
         if (_player == null) return;
         _player.OnAttackHit -= OnAttackHit;
         _player = null;
+        UpdateCameraFollowTarget(null);
     }
 
     /// <summary>
@@ -126,8 +145,81 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
+        if (_rebindCoroutine != null)
+        {
+            StopCoroutine(_rebindCoroutine);
+            _rebindCoroutine = null;
+        }
+
         UnbindPlayer();
         RestoreTimeScaleIfNeeded();
+    }
+
+    /// <summary>
+    /// 启动“玩家重绑”流程。会先解绑旧玩家，再在后续若干帧内重试查找新玩家。
+    /// </summary>
+    private void StartRebindPlayerFlow()
+    {
+        if (_rebindCoroutine != null)
+        {
+            StopCoroutine(_rebindCoroutine);
+            _rebindCoroutine = null;
+        }
+
+        _rebindCoroutine = StartCoroutine(RebindPlayerWithRetry());
+    }
+
+    /// <summary>
+    /// 切场景后延迟重绑玩家，兼容玩家对象稍晚初始化的时序。
+    /// </summary>
+    /// <returns>协程枚举器。</returns>
+    private IEnumerator RebindPlayerWithRetry()
+    {
+        UnbindPlayer();
+
+        for (int retryIndex = 0; retryIndex < MaxRebindRetryFrames; retryIndex++)
+        {
+            PlayerController player = FindPlayerController();
+            if (player != null)
+            {
+                BindPlayer(player);
+                _rebindCoroutine = null;
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        // 兜底：最终仍未找到玩家时保持 Follow 为空，防止镜头挂在旧目标上。
+        BindPlayer(null);
+        _rebindCoroutine = null;
+    }
+
+    /// <summary>
+    /// 统一查找当前场景玩家对象。
+    /// </summary>
+    /// <returns>查找到的 PlayerController，找不到返回 null。</returns>
+    private static PlayerController FindPlayerController()
+    {
+#if UNITY_2023_1_OR_NEWER
+        return FindFirstObjectByType<PlayerController>();
+#else
+        return FindObjectOfType<PlayerController>();
+#endif
+    }
+
+    /// <summary>
+    /// 更新虚拟相机 Follow 目标，确保跨场景后跟随目标始终指向当前玩家。
+    /// </summary>
+    /// <param name="target">新的跟随目标。</param>
+    private void UpdateCameraFollowTarget(Transform target)
+    {
+        if (playerCamera == null)
+        {
+            return;
+        }
+
+        playerCamera.Follow = target;
     }
 
     /// <summary>

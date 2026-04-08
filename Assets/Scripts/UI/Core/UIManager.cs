@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -9,6 +10,9 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class UIManager : MonoBehaviour
 {
+    private const int MinSlotIndex = 0; // 合法存档槽位下限。
+    private const int NoPendingLoadSlot = -1; // 无待处理读档请求标记。
+    private const string GamePlaySceneName = "GamePlay"; // 目标玩法场景名。
     public static UIManager Instance { get; private set; }
 
     [Header("核心子管理器")]
@@ -23,6 +27,8 @@ public class UIManager : MonoBehaviour
     public EventSystem eventSystem;
     /// <summary> 当前是否为游戏内场景（用于 Esc 只在实际游戏中触发暂停）。 </summary>
     private bool isInGameScene;
+    // 场景切换完成后待执行的读档槽位。
+    private int _pendingLoadSlot = NoPendingLoadSlot;
 
     /// <summary>
     /// 初始化 HUD：从当前场景找到 HUDManager 并显示。进入游戏场景后由 SceneLoader 或 RefreshManagersByScene 调用。
@@ -39,6 +45,16 @@ public class UIManager : MonoBehaviour
     public void LoadGamePlay()
     {
         SceneLoader.Instance.LoadScene("GamePlay");
+    }
+
+    /// <summary>
+    /// 先切换到 GamePlay，再在场景就绪后执行读档。
+    /// </summary>
+    /// <param name="slotIndex">读档槽位编号。</param>
+    public void LoadGamePlayFromSave(int slotIndex)
+    {
+        _pendingLoadSlot = Mathf.Max(slotIndex, MinSlotIndex);
+        LoadGamePlay();
     }
 
     /// <summary>
@@ -153,6 +169,31 @@ public class UIManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         RefreshManagersByScene(scene);
+        TryExecutePendingLoad(scene);
+    }
+
+    /// <summary>
+    /// 若存在待处理读档请求，则在目标场景加载后执行。
+    /// </summary>
+    /// <param name="scene">刚加载完成的场景。</param>
+    private async void TryExecutePendingLoad(Scene scene)
+    {
+        if (_pendingLoadSlot < MinSlotIndex)
+        {
+            return;
+        }
+
+        if (scene.name != GamePlaySceneName)
+        {
+            return;
+        }
+
+        int slotToLoad = _pendingLoadSlot;
+        _pendingLoadSlot = NoPendingLoadSlot;
+
+        // 等一帧，确保场景对象完成 Awake/注册后再恢复状态。
+        await Task.Yield();
+        await SaveManager.Instance.Load(slotToLoad);
     }
 
     /// <summary>
