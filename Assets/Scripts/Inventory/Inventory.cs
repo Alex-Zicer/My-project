@@ -226,4 +226,19 @@ public class Inventory : MonoBehaviour
 
         return totalCount;
     }
+
+    /// <summary>
+    /// 使用读档结果整体替换背包数据，并触发一次刷新事件。
+    /// </summary>
+    /// <param name="newItems">新的背包条目列表。</param>
+    public void ReplaceAllItems(List<InventoryItem> newItems)
+    {
+        items.Clear();
+        if (newItems != null)
+        {
+            items.AddRange(newItems);
+        }
+
+        OnInventoryChanged?.Invoke();
+    }
 }

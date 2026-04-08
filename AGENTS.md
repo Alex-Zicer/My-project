@@ -13,10 +13,11 @@
 - **MCP 使用规范**: 可通过 Unity MCP 创建/修改脚本、场景中的 GameObject。但**严禁**修改 `ProjectSettings/` 和 `Packages/` 目录下的任何文件。
 - **目录结构**: 新建脚本必须放在 `Assets/Scripts/` 下，并按功能模块分类（如 `Player/`, `UI/`, `Managers/`）。
 - **命名规范**:
-  - 公共字段/属性: `PascalCase` (例如 `PlayerSpeed`)
+  - 公共字段/属性: `pascalCase` (例如 `playerSpeed`)
   - 私有字段: `_camelCase` (例如 `_currentHealth`)
   - 方法: `PascalCase` (例如 `TakeDamage()`)
-- **代码注释**: 使用中文进行注释，为所有 public 方法和复杂逻辑添加 `/// <summary>` XML 注释，所有变量字段使用`//`进行注释。
+- **代码注释**: 使用中文进行注释，为所有 public 方法和复杂逻辑添加 `/// <summary>` XML 注释，所有变量字段使用`//`进行注释，函数中重要逻辑使用`//`进行注释。
+- **编码格式**:生成的脚本文件必须是UTF-8 with BOM。
 
 ## 4. C# 编码规范
 - 避免在 `Update()` 方法中进行高开销操作，如 `GameObject.Find()` 或复杂计算。
