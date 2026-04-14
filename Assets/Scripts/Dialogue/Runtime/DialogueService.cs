@@ -3,24 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Runtime dialogue service that drives dialogue flow and UI interaction.
 public class DialogueService : MonoBehaviour
 {
-    // Singleton instance.
+    // 单例实例引用。
     private static DialogueService _instance;
 
     [Header("Typing Settings")]
-    // Characters shown per second while typing.
     [SerializeField] private float charactersPerSecond = 40f;
 
-    // Whether singleton already exists.
+    // HasInstance 状态开关。
     public static bool HasInstance => _instance != null;
 
-    // Singleton access point.
     public static DialogueService Instance
     {
         get
         {
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
             if (_instance == null)
             {
                 CreateInstance();
@@ -30,53 +28,53 @@ public class DialogueService : MonoBehaviour
         }
     }
 
-    // Whether dialogue flow is currently running.
+    // IsRunning 状态开关。
     public bool IsRunning => _state != DialogueRunState.Idle;
 
-    // Raised when dialogue starts.
+    // OnDialogueStarted 事件。
     public event Action OnDialogueStarted;
 
-    // Raised when dialogue ends.
+    // OnDialogueEnded 事件。
     public event Action OnDialogueEnded;
 
-    // Dialogue data provider registry.
+    // _providerRegistry 组件或配置引用。
     private DialogueProviderRegistry _providerRegistry;
 
-    // Bound dialogue view.
+    // _view 运行时字段。
     private IDialogueView _view;
 
-    // Current dialogue graph.
+    // _graph 运行时字段。
     private DialogueGraph _graph;
 
-    // Current node in graph.
+    // _currentNode 运行时字段。
     private DialogueNodeData _currentNode;
 
-    // Runtime state.
+    // _state 运行时字段。
     private DialogueRunState _state = DialogueRunState.Idle;
 
-    // Active typing coroutine.
+    // _typingCoroutine 运行时字段。
     private Coroutine _typingCoroutine;
 
-    // Full text line currently being typed.
+    // _fullLine 运行时字段。
     private string _fullLine = string.Empty;
 
-    // Skip typing flag requested by player input.
+    // _skipTypingRequested 运行时字段。
     private bool _skipTypingRequested;
 
-    // Whether player input was locked by this service.
+    // _hasLockedInput 状态开关。
     private bool _hasLockedInput;
 
-    // Re-entrancy guard for end flow.
+    // _isEnding 状态开关。
     private bool _isEnding;
 
-    // Route context used for completion callback.
+    // _activeRouteResult 运行时字段。
     private DialogueRouteResult _activeRouteResult;
 
-    // Pending route context captured before graph start.
+    // _pendingRouteResult 运行时字段。
     private DialogueRouteResult _pendingRouteResult;
 
     /// <summary>
-    /// Creates singleton instance on demand.
+    /// 创建单例实例并设置为跨场景持久对象。
     /// </summary>
     private static void CreateInstance()
     {
@@ -86,7 +84,7 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Ensures singleton uniqueness and initializes registry.
+    /// 初始化组件并确保运行时状态有效。
     /// </summary>
     private void Awake()
     {
@@ -102,7 +100,7 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Clears singleton reference and unbinds view events.
+    /// 清理实例引用与事件绑定，防止悬挂回调。
     /// </summary>
     private void OnDestroy()
     {
@@ -115,9 +113,8 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Binds dialogue view and subscribes its input events.
+    /// 绑定视图并注册输入事件。
     /// </summary>
-    /// <param name="view">Dialogue view implementation.</param>
     public void BindView(IDialogueView view)
     {
         if (ReferenceEquals(_view, view))
@@ -131,9 +128,8 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Unbinds dialogue view. Ends running dialogue if needed.
+    /// 解绑视图并取消输入事件注册。
     /// </summary>
-    /// <param name="view">Dialogue view implementation.</param>
     public void UnbindView(IDialogueView view)
     {
         if (!ReferenceEquals(_view, view))
@@ -144,6 +140,7 @@ public class DialogueService : MonoBehaviour
         UnsubscribeViewEvents(_view);
         _view = null;
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (IsRunning && !_isEnding)
         {
             EndDialogue();
@@ -151,40 +148,37 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Starts dialogue from reference without route context.
+    /// 启动对话流程并进入起始节点。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <returns>True when dialogue starts successfully.</returns>
     public bool StartDialogue(DialogueReference reference)
     {
         return StartDialogue(reference, null);
     }
 
     /// <summary>
-    /// Starts dialogue from reference with route context.
+    /// 启动对话流程并进入起始节点。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <param name="routeResult">Route context for completion callback.</param>
-    /// <returns>True when dialogue starts successfully.</returns>
     public bool StartDialogue(DialogueReference reference, DialogueRouteResult routeResult)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (IsRunning)
         {
             return false;
         }
 
-        // Do not start dialogue when gameplay is paused.
         if (UIManager.Instance != null && UIManager.Instance.InGamePage != null && UIManager.Instance.InGamePage.IsPause)
         {
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (reference == null)
         {
             Debug.LogWarning("[DialogueService] Cannot start dialogue: reference is null.");
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (_providerRegistry == null)
         {
             _providerRegistry = new DialogueProviderRegistry();
@@ -207,20 +201,20 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Starts dialogue directly from an already built graph.
+    /// 启动对话流程并进入起始节点。
     /// </summary>
-    /// <param name="graph">Dialogue graph.</param>
-    /// <returns>True when dialogue starts successfully.</returns>
     public bool StartDialogue(DialogueGraph graph)
     {
         DialogueRouteResult routeContext = _pendingRouteResult;
         _pendingRouteResult = null;
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (IsRunning)
         {
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (graph == null)
         {
             Debug.LogWarning("[DialogueService] Cannot start dialogue: graph is null.");
@@ -242,15 +236,23 @@ public class DialogueService : MonoBehaviour
         OpenDialoguePage();
 
         OnDialogueStarted?.Invoke();
-        EnterNodeById(_graph.StartNodeId);
+
+        string startNodeId = routeContext?.StartNodeId;
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (string.IsNullOrWhiteSpace(startNodeId))
+        {
+            startNodeId = _graph.StartNodeId;
+        }
+        EnterNodeById(startNodeId);
         return true;
     }
 
     /// <summary>
-    /// Ends dialogue and clears runtime state.
+    /// 结束当前对话并回收运行时状态。
     /// </summary>
     public void EndDialogue()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (!IsRunning || _isEnding)
         {
             return;
@@ -292,10 +294,8 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Ensures a dialogue view is available.
+    /// 确保当前场景中存在可用的对话视图。
     /// </summary>
-    /// <param name="error">Error message output.</param>
-    /// <returns>True when view is ready.</returns>
     private bool EnsureView(out string error)
     {
         if (_view != null)
@@ -304,9 +304,9 @@ public class DialogueService : MonoBehaviour
             return true;
         }
 
-        // Auto-discover any component that implements IDialogueView.
         MonoBehaviour[] allBehaviours =
             FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        // 遍历集合并逐项处理当前业务。
         for (int i = 0; i < allBehaviours.Length; i++)
         {
             MonoBehaviour behaviour = allBehaviours[i];
@@ -317,6 +317,7 @@ public class DialogueService : MonoBehaviour
             }
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (_view == null)
         {
             error = "No IDialogueView implementation found in current scene.";
@@ -328,11 +329,11 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Enters target node and refreshes speaker/content.
+    /// 切换到指定节点并刷新说话人与文本。
     /// </summary>
-    /// <param name="nodeId">Target node id.</param>
     private void EnterNodeById(string nodeId)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (_graph == null || !_graph.TryGetNode(nodeId, out DialogueNodeData node))
         {
             Debug.LogWarning($"[DialogueService] Missing node '{nodeId}', ending dialogue.");
@@ -347,9 +348,8 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Starts typing flow for one line.
+    /// 开始当前文本的打字机播放。
     /// </summary>
-    /// <param name="line">Line content.</param>
     private void BeginTyping(string line)
     {
         StopTypingCoroutine();
@@ -362,9 +362,8 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Coroutine that reveals text over time.
+    /// 按打字机速度逐步输出文本内容。
     /// </summary>
-    /// <returns>Enumerator instance.</returns>
     private IEnumerator TypeLineRoutine()
     {
         if (string.IsNullOrEmpty(_fullLine))
@@ -384,12 +383,10 @@ public class DialogueService : MonoBehaviour
         {
             if (_skipTypingRequested)
             {
-                // Fast-forward current line when player requests next during typing.
                 visible = total;
             }
             else
             {
-                // Use unscaled time to keep speed stable under timeScale changes.
                 timer += Time.unscaledDeltaTime;
                 while (timer >= interval && visible < total)
                 {
@@ -408,10 +405,11 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles state transition after typing completes.
+    /// 文本播放完成后切换到下一交互状态。
     /// </summary>
     private void OnTypingCompleted()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (_currentNode == null)
         {
             EndDialogue();
@@ -423,6 +421,7 @@ public class DialogueService : MonoBehaviour
         {
             _state = DialogueRunState.WaitingChoice;
             var vm = new List<DialogueChoiceViewModel>(_currentNode.choices.Count);
+            // 遍历集合并逐项处理当前业务。
             for (int i = 0; i < _currentNode.choices.Count; i++)
             {
                 DialogueChoiceData choice = _currentNode.choices[i];
@@ -437,10 +436,11 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles next action request from view layer.
+    /// 响应继续输入并推进对话流程。
     /// </summary>
     private void HandleNextRequested()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (!IsRunning)
         {
             return;
@@ -461,16 +461,17 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles choice selection from view layer.
+    /// 处理选项点击并跳转目标节点。
     /// </summary>
-    /// <param name="choiceIndex">Selected choice index.</param>
     private void HandleChoiceSelected(int choiceIndex)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (!IsRunning || _state != DialogueRunState.WaitingChoice || _currentNode == null)
         {
             return;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (_currentNode.choices == null || choiceIndex < 0 || choiceIndex >= _currentNode.choices.Count)
         {
             Debug.LogWarning($"[DialogueService] Invalid choice index: {choiceIndex}");
@@ -479,6 +480,7 @@ public class DialogueService : MonoBehaviour
 
         DialogueChoiceData choice = _currentNode.choices[choiceIndex];
         _view?.ClearChoices();
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (choice == null || string.IsNullOrWhiteSpace(choice.nextNodeId))
         {
             EndDialogue();
@@ -489,10 +491,11 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Advances to next linear node or ends dialogue.
+    /// 按线性后继节点推进对话。
     /// </summary>
     private void AdvanceToNextNode()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (_currentNode == null)
         {
             EndDialogue();
@@ -505,6 +508,7 @@ public class DialogueService : MonoBehaviour
             return;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(_currentNode.nextNodeId))
         {
             EndDialogue();
@@ -515,7 +519,7 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Opens dialogue page.
+    /// 打开对话页面容器。
     /// </summary>
     private void OpenDialoguePage()
     {
@@ -533,7 +537,7 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Closes dialogue page.
+    /// 关闭对话页面容器。
     /// </summary>
     private void CloseDialoguePage()
     {
@@ -551,12 +555,12 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Enables or disables player input.
+    /// 启用或禁用玩家控制输入。
     /// </summary>
-    /// <param name="enabled">Whether input should be enabled.</param>
     private void SetPlayerInputEnabled(bool enabled)
     {
         PlayerController player = FindFirstObjectByType<PlayerController>();
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (player == null)
         {
             return;
@@ -566,7 +570,7 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Stops active typing coroutine safely.
+    /// 安全停止当前打字协程。
     /// </summary>
     private void StopTypingCoroutine()
     {
@@ -578,11 +582,11 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Subscribes view events.
+    /// 订阅视图层输入事件。
     /// </summary>
-    /// <param name="view">Dialogue view.</param>
     private void SubscribeViewEvents(IDialogueView view)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (view == null)
         {
             return;
@@ -593,11 +597,11 @@ public class DialogueService : MonoBehaviour
     }
 
     /// <summary>
-    /// Unsubscribes view events.
+    /// 取消订阅视图层输入事件。
     /// </summary>
-    /// <param name="view">Dialogue view.</param>
     private void UnsubscribeViewEvents(IDialogueView view)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (view == null)
         {
             return;

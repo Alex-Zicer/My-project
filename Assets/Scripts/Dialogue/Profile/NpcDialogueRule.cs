@@ -1,48 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 
+/// <summary>
+/// NPC 对话规则：包含优先级、条件与对应对话引用。
+/// </summary>
 [Serializable]
-// Rule item inside an NPC dialogue profile.
 public class NpcDialogueRule
 {
-    // Rule identifier.
+    // ruleId 标识。
     public string ruleId = "rule";
 
-    // Whether this rule is enabled.
+    // enabled 运行时字段。
     public bool enabled = true;
 
-    // Higher value means higher priority.
+    // priority 运行时字段。
     public int priority;
 
-    // Condition combiner mode.
-    public DialogueConditionMode conditionMode = DialogueConditionMode.All;
-
-    // Condition list.
+    // 命中此规则所需满足的布尔条件列表。
     public List<DialogueCondition> conditions = new List<DialogueCondition>();
 
-    // First-time dialogue reference.
-    public DialogueReference firstDialogueReference = new DialogueReference();
+    // 规则命中后要播放的对话引用。
+    public DialogueReference dialogueReference = new DialogueReference();
 
-    // First dialogue repeat policy when repeat reference is not configured.
-    public DialogueRepeatPolicy firstRepeatPolicy = DialogueRepeatPolicy.Once;
-
-    // Repeat dialogue reference.
-    public DialogueReference repeatDialogueReference = new DialogueReference();
-
-    // Repeat dialogue repeat policy.
-    public DialogueRepeatPolicy repeatRepeatPolicy = DialogueRepeatPolicy.Repeatable;
-
-    // State mutations applied after first dialogue completion.
-    public List<DialogueStateMutation> onFirstCompleted = new List<DialogueStateMutation>();
-
-    // State mutations applied after repeat dialogue completion.
-    public List<DialogueStateMutation> onRepeatCompleted = new List<DialogueStateMutation>();
+    // 对话完成后要执行的状态写回列表。
+    public List<DialogueStateMutation> onCompleted = new List<DialogueStateMutation>();
 
     /// <summary>
-    /// Evaluates whether current game state matches this rule.
+    /// 判断当前规则是否满足状态条件。
     /// </summary>
-    /// <param name="stateReader">State reader.</param>
-    /// <returns>True when rule matches.</returns>
     public bool IsMatch(IDialogueGameStateReader stateReader)
     {
         if (!enabled)
@@ -50,47 +35,28 @@ public class NpcDialogueRule
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (conditions == null || conditions.Count == 0)
         {
             return true;
         }
 
-        bool hasEvaluatedAny = false;
-        if (conditionMode == DialogueConditionMode.All)
-        {
-            for (int i = 0; i < conditions.Count; i++)
-            {
-                DialogueCondition condition = conditions[i];
-                if (condition == null || !condition.enabled)
-                {
-                    continue;
-                }
-
-                hasEvaluatedAny = true;
-                if (!condition.Evaluate(stateReader))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
+        // 遍历集合并逐项处理当前业务。
         for (int i = 0; i < conditions.Count; i++)
         {
             DialogueCondition condition = conditions[i];
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
             if (condition == null || !condition.enabled)
             {
                 continue;
             }
 
-            hasEvaluatedAny = true;
-            if (condition.Evaluate(stateReader))
+            if (!condition.Evaluate(stateReader))
             {
-                return true;
+                return false;
             }
         }
 
-        return !hasEvaluatedAny;
+        return true;
     }
 }

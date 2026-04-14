@@ -1,29 +1,26 @@
 ﻿using System.Collections.Generic;
 
-// Provider registry for dialogue data loading.
 public class DialogueProviderRegistry
 {
-    // Registered providers in resolution order.
+    // 已注册的数据提供器列表，按优先级顺序尝试加载。
     private readonly List<IDialogueProvider> _providers = new List<IDialogueProvider>();
 
     /// <summary>
-    /// Initializes registry with built-in providers.
+    /// 初始化默认数据提供器注册顺序（SO -> JSON -> CSV）。
     /// </summary>
     public DialogueProviderRegistry()
     {
-        // Default priority: SO, JSON, CSV.
         RegisterProvider(new SoDialogueProvider());
         RegisterProvider(new JsonDialogueProvider());
         RegisterProvider(new CsvDialogueProvider());
     }
 
     /// <summary>
-    /// Registers a provider.
+    /// 注册对话数据提供器。
     /// </summary>
-    /// <param name="provider">Provider instance.</param>
-    /// <param name="prepend">True to insert at the front.</param>
     public void RegisterProvider(IDialogueProvider provider, bool prepend = false)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (provider == null)
         {
             return;
@@ -40,12 +37,8 @@ public class DialogueProviderRegistry
     }
 
     /// <summary>
-    /// Tries to load dialogue from primary source, then optional fallback SO.
+    /// 尝试加载对话数据并输出对话图。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <param name="graph">Loaded graph output.</param>
-    /// <param name="error">Error message output.</param>
-    /// <returns>True when any load path succeeds.</returns>
     public bool TryLoad(DialogueReference reference, out DialogueGraph graph, out string error)
     {
         if (TryLoadInternal(reference, out graph, out error))
@@ -53,7 +46,6 @@ public class DialogueProviderRegistry
             return true;
         }
 
-        // If primary source fails, try fallback SO if configured.
         if (reference != null && reference.fallbackSO != null)
         {
             var fallbackReference = DialogueReference.FromSo(reference.fallbackSO);
@@ -74,17 +66,14 @@ public class DialogueProviderRegistry
     }
 
     /// <summary>
-    /// Tries to load dialogue by iterating matching providers.
+    /// 遍历匹配的提供器执行加载。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <param name="graph">Loaded graph output.</param>
-    /// <param name="error">Error message output.</param>
-    /// <returns>True when one provider succeeds.</returns>
     private bool TryLoadInternal(DialogueReference reference, out DialogueGraph graph, out string error)
     {
         graph = null;
         error = string.Empty;
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (reference == null)
         {
             error = "DialogueReference is null.";
@@ -92,9 +81,11 @@ public class DialogueProviderRegistry
         }
 
         bool handledByAnyProvider = false;
+        // 遍历集合并逐项处理当前业务。
         for (int i = 0; i < _providers.Count; i++)
         {
             IDialogueProvider provider = _providers[i];
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
             if (provider == null || !provider.CanHandle(reference))
             {
                 continue;

@@ -2,71 +2,59 @@
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
-// 2D dialogue trigger for player interaction and optional profile routing.
 public class DialogueTrigger : MonoBehaviour
 {
     [Header("Dialogue Config (Routing)")]
-    // Whether profile routing is enabled.
     [SerializeField] private bool useProfileRouting = true;
 
-    // NPC id used by router/progress store.
     [SerializeField] private string npcId = "npc_001";
 
-    // Dialogue profile for routing mode.
     [SerializeField] private NpcDialogueProfileSO dialogueProfile;
 
     [Header("Dialogue Config (Legacy)")]
-    // Direct dialogue reference when routing is disabled.
     [SerializeField] private DialogueReference dialogueReference = new DialogueReference();
 
-    // One-shot flag in legacy mode.
     [SerializeField] private bool oneShot;
 
     [Header("Interaction")]
-    // Interaction key.
     [SerializeField] private KeyCode interactKey = KeyCode.E;
 
-    // Interaction anchor transform.
     [SerializeField] private Transform interactOrigin;
 
-    // Trigger collider zone.
     [SerializeField] private BoxCollider2D triggerZone;
 
     [Header("Hint (Optional)")]
-    // Root object for interaction hint.
     [SerializeField] private GameObject interactHintRoot;
 
-    // Whether hint follows interaction anchor.
     [SerializeField] private bool followInteractOrigin = true;
 
-    // Hint position offset.
     [SerializeField] private Vector3 hintOffset = new Vector3(0f, 2f, 0f);
 
-    // Hint text format. {0} is key name.
     [SerializeField] private string hintFormat = "[{0}] Interact";
 
-    // Hint TMP text.
     [SerializeField] private TMP_Text hintText;
 
-    // Legacy one-shot runtime flag.
+    // _hasTriggered 状态开关。
     private bool _hasTriggered;
 
-    // Whether player is inside trigger range.
+    // _playerInRange 运行时字段。
     private bool _playerInRange;
 
-    // Current hint visibility cache.
+    // _hintVisible 运行时字段。
     private bool _hintVisible;
 
     /// <summary>
-    /// Initializes trigger references and hint state.
+    /// 初始化组件并确保运行时状态有效。
     /// </summary>
     private void Awake()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (interactOrigin == null)
         {
             interactOrigin = transform;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (triggerZone == null)
         {
             triggerZone = GetComponent<BoxCollider2D>();
@@ -82,7 +70,7 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Resets hint state on enable.
+    /// 组件启用时重置必要状态并注册依赖。
     /// </summary>
     private void OnEnable()
     {
@@ -90,7 +78,7 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Clears range state and hint on disable.
+    /// 组件停用时清理临时状态并解除依赖。
     /// </summary>
     private void OnDisable()
     {
@@ -99,7 +87,7 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles interaction input and dialogue start.
+    /// 处理每帧输入与状态推进逻辑。
     /// </summary>
     private void Update()
     {
@@ -151,9 +139,8 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Checks whether profile routing can be used.
+    /// 判断是否启用基于 Profile 的路由模式。
     /// </summary>
-    /// <returns>True when routing config is valid.</returns>
     private bool IsUsingProfileRouting()
     {
         if (!useProfileRouting)
@@ -161,6 +148,7 @@ public class DialogueTrigger : MonoBehaviour
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (dialogueProfile == null)
         {
             return false;
@@ -170,9 +158,8 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Resolves route by profile and starts dialogue.
+    /// 通过 Profile 路由解析并启动对话。
     /// </summary>
-    /// <returns>True when dialogue starts successfully.</returns>
     private bool TryStartByProfile()
     {
         if (!DialogueRouterService.Instance.TryResolve(npcId, dialogueProfile, out DialogueRouteResult route, out string error))
@@ -185,9 +172,8 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Marks player as in range.
+    /// 玩家进入触发区域时标记可交互状态。
     /// </summary>
-    /// <param name="other">Trigger collider.</param>
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other != null && other.CompareTag("Player"))
@@ -197,9 +183,8 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Marks player as out of range.
+    /// 玩家离开触发区域时清理交互状态。
     /// </summary>
-    /// <param name="other">Trigger collider.</param>
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other != null && other.CompareTag("Player"))
@@ -210,12 +195,11 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets hint visibility with cached state.
+    /// 设置交互提示显隐状态。
     /// </summary>
-    /// <param name="visible">Target visibility.</param>
-    /// <param name="force">Whether to force update.</param>
     private void SetHintVisible(bool visible, bool force = false)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (interactHintRoot == null)
         {
             return;
@@ -236,10 +220,11 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Updates hint world position.
+    /// 刷新交互提示在世界空间的位置。
     /// </summary>
     private void RefreshHintTransform()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (interactHintRoot == null || !followInteractOrigin)
         {
             return;
@@ -249,16 +234,18 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Refreshes hint label text.
+    /// 刷新交互提示文本。
     /// </summary>
     private void RefreshHintText()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (hintText == null)
         {
             return;
         }
 
         string keyName = interactKey.ToString().ToUpperInvariant();
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(hintFormat))
         {
             hintText.text = keyName;
@@ -271,15 +258,17 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Keeps serialized references valid in editor.
+    /// 在编辑器参数变更时校正序列化配置。
     /// </summary>
     private void OnValidate()
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (interactOrigin == null)
         {
             interactOrigin = transform;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (triggerZone == null)
         {
             triggerZone = GetComponent<BoxCollider2D>();
@@ -290,6 +279,7 @@ public class DialogueTrigger : MonoBehaviour
             triggerZone.isTrigger = true;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(npcId))
         {
             npcId = gameObject != null ? gameObject.name : "npc_001";
@@ -299,11 +289,12 @@ public class DialogueTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// Draws trigger bounds for scene debugging.
+    /// 在场景视图绘制触发区域辅助线框。
     /// </summary>
     private void OnDrawGizmosSelected()
     {
         BoxCollider2D zone = triggerZone != null ? triggerZone : GetComponent<BoxCollider2D>();
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (zone == null)
         {
             return;

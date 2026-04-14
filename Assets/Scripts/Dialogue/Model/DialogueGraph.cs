@@ -5,60 +5,54 @@ using UnityEngine;
 [Serializable]
 public class DialogueChoiceData
 {
-    // Choice text shown to player.
+    // choiceText 组件或配置引用。
     public string choiceText;
 
-    // Target node id after selection.
+    // nextNodeId 标识。
     public string nextNodeId;
 }
 
 [Serializable]
 public class DialogueNodeData
 {
-    // Unique node id.
+    // nodeId 标识。
     public string nodeId;
 
-    // Speaker name.
+    // speakerName 运行时字段。
     public string speakerName;
 
-    // Speaker portrait.
+    // speakerPortrait 运行时字段。
     public Sprite speakerPortrait;
 
     [TextArea]
-    // Dialogue content text.
+    // content 运行时字段。
     public string content;
 
-    // Next node id for linear flow.
+    // nextNodeId 标识。
     public string nextNodeId;
 
-    // Whether this is an end node.
+    // isEndNode 状态开关。
     public bool isEndNode;
 
-    // Branch choice list.
+    // 当前节点可选分支列表。
     public List<DialogueChoiceData> choices = new List<DialogueChoiceData>();
 }
 
-// Runtime dialogue graph model.
 public class DialogueGraph
 {
-    // Dialogue identifier.
     public string DialogueId { get; }
 
-    // Start node id.
     public string StartNodeId { get; }
 
-    // Node map.
+    // 节点字典，键为节点 ID。
     private readonly Dictionary<string, DialogueNodeData> _nodes;
 
-    // Read-only node dictionary.
+    // 只读节点视图，供外部查询节点内容。
     public IReadOnlyDictionary<string, DialogueNodeData> Nodes => _nodes;
 
     /// <summary>
-    /// Creates a dialogue graph.
+    /// 构建对话图并缓存节点映射。
     /// </summary>
-    /// <param name="dialogueId">Dialogue identifier.</param>
-    /// <param name="startNodeId">Start node id.</param>
-    /// <param name="nodes">Node map.</param>
     public DialogueGraph(string dialogueId, string startNodeId, Dictionary<string, DialogueNodeData> nodes)
     {
         DialogueId = dialogueId;
@@ -67,13 +61,11 @@ public class DialogueGraph
     }
 
     /// <summary>
-    /// Tries to get one node by id.
+    /// 按节点 ID 尝试获取节点数据。
     /// </summary>
-    /// <param name="nodeId">Node id.</param>
-    /// <param name="node">Node output.</param>
-    /// <returns>True when node exists.</returns>
     public bool TryGetNode(string nodeId, out DialogueNodeData node)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(nodeId))
         {
             node = null;

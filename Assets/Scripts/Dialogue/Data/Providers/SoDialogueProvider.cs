@@ -1,36 +1,31 @@
 ﻿using System.Collections.Generic;
 
-// ScriptableObject dialogue data provider.
 public class SoDialogueProvider : IDialogueProvider
 {
     /// <summary>
-    /// Checks whether this provider can handle the input reference.
+    /// 判断提供器是否支持该数据源引用。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <returns>True when source type is SO.</returns>
     public bool CanHandle(DialogueReference reference)
     {
         return reference != null && reference.sourceType == DialogueSourceType.So;
     }
 
     /// <summary>
-    /// Loads a dialogue graph from a ScriptableObject source.
+    /// 尝试加载对话数据并输出对话图。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <param name="graph">Loaded graph output.</param>
-    /// <param name="error">Error message output.</param>
-    /// <returns>True when load and validation both succeed.</returns>
     public bool TryLoad(DialogueReference reference, out DialogueGraph graph, out string error)
     {
         graph = null;
         error = string.Empty;
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (reference == null)
         {
             error = "DialogueReference is null.";
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (reference.primarySO == null)
         {
             error = "Source type is SO but primarySO is not assigned.";
@@ -38,16 +33,17 @@ public class SoDialogueProvider : IDialogueProvider
         }
 
         DialogueDataSO so = reference.primarySO;
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (so.nodes == null || so.nodes.Count == 0)
         {
             error = $"Dialogue SO '{so.name}' has no node data.";
             return false;
         }
 
-        // Build node map and validate unique node ids.
         var nodeMap = new Dictionary<string, DialogueNodeData>();
         foreach (DialogueNodeData node in so.nodes)
         {
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
             if (node == null || string.IsNullOrWhiteSpace(node.nodeId))
             {
                 error = $"Dialogue SO '{so.name}' contains a node with empty nodeId.";
@@ -74,10 +70,8 @@ public class SoDialogueProvider : IDialogueProvider
     }
 
     /// <summary>
-    /// Deep-copies one dialogue node into runtime data.
+    /// 深拷贝节点数据，避免运行时污染源数据。
     /// </summary>
-    /// <param name="source">Source node.</param>
-    /// <returns>Cloned node.</returns>
     private static DialogueNodeData CloneNode(DialogueNodeData source)
     {
         var node = new DialogueNodeData
@@ -93,9 +87,11 @@ public class SoDialogueProvider : IDialogueProvider
 
         if (source.choices != null)
         {
+            // 遍历集合并逐项处理当前业务。
             for (int i = 0; i < source.choices.Count; i++)
             {
                 DialogueChoiceData choice = source.choices[i];
+                // 守卫条件：不满足时直接返回，避免进入无效流程。
                 if (choice == null)
                 {
                     continue;

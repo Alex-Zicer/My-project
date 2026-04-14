@@ -2,15 +2,14 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "DialogueData", menuName = "Data/Dialogue/DialogueData")]
-// ScriptableObject asset for dialogue graph data.
 public class DialogueDataSO : ScriptableObject
 {
-    // Dialogue identifier.
+    // dialogueId 标识。
     public string dialogueId = "dialogue_001";
 
-    // Start node id.
+    // startNodeId 标识。
     public string startNodeId = "start";
 
-    // Node list.
+    // 对话图中的节点列表。
     public List<DialogueNodeData> nodes = new List<DialogueNodeData>();
 }

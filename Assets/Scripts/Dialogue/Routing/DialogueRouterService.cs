@@ -1,99 +1,66 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-// Resolves dialogue route by NPC profile and current game state.
+/// <summary>
+/// 对话路由服务：根据 NPC、Profile 与当前剧情布尔状态， 解析本次交互应播放的对话入口（首次/重复），并在对话完成后写回进度与状态。
+/// </summary>
 public class DialogueRouterService : MonoBehaviour
 {
-    // Rule + original index pair for stable sorting.
+    /// <summary>
+    /// 规则排序缓存项：保存规则本体与其原始索引。 原始索引用于在同优先级下保持稳定顺序。
+    /// </summary>
     private sealed class RuleEntry
     {
-        // Rule instance.
+        // Rule 运行时字段。
         public NpcDialogueRule Rule;
-
-        // Original index in source list.
+        // Index 运行时字段。
         public int Index;
     }
 
-    // Null object for safe state reads when no state service is available.
+    /// <summary>
+    /// 空状态读取器：当未接入状态服务时，提供安全的默认读行为。
+    /// </summary>
     private sealed class NullGameStateReader : IDialogueGameStateReader
     {
+        // 空读取器单例，避免重复分配。
         public static readonly NullGameStateReader Instance = new NullGameStateReader();
 
-        /// <summary>
-        /// Checks whether a key exists.
-        /// </summary>
-        /// <param name="key">State key.</param>
-        /// <returns>Always false.</returns>
-        public bool HasKey(string key)
-        {
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to read a bool value.
-        /// </summary>
-        /// <param name="key">State key.</param>
-        /// <param name="value">Read output.</param>
-        /// <returns>Always false.</returns>
-        public bool TryGetBool(string key, out bool value)
-        {
-            value = false;
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to read an int value.
-        /// </summary>
-        /// <param name="key">State key.</param>
-        /// <param name="value">Read output.</param>
-        /// <returns>Always false.</returns>
-        public bool TryGetInt(string key, out int value)
-        {
-            value = 0;
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to read a string value.
-        /// </summary>
-        /// <param name="key">State key.</param>
-        /// <param name="value">Read output.</param>
-        /// <returns>Always false.</returns>
-        public bool TryGetString(string key, out string value)
-        {
-            value = string.Empty;
-            return false;
-        }
+        public bool HasKey(string key) => false;
+        public bool TryGetBool(string key, out bool value) { value = false; return false; }
     }
 
-    // Singleton instance.
+    // 单例实例引用。
     private static DialogueRouterService _instance;
 
-    // Dialogue progress store.
+    // 对话进度存储（默认内存实现，可被外部注入替换）。
     private IDialogueProgressStore _progressStore = new DialogueMemoryProgressStore();
 
-    // Reused rule buffer to reduce allocations.
+    // 规则排序缓存，避免每次解析产生临时集合。
     private readonly List<RuleEntry> _ruleBuffer = new List<RuleEntry>();
 
-    // Whether singleton already exists.
+    /// <summary>
+    /// 当前场景中是否已经存在路由服务实例。
+    /// </summary>
     public static bool HasInstance => _instance != null;
 
-    // Singleton access point.
+    /// <summary>
+    /// 单例访问入口；若不存在则自动创建。
+    /// </summary>
     public static DialogueRouterService Instance
     {
         get
         {
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
             if (_instance == null)
             {
                 CreateInstance();
             }
-
             return _instance;
         }
     }
 
     /// <summary>
-    /// Creates singleton instance on demand.
+    /// 延迟创建路由服务单例并跨场景保留。
     /// </summary>
     private static void CreateInstance()
     {
@@ -103,7 +70,7 @@ public class DialogueRouterService : MonoBehaviour
     }
 
     /// <summary>
-    /// Ensures singleton uniqueness.
+    /// 保证场景中只保留一个路由服务实例。
     /// </summary>
     private void Awake()
     {
@@ -118,7 +85,7 @@ public class DialogueRouterService : MonoBehaviour
     }
 
     /// <summary>
-    /// Clears singleton reference when destroyed.
+    /// 销毁时清理单例引用。
     /// </summary>
     private void OnDestroy()
     {
@@ -129,27 +96,18 @@ public class DialogueRouterService : MonoBehaviour
     }
 
     /// <summary>
-    /// Injects a custom dialogue progress store.
+    /// 注入自定义进度存储实现（例如持久化存档）。
     /// </summary>
-    /// <param name="progressStore">Store implementation.</param>
     public void SetProgressStore(IDialogueProgressStore progressStore)
     {
-        if (progressStore == null)
-        {
-            return;
-        }
-
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (progressStore == null) return;
         _progressStore = progressStore;
     }
 
     /// <summary>
-    /// Resolves which dialogue should play for a given NPC and profile.
+    /// 根据 NPC 与 Profile 解析本次应播放的对话路由结果。 解析顺序：按优先级规则匹配，若未命中则尝试默认对话。
     /// </summary>
-    /// <param name="npcId">NPC identifier.</param>
-    /// <param name="profile">Dialogue profile.</param>
-    /// <param name="routeResult">Route result output.</param>
-    /// <param name="error">Error message output.</param>
-    /// <returns>True when a playable route is found.</returns>
     public bool TryResolve(
         string npcId,
         NpcDialogueProfileSO profile,
@@ -159,15 +117,17 @@ public class DialogueRouterService : MonoBehaviour
         routeResult = null;
         error = string.Empty;
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(npcId))
         {
-            error = "npcId is empty.";
+            error = "npcId 为空。";
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (profile == null)
         {
-            error = $"NPC '{npcId}' has no dialogue profile.";
+            error = $"NPC '{npcId}' 未配置 NpcDialogueProfile。";
             return false;
         }
 
@@ -175,20 +135,14 @@ public class DialogueRouterService : MonoBehaviour
         IDialogueGameStateReader stateReader = GetStateReader();
         BuildSortedRules(profile.rules);
 
-        // Walk sorted rules and return first playable route.
+        // 按优先级从高到低遍历，命中第一条可用规则即返回。
         for (int i = 0; i < _ruleBuffer.Count; i++)
         {
             RuleEntry entry = _ruleBuffer[i];
             NpcDialogueRule rule = entry.Rule;
-            if (rule == null || !rule.enabled)
-            {
-                continue;
-            }
-
-            if (!rule.IsMatch(stateReader))
-            {
-                continue;
-            }
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
+            if (rule == null || !rule.enabled) continue;
+            if (!rule.IsMatch(stateReader)) continue;
 
             string ruleId = ResolveRuleId(rule, entry.Index);
             if (TryResolveFromRule(npcId, profileId, ruleId, rule, out routeResult))
@@ -197,26 +151,25 @@ public class DialogueRouterService : MonoBehaviour
             }
         }
 
+        // 未命中任何规则时，尝试默认对话配置。
         if (TryResolveDefault(npcId, profileId, profile, out routeResult))
         {
             return true;
         }
 
-        error = $"NPC '{npcId}' did not match any playable dialogue in profile '{profileId}'.";
+        error = $"NPC '{npcId}' 未命中可播放对话，请检查 Profile '{profileId}' 的规则配置。";
         return false;
     }
 
     /// <summary>
-    /// Applies progress and state mutations after a dialogue is completed.
+    /// 对话结束后写回进度并应用状态变更。
     /// </summary>
-    /// <param name="routeResult">Completed route result.</param>
     public void NotifyDialogueCompleted(DialogueRouteResult routeResult)
     {
-        if (routeResult == null || !routeResult.IsValid)
-        {
-            return;
-        }
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (routeResult == null || !routeResult.IsValid) return;
 
+        // 记录首次/重复播放进度，供下次路由判断。
         switch (routeResult.Phase)
         {
             case DialogueRoutePhase.First:
@@ -228,18 +181,13 @@ public class DialogueRouterService : MonoBehaviour
                 break;
         }
 
+        // 应用规则配置的状态写回项。
         ApplyMutations(routeResult.CompletionMutations);
     }
 
     /// <summary>
-    /// Resolves first/repeat route from one rule.
+    /// 依据单条规则构造路由结果。 首次播放使用 firstStartNodeId，非首次播放使用 repeatStartNodeId。
     /// </summary>
-    /// <param name="npcId">NPC identifier.</param>
-    /// <param name="profileId">Profile identifier.</param>
-    /// <param name="ruleId">Rule identifier.</param>
-    /// <param name="rule">Rule data.</param>
-    /// <param name="routeResult">Route result output.</param>
-    /// <returns>True when this rule yields a playable route.</returns>
     private bool TryResolveFromRule(
         string npcId,
         string profileId,
@@ -248,65 +196,41 @@ public class DialogueRouterService : MonoBehaviour
         out DialogueRouteResult routeResult)
     {
         routeResult = null;
-        bool firstPlayed = _progressStore.HasPlayedFirst(npcId, profileId, ruleId);
 
-        if (!firstPlayed && IsReferenceConfigured(rule.firstDialogueReference))
+        if (!IsReferenceConfigured(rule.dialogueReference))
         {
-            routeResult = DialogueRouteResult.Create(
-                npcId,
-                profileId,
-                ruleId,
-                DialogueRoutePhase.First,
-                rule.firstDialogueReference,
-                rule.onFirstCompleted);
-            return true;
+            return false;
         }
 
-        if (IsReferenceConfigured(rule.repeatDialogueReference))
-        {
-            bool repeatPlayed = _progressStore.HasPlayedRepeat(npcId, profileId, ruleId);
-            if (rule.repeatRepeatPolicy == DialogueRepeatPolicy.Once && repeatPlayed)
-            {
-                return false;
-            }
+        // 仅以“是否播过首次”区分当前阶段。
+        bool isFirstPlay = !_progressStore.HasPlayedFirst(npcId, profileId, ruleId);
 
-            routeResult = DialogueRouteResult.Create(
-                npcId,
-                profileId,
-                ruleId,
-                DialogueRoutePhase.Repeat,
-                rule.repeatDialogueReference,
-                rule.onRepeatCompleted);
-            return true;
+        // 根据阶段选择入口节点：首次 -> firstStartNodeId，重复 -> repeatStartNodeId。
+        string startNodeId = isFirstPlay
+            ? rule.dialogueReference.firstStartNodeId
+            : rule.dialogueReference.repeatStartNodeId;
+
+        // 若重复入口未配置，则回退到首次入口。
+        if (string.IsNullOrWhiteSpace(startNodeId))
+        {
+            startNodeId = rule.dialogueReference.firstStartNodeId;
         }
 
-        if (firstPlayed &&
-            rule.firstRepeatPolicy == DialogueRepeatPolicy.Repeatable &&
-            IsReferenceConfigured(rule.firstDialogueReference))
-        {
-            routeResult = DialogueRouteResult.Create(
-                npcId,
-                profileId,
-                ruleId,
-                DialogueRoutePhase.Repeat,
-                rule.firstDialogueReference,
-                rule.onRepeatCompleted != null && rule.onRepeatCompleted.Count > 0
-                    ? rule.onRepeatCompleted
-                    : rule.onFirstCompleted);
-            return true;
-        }
+        routeResult = DialogueRouteResult.Create(
+            npcId,
+            profileId,
+            ruleId,
+            isFirstPlay ? DialogueRoutePhase.First : DialogueRoutePhase.Repeat,
+            rule.dialogueReference,
+            startNodeId,
+            rule.onCompleted);
 
-        return false;
+        return true;
     }
 
     /// <summary>
-    /// Resolves fallback default dialogue from profile.
+    /// 当规则都未命中时，尝试解析 Profile 的默认对话。
     /// </summary>
-    /// <param name="npcId">NPC identifier.</param>
-    /// <param name="profileId">Profile identifier.</param>
-    /// <param name="profile">Profile data.</param>
-    /// <param name="routeResult">Route result output.</param>
-    /// <returns>True when default dialogue is playable.</returns>
     private bool TryResolveDefault(
         string npcId,
         string profileId,
@@ -314,21 +238,22 @@ public class DialogueRouterService : MonoBehaviour
         out DialogueRouteResult routeResult)
     {
         routeResult = null;
-        if (profile == null)
-        {
-            return false;
-        }
-
-        if (!IsReferenceConfigured(profile.defaultDialogueReference))
-        {
-            return false;
-        }
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (profile == null) return false;
+        if (!IsReferenceConfigured(profile.defaultDialogueReference)) return false;
 
         const string defaultRuleId = "__default__";
         bool firstPlayed = _progressStore.HasPlayedFirst(npcId, profileId, defaultRuleId);
-        if (firstPlayed && profile.defaultRepeatPolicy == DialogueRepeatPolicy.Once)
+
+        // 默认对话同样遵循首次/重复双入口。
+        string startNodeId = !firstPlayed
+            ? profile.defaultDialogueReference.firstStartNodeId
+            : profile.defaultDialogueReference.repeatStartNodeId;
+
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (string.IsNullOrWhiteSpace(startNodeId))
         {
-            return false;
+            startNodeId = profile.defaultDialogueReference.firstStartNodeId;
         }
 
         routeResult = DialogueRouteResult.Create(
@@ -337,31 +262,32 @@ public class DialogueRouterService : MonoBehaviour
             defaultRuleId,
             firstPlayed ? DialogueRoutePhase.Repeat : DialogueRoutePhase.Default,
             profile.defaultDialogueReference,
+            startNodeId,
             System.Array.Empty<DialogueStateMutation>());
+
         return true;
     }
 
     /// <summary>
-    /// Applies state mutations from route completion.
+    /// 执行路由结果携带的状态写回列表。
     /// </summary>
-    /// <param name="mutations">Mutation list.</param>
     private void ApplyMutations(IReadOnlyList<DialogueStateMutation> mutations)
     {
-        if (mutations == null || mutations.Count == 0)
-        {
-            return;
-        }
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (mutations == null || mutations.Count == 0) return;
 
         IDialogueGameStateWriter writer = DialogueGameStateService.HasInstance
             ? DialogueGameStateService.Instance
             : null;
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (writer == null)
         {
-            Debug.LogWarning("[DialogueRouterService] Mutations exist but DialogueGameStateService is missing.");
+            Debug.LogWarning("[DialogueRouterService] 有状态写回配置，但未找到 DialogueGameStateService。");
             return;
         }
 
+        // 遍历集合并逐项处理当前业务。
         for (int i = 0; i < mutations.Count; i++)
         {
             DialogueStateMutation mutation = mutations[i];
@@ -370,39 +296,30 @@ public class DialogueRouterService : MonoBehaviour
     }
 
     /// <summary>
-    /// Gets state reader, with null-object fallback.
+    /// 获取状态读取器；未接入状态服务时回退到空读取器。
     /// </summary>
-    /// <returns>State reader instance.</returns>
     private IDialogueGameStateReader GetStateReader()
     {
-        if (DialogueGameStateService.HasInstance)
-        {
-            return DialogueGameStateService.Instance;
-        }
-
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (DialogueGameStateService.HasInstance) return DialogueGameStateService.Instance;
         return NullGameStateReader.Instance;
     }
 
     /// <summary>
-    /// Sorts rules by priority desc and source order asc.
+    /// 按优先级对规则进行稳定排序。 同优先级下保持配置列表中的原顺序。
     /// </summary>
-    /// <param name="rules">Rule list from profile.</param>
     private void BuildSortedRules(List<NpcDialogueRule> rules)
     {
         _ruleBuffer.Clear();
-        if (rules == null || rules.Count == 0)
-        {
-            return;
-        }
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (rules == null || rules.Count == 0) return;
 
+        // 遍历集合并逐项处理当前业务。
         for (int i = 0; i < rules.Count; i++)
         {
             NpcDialogueRule rule = rules[i];
-            if (rule == null)
-            {
-                continue;
-            }
-
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
+            if (rule == null) continue;
             _ruleBuffer.Add(new RuleEntry
             {
                 Rule = rule,
@@ -413,53 +330,33 @@ public class DialogueRouterService : MonoBehaviour
         _ruleBuffer.Sort((a, b) =>
         {
             int p = b.Rule.priority.CompareTo(a.Rule.priority);
-            if (p != 0)
-            {
-                return p;
-            }
-
+            if (p != 0) return p;
             return a.Index.CompareTo(b.Index);
         });
     }
 
     /// <summary>
-    /// Resolves stable rule identifier.
+    /// 解析规则 ID：优先使用配置的 ruleId，未配置时使用稳定回退 ID。
     /// </summary>
-    /// <param name="rule">Rule object.</param>
-    /// <param name="index">Rule fallback index.</param>
-    /// <returns>Rule id.</returns>
     private static string ResolveRuleId(NpcDialogueRule rule, int index)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (rule != null && !string.IsNullOrWhiteSpace(rule.ruleId))
         {
             return rule.ruleId.Trim();
         }
-
         return "rule_" + index;
     }
 
     /// <summary>
-    /// Checks whether at least one source is configured on the reference.
+    /// 判断对话引用是否至少配置了一个可加载来源。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <returns>True when source info is present.</returns>
     private static bool IsReferenceConfigured(DialogueReference reference)
     {
-        if (reference == null)
-        {
-            return false;
-        }
-
-        if (reference.primarySO != null)
-        {
-            return true;
-        }
-
-        if (reference.fallbackSO != null)
-        {
-            return true;
-        }
-
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
+        if (reference == null) return false;
+        if (reference.primarySO != null) return true;
+        if (reference.fallbackSO != null) return true;
         return !string.IsNullOrWhiteSpace(reference.keyOrPath);
     }
 }

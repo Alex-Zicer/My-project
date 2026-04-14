@@ -1,33 +1,11 @@
-﻿// Comparison mode used by dialogue conditions.
+﻿using System;
+
+/// <summary>
+/// 布尔条件比较方式枚举。
+/// </summary>
 public enum DialogueConditionComparison
 {
-    // Equal to expected value.
-    Equals,
-
-    // Not equal to expected value.
-    NotEquals,
-
-    // Greater than expected value.
-    Greater,
-
-    // Greater than or equal to expected value.
-    GreaterOrEqual,
-
-    // Less than expected value.
-    Less,
-
-    // Less than or equal to expected value.
-    LessOrEqual,
-
-    // Current bool is true.
     IsTrue,
 
-    // Current bool is false.
-    IsFalse,
-
-    // Key exists in state.
-    Exists,
-
-    // Key does not exist in state.
-    NotExists
+    IsFalse
 }

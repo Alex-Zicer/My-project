@@ -51,7 +51,7 @@
 
 可在其他系统中设置状态，例如：
 1. `DialogueGameStateService.Instance.SetBool("quest.main_001.started", true);`
-2. `DialogueGameStateService.Instance.SetInt("chapter", 2);`
+2. `DialogueGameStateService.Instance.SetBool("chapter_2_unlocked", true);`
 
 ## 5) 典型需求配置示例
 “特殊阶段首播完整剧情，后续只重复关键提示”：

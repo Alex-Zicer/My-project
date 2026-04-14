@@ -3,79 +3,73 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-// JSON dialogue data provider.
 public class JsonDialogueProvider : IDialogueProvider
 {
     [Serializable]
     private class DialogueJsonDocument
     {
-        // Dialogue identifier.
+        // dialogueId 标识。
         public string dialogueId;
 
-        // Start node identifier.
+        // startNodeId 标识。
         public string startNodeId;
 
-        // Node array payload.
+        // nodes 运行时字段。
         public DialogueJsonNode[] nodes;
     }
 
     [Serializable]
     private class DialogueJsonNode
     {
-        // Node identifier.
+        // nodeId 标识。
         public string nodeId;
 
-        // Speaker display name.
+        // speakerName 运行时字段。
         public string speakerName;
 
-        // Portrait resource path in Resources.
+        // portraitResourcePath 运行时字段。
         public string portraitResourcePath;
 
-        // Content text.
+        // content 运行时字段。
         public string content;
 
-        // Linear next node id.
+        // nextNodeId 标识。
         public string nextNodeId;
 
-        // End node flag.
+        // isEndNode 状态开关。
         public bool isEndNode;
 
-        // Choice payload.
+        // choices 运行时字段。
         public DialogueJsonChoice[] choices;
     }
 
     [Serializable]
     private class DialogueJsonChoice
     {
-        // Choice text.
+        // choiceText 组件或配置引用。
         public string choiceText;
 
-        // Choice target node id.
+        // nextNodeId 标识。
         public string nextNodeId;
     }
 
     /// <summary>
-    /// Checks whether this provider can handle the input reference.
+    /// 判断提供器是否支持该数据源引用。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <returns>True when source type is JSON.</returns>
     public bool CanHandle(DialogueReference reference)
     {
         return reference != null && reference.sourceType == DialogueSourceType.Json;
     }
 
     /// <summary>
-    /// Loads a JSON dialogue file and converts it into a dialogue graph.
+    /// 尝试加载对话数据并输出对话图。
     /// </summary>
-    /// <param name="reference">Dialogue reference.</param>
-    /// <param name="graph">Loaded graph output.</param>
-    /// <param name="error">Error message output.</param>
-    /// <returns>True when load and validation both succeed.</returns>
     public bool TryLoad(DialogueReference reference, out DialogueGraph graph, out string error)
     {
         graph = null;
         error = string.Empty;
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (reference == null)
         {
             error = "DialogueReference is null.";
@@ -83,6 +77,7 @@ public class JsonDialogueProvider : IDialogueProvider
         }
 
         string path = ResolvePath(reference.keyOrPath);
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(path))
         {
             error = "Source type is JSON but keyOrPath is empty.";
@@ -117,16 +112,17 @@ public class JsonDialogueProvider : IDialogueProvider
             return false;
         }
 
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (document == null || document.nodes == null || document.nodes.Length == 0)
         {
             error = $"JSON '{path}' has no node data.";
             return false;
         }
 
-        // Build node map and validate unique node ids.
         var nodeMap = new Dictionary<string, DialogueNodeData>();
         foreach (DialogueJsonNode jsonNode in document.nodes)
         {
+            // 守卫条件：不满足时直接返回，避免进入无效流程。
             if (jsonNode == null || string.IsNullOrWhiteSpace(jsonNode.nodeId))
             {
                 error = $"JSON '{path}' contains a node with empty nodeId.";
@@ -153,10 +149,8 @@ public class JsonDialogueProvider : IDialogueProvider
     }
 
     /// <summary>
-    /// Converts one JSON node payload into runtime node data.
+    /// 将外部节点数据转换为运行时节点。
     /// </summary>
-    /// <param name="jsonNode">JSON node payload.</param>
-    /// <returns>Converted runtime node.</returns>
     private static DialogueNodeData ConvertNode(DialogueJsonNode jsonNode)
     {
         var node = new DialogueNodeData
@@ -172,9 +166,11 @@ public class JsonDialogueProvider : IDialogueProvider
 
         if (jsonNode.choices != null)
         {
+            // 遍历集合并逐项处理当前业务。
             for (int i = 0; i < jsonNode.choices.Length; i++)
             {
                 DialogueJsonChoice jsonChoice = jsonNode.choices[i];
+                // 守卫条件：不满足时直接返回，避免进入无效流程。
                 if (jsonChoice == null)
                 {
                     continue;
@@ -192,12 +188,11 @@ public class JsonDialogueProvider : IDialogueProvider
     }
 
     /// <summary>
-    /// Tries to load a portrait from the Resources path.
+    /// 按资源路径加载角色头像精灵。
     /// </summary>
-    /// <param name="resourcePath">Resource path under Resources.</param>
-    /// <returns>Loaded sprite or null.</returns>
     private static Sprite TryLoadPortrait(string resourcePath)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(resourcePath))
         {
             return null;
@@ -207,12 +202,11 @@ public class JsonDialogueProvider : IDialogueProvider
     }
 
     /// <summary>
-    /// Resolves keyOrPath to an absolute file path.
+    /// 将配置路径解析为可访问的绝对路径。
     /// </summary>
-    /// <param name="keyOrPath">Configured key or path.</param>
-    /// <returns>Absolute path or empty string.</returns>
     private static string ResolvePath(string keyOrPath)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(keyOrPath))
         {
             return string.Empty;

@@ -1,26 +1,24 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// NPC 对话配置：维护规则列表与默认对话。
+/// </summary>
 [CreateAssetMenu(fileName = "NpcDialogueProfile", menuName = "Data/Dialogue/NpcDialogueProfile")]
-// NPC dialogue profile containing rules and default fallback.
 public class NpcDialogueProfileSO : ScriptableObject
 {
-    // Profile identifier. Falls back to asset name when empty.
+    // profileId 标识。
     public string profileId = "npc_profile";
 
-    // Rule list.
+    // 按优先级匹配的规则列表。
     public List<NpcDialogueRule> rules = new List<NpcDialogueRule>();
 
-    // Default dialogue reference when no rule matches.
+    // 未命中任何规则时使用的默认对话引用。
     public DialogueReference defaultDialogueReference = new DialogueReference();
 
-    // Repeat policy for default dialogue.
-    public DialogueRepeatPolicy defaultRepeatPolicy = DialogueRepeatPolicy.Repeatable;
-
     /// <summary>
-    /// Gets stable profile id.
+    /// 获取可用的 Profile 标识。
     /// </summary>
-    /// <returns>Configured profile id or asset name.</returns>
     public string GetProfileId()
     {
         return string.IsNullOrWhiteSpace(profileId) ? name : profileId;

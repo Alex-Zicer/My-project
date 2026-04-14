@@ -1,7 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-// 瀵硅瘽鏉ユ簮绫诲瀷锛?// So/Json/Csv 琛ㄧず鍐呯疆鏀寔鐨勬暟鎹簮锛孋ustom 棰勭暀缁欓」鐩嚜瀹氫箟 Provider銆?
+/// <summary>
+/// DialogueSourceType 枚举定义。
+/// </summary>
 public enum DialogueSourceType
 {
     So,
@@ -10,32 +12,43 @@ public enum DialogueSourceType
     Custom
 }
 
+/// <summary>
+/// 对话引用配置：描述来源与首次/重复入口节点。
+/// </summary>
 [Serializable]
 public class DialogueReference
 {
-    // 褰撳墠寮曠敤浣跨敤鐨勬暟鎹簮绫诲瀷銆?
+    // sourceType 运行时字段。
     public DialogueSourceType sourceType = DialogueSourceType.So;
 
-    // 涓?SO 璧勬簮锛氬綋 sourceType=So 鏃剁敱 SoDialogueProvider 浣跨敤銆?
+    // primarySO 运行时字段。
     public DialogueDataSO primarySO;
 
-    // 澶栭儴鏁版嵁閿?璺緞锛?    // Json/Csv 妯″紡涓嬪彲濉浉瀵硅矾寰勶紙鐩稿 StreamingAssets锛夋垨缁濆璺緞銆?
+    // keyOrPath 运行时字段。
     public string keyOrPath;
 
-    // 鍥為€€ SO锛氫富鏉ユ簮鍔犺浇澶辫触鏃讹紝娉ㄥ唽琛ㄤ細灏濊瘯浣跨敤璇ヨ祫婧愬厹搴曘€?
+    // fallbackSO 运行时字段。
     public DialogueDataSO fallbackSO;
 
-    // 渚挎嵎鏋勯€狅細蹇€熶粠 SO 鐢熸垚涓€涓彲鐩存帴杩愯鐨勫紩鐢ㄥ璞°€?
+    [Header("起始节点")]
+    [Tooltip("首次播放时的起始节点，为空则使用对话图默认起始节点")]
+    // firstStartNodeId 标识。
+    public string firstStartNodeId;
+
+    [Tooltip("重复播放时的起始节点，为空则使用 firstStartNodeId")]
+    // repeatStartNodeId 标识。
+    public string repeatStartNodeId;
+
     /// <summary>
-    /// FromSo。
+    /// 从 ScriptableObject 快速构造对话引用。
     /// </summary>
-    /// <param name="so">参数。</param>
-    public static DialogueReference FromSo(DialogueDataSO so)
+    public static DialogueReference FromSo(DialogueDataSO so, string startNodeId = null)
     {
         return new DialogueReference
         {
             sourceType = DialogueSourceType.So,
-            primarySO = so
+            primarySO = so,
+            firstStartNodeId = startNodeId
         };
     }
 }

@@ -1,55 +1,36 @@
 ﻿using System;
 
+/// <summary>
+/// 对话完成后的状态写回配置。
+/// </summary>
 [Serializable]
-// State write-back entry applied after dialogue completion.
 public class DialogueStateMutation
 {
-    // Target key to write.
+    // key 运行时字段。
     public string key;
 
-    // Target value type.
-    public DialogueConditionValueType valueType = DialogueConditionValueType.Bool;
-
-    // Bool value when valueType is Bool.
-    public bool boolValue = true;
-
-    // Int value when valueType is Int.
-    public int intValue;
-
-    // String value when valueType is String.
-    public string stringValue = string.Empty;
+    // value 运行时字段。
+    public bool value;
 
     /// <summary>
-    /// Checks whether this mutation is configured.
+    /// 判断状态写回项是否配置完整。
     /// </summary>
-    /// <returns>True when key is valid.</returns>
     public bool IsConfigured()
     {
         return !string.IsNullOrWhiteSpace(key);
     }
 
     /// <summary>
-    /// Applies this mutation into a game-state writer.
+    /// 将状态写回项应用到状态写入器。
     /// </summary>
-    /// <param name="stateWriter">State writer.</param>
     public void Apply(IDialogueGameStateWriter stateWriter)
     {
+        // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (stateWriter == null || !IsConfigured())
         {
             return;
         }
 
-        switch (valueType)
-        {
-            case DialogueConditionValueType.Bool:
-                stateWriter.SetBool(key, boolValue);
-                break;
-            case DialogueConditionValueType.Int:
-                stateWriter.SetInt(key, intValue);
-                break;
-            case DialogueConditionValueType.String:
-                stateWriter.SetString(key, stringValue ?? string.Empty);
-                break;
-        }
+        stateWriter.SetBool(key, value);
     }
 }
