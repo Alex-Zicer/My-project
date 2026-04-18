@@ -4,6 +4,8 @@ using System;
 
 public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 {
+    private const float InitialHealthValue = 5f; // 分段血条初始生命值（1 格 = 1 血）。
+
     [Header("数据引用")]
     [SerializeField] private PlayerData playerData;
     [SerializeField] private WeaponData defaultWeapon;
@@ -71,8 +73,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
         //初始化玩家血量
         health = GetComponent<Health>();
-        health.maxHealth = playerData.maxHealth;
-        health.currentHealth = health.maxHealth;
+        health.SetMaxHealth(InitialHealthValue, true);
 
         //初始化状态机
         InitializeStateMachine();

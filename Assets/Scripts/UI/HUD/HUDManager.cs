@@ -7,7 +7,10 @@ using UnityEngine;
 /// </summary>
 public class HUDManager : MonoBehaviour
 {
-    [SerializeField] private CanvasGroup hudCanvasGroup;
+    [SerializeField] private CanvasGroup hudCanvasGroup; // HUD 根节点 CanvasGroup。
+    public bool IsHUDActive { get; private set; } // 当前 HUD 显隐状态。
+
+    public System.Action<bool> OnHUDActiveChanged; // HUD 显隐变化事件。
 
     /// <summary>
     /// 设置 HUD 整体显示或隐藏。用于进入主菜单/剧情时隐藏，进入游戏时显示。
@@ -17,9 +20,14 @@ public class HUDManager : MonoBehaviour
     {
         if (hudCanvasGroup != null)
         {
+            // 统一控制可见性、交互和射线响应。
             hudCanvasGroup.alpha = isActive ? 1 : 0;
             hudCanvasGroup.blocksRaycasts = isActive;
             hudCanvasGroup.interactable = isActive;
         }
+
+        // 同步状态并广播给各 HUD 子模块（血条/能量/货币等）。
+        IsHUDActive = isActive;
+        OnHUDActiveChanged?.Invoke(isActive);
     }
 }
