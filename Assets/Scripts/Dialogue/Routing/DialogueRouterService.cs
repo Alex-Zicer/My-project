@@ -276,14 +276,13 @@ public class DialogueRouterService : MonoBehaviour
         // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (mutations == null || mutations.Count == 0) return;
 
-        IDialogueGameStateWriter writer = DialogueGameStateService.HasInstance
-            ? DialogueGameStateService.Instance
-            : null;
+        // 按需获取状态服务实例，保证写回链路可用。
+        DialogueGameStateService gameStateService = DialogueGameStateService.Instance;
 
         // 守卫条件：不满足时直接返回，避免进入无效流程。
-        if (writer == null)
+        if (gameStateService == null)
         {
-            Debug.LogWarning("[DialogueRouterService] 有状态写回配置，但未找到 DialogueGameStateService。");
+            Debug.LogWarning("[DialogueRouterService] 有状态写回配置，但状态服务实例为空，写回已跳过。");
             return;
         }
 
@@ -291,7 +290,7 @@ public class DialogueRouterService : MonoBehaviour
         for (int i = 0; i < mutations.Count; i++)
         {
             DialogueStateMutation mutation = mutations[i];
-            mutation?.Apply(writer);
+            mutation?.Apply(gameStateService);
         }
     }
 
@@ -300,9 +299,8 @@ public class DialogueRouterService : MonoBehaviour
     /// </summary>
     private IDialogueGameStateReader GetStateReader()
     {
-        // 守卫条件：不满足时直接返回，避免进入无效流程。
-        if (DialogueGameStateService.HasInstance) return DialogueGameStateService.Instance;
-        return NullGameStateReader.Instance;
+        // 按需获取状态服务实例，保证规则条件读取与写回一致。
+        return DialogueGameStateService.Instance;
     }
 
     /// <summary>

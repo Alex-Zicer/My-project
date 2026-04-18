@@ -21,6 +21,12 @@ public class DialogueGameStateService : MonoBehaviour, IDialogueGameStateReader,
             {
                 CreateInstance();
             }
+
+            if (_instance == null)
+            {
+                Debug.LogError("[DialogueGameStateService] 无法创建状态服务实例。");
+            }
+
             return _instance;
         }
     }
@@ -30,9 +36,26 @@ public class DialogueGameStateService : MonoBehaviour, IDialogueGameStateReader,
     /// </summary>
     private static void CreateInstance()
     {
+        // 优先复用场景里已有实例，避免重复创建。
+        DialogueGameStateService existing =
+            FindFirstObjectByType<DialogueGameStateService>(FindObjectsInactive.Include);
+        if (existing != null)
+        {
+            _instance = existing;
+            DontDestroyOnLoad(existing.gameObject);
+            return;
+        }
+
         var go = new GameObject("DialogueGameStateService");
         _instance = go.AddComponent<DialogueGameStateService>();
-        DontDestroyOnLoad(go);
+        if (_instance != null)
+        {
+            DontDestroyOnLoad(go);
+            return;
+        }
+
+        Debug.LogError("[DialogueGameStateService] AddComponent 失败，状态服务未创建。");
+        Object.Destroy(go);
     }
 
     /// <summary>

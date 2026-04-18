@@ -18,9 +18,16 @@ public class InGamePageManager : BasePageManager
     [Header("Dialogue")]
     [SerializeField] private string dialoguePageKey = "DialoguePage";
 
+    // 背包页面的 PageKey（需与 UIPage 配置一致）。
+    [Header("Bag")]
+    [SerializeField] private string bagPageKey = "BagPage";
+
     // 当前是否处于暂停状态。
     // true: 游戏暂停；false: 游戏运行。
     public bool IsPause { get; private set; }
+    // 背包页输入锁标记：true 表示当前由“背包页面”触发了输入禁用。
+    // 用于防止重复 Disable/Enable，并在离开背包时按条件恢复输入。
+    private bool _hasLockedInputByBag;
 
     private void Reset()
     {
@@ -32,8 +39,37 @@ public class InGamePageManager : BasePageManager
     {
         // 初始化时确保游戏恢复到正常运行态，防止场景重载后残留暂停状态。
         IsPause = false;
+        _hasLockedInputByBag = false;
         Time.timeScale = 1;
         base.Initialize();
+    }
+
+    /// <summary>
+    /// 跳转页面后同步背包输入锁状态，确保通过任意入口打开背包都能禁用玩家输入。
+    /// </summary>
+    /// <param name="pageName">目标页面 Key。</param>
+    public override void GoToPageByName(string pageName)
+    {
+        base.GoToPageByName(pageName);
+        SyncBagInputLock();
+    }
+
+    /// <summary>
+    /// 返回上一页后同步背包输入锁状态。
+    /// </summary>
+    public override void Back()
+    {
+        base.Back();
+        SyncBagInputLock();
+    }
+
+    /// <summary>
+    /// 关闭当前页后同步背包输入锁状态。
+    /// </summary>
+    public override void CloseCurrentPage()
+    {
+        base.CloseCurrentPage();
+        SyncBagInputLock();
     }
 
     // 暂停开关入口：
@@ -103,17 +139,42 @@ public class InGamePageManager : BasePageManager
         player.SetInputEnabled(enabled);
     }
 
+    // 根据当前页面同步背包输入锁：
+    // 在背包页时锁输入；离开背包页时仅在非暂停、非对话状态下恢复输入。
+    private void SyncBagInputLock()
+    {
+        // 当前页面是背包页：仅在首次进入时执行一次输入禁用。
+        bool shouldLock = CurrentPageKey == bagPageKey;
+        if (shouldLock)
+        {
+            if (_hasLockedInputByBag) return;
+            _hasLockedInputByBag = true;
+            SetPlayerInputEnabled(false);
+            return;
+        }
+
+        // 当前不在背包页：若此前由背包加过锁，则尝试释放该锁。
+        if (!_hasLockedInputByBag) return;
+        _hasLockedInputByBag = false;
+
+        // 仅当不存在“暂停/对话”这两类更高优先级锁时，才恢复玩家输入。
+        if (!IsPause && !IsDialogueRunning())
+        {
+            SetPlayerInputEnabled(true);
+        }
+    }
+
     private void Update()
     {
         // 对话运行期间屏蔽背包热键，避免与对话输入抢占。
         if (IsDialogueRunning()) return;
 
         // B 键切换背包：
-        // 当前已在背包页 -> 返回上一页；否则 -> 打开背包页。
+        // 当前已在背包页 -> 关闭当前页；否则 -> 打开背包页。
         if (Input.GetKeyDown(KeyCode.B))
         {
-            if (CurrentPageKey == "BagPage") Back();
-            else GoToPageByName("BagPage");
+            if (CurrentPageKey == bagPageKey) CloseCurrentPage();
+            else GoToPageByName(bagPageKey);
         }
     }
 

@@ -17,25 +17,24 @@ MonoBehaviour:
   - ruleId: main
     enabled: 1
     priority: 100
-    conditionMode: 0
-    conditions: []
-    firstDialogueReference:
+    conditions:
+    - enabled: 1
+      key: npc_001_met
+      comparison: 1
+    dialogueReference:
       sourceType: 0
       primarySO: {fileID: 11400000, guid: 64379373b20be5a4f96cfe3c5a330adc, type: 2}
       keyOrPath: 
-      fallbackSO: {fileID: 11400000, guid: 64379373b20be5a4f96cfe3c5a330adc, type: 2}
-    firstRepeatPolicy: 0
-    repeatDialogueReference:
-      sourceType: 0
-      primarySO: {fileID: 11400000, guid: 9ab1584f511022f4bb3063586caf72f0, type: 2}
-      keyOrPath: 
-      fallbackSO: {fileID: 11400000, guid: 9ab1584f511022f4bb3063586caf72f0, type: 2}
-    repeatRepeatPolicy: 1
-    onFirstCompleted: []
-    onRepeatCompleted: []
+      fallbackSO: {fileID: 0}
+      firstStartNodeId: 00
+      repeatStartNodeId: 02
+    onCompleted:
+    - key: npc_001_met
+      value: 1
   defaultDialogueReference:
     sourceType: 0
-    primarySO: {fileID: 0}
+    primarySO: {fileID: 11400000, guid: 9ab1584f511022f4bb3063586caf72f0, type: 2}
     keyOrPath: 
     fallbackSO: {fileID: 0}
-  defaultRepeatPolicy: 1
+    firstStartNodeId: 
+    repeatStartNodeId: 

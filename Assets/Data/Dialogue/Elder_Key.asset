@@ -18,7 +18,7 @@ MonoBehaviour:
   - nodeId: start
     speakerName: "\u6751\u957F"
     speakerPortrait: {fileID: -418520517, guid: aea9579e619a94b4cbca367e2187f98b, type: 3}
-    content: "\u7EE7\u7EED\u524D\u8FDB\u5427\uFF01"
+    content: "\u4F60\u597D\uFF01"
     nextNodeId: 
     isEndNode: 1
     choices: []

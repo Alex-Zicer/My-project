@@ -25,14 +25,14 @@ MonoBehaviour:
   - nodeId: 01
     speakerName: "\u6751\u957F"
     speakerPortrait: {fileID: -418520517, guid: aea9579e619a94b4cbca367e2187f98b, type: 3}
-    content: 
+    content: "\u6211\u662F\u6751\u957F\u3002"
     nextNodeId: 02
     isEndNode: 0
     choices: []
   - nodeId: 02
     speakerName: "\u6751\u957F"
     speakerPortrait: {fileID: -418520517, guid: aea9579e619a94b4cbca367e2187f98b, type: 3}
-    content: 
+    content: "\u7EE7\u7EED\u524D\u8FDB\u5427\uFF01"
     nextNodeId: 
     isEndNode: 1
     choices: []

@@ -69,7 +69,10 @@ public class SceneLoader : MonoBehaviour
         }
 
         _instance = this;
-        DontDestroyOnLoad(_instance.gameObject);
+        if (transform.parent == null)
+        {
+            DontDestroyOnLoad(_instance.gameObject);
+        }
 
         // 初始化加载幕布。
         if (fadeCanvasGroup != null)

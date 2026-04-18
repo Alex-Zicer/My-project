@@ -36,7 +36,11 @@ public class BagPageController : MonoBehaviour
             Inventory.Instance.OnInventoryChanged += Refresh;
 
         if (detailedPanel != null)
+        {
+            if (!detailedPanel.gameObject.activeSelf)
+                detailedPanel.gameObject.SetActive(true);
             detailedPanel.Hide();
+        }
         Refresh();
     }
 
