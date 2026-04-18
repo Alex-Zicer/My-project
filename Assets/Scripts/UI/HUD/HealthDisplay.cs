@@ -13,7 +13,6 @@ public class HealthDisplay : MonoBehaviour
     [SerializeField] private Transform maskRoot;                    // 血格父节点。
     [SerializeField] private HealthMaskCell maskCellPrefab;         // 单个血格预制体。
     [SerializeField] private int initialMaskCount = 5;              // 初始血格数量（1 格 = 1 血）。
-    [SerializeField] private bool forceInitialHealthAtStart = true; // 开局是否强制重置为初始血量。
 
     private readonly List<HealthMaskCell> _cells = new List<HealthMaskCell>(); // 已创建血格缓存。
     private float _lastCurrentHealth; // 上一次生命值（用于比较受伤/回血）。
@@ -23,7 +22,6 @@ public class HealthDisplay : MonoBehaviour
     {
         // 先补齐引用，再初始化数据与显示，避免空引用和初帧状态错误。
         ResolveReferences();
-        InitializeHealthValue();
         InitializeMasks();
         ForceSyncCellState(playerHealth != null ? playerHealth.currentHealth : 0f);
 
@@ -106,19 +104,6 @@ public class HealthDisplay : MonoBehaviour
         }
 
         PlayAppearForAllMasks();
-    }
-
-    /// <summary>
-    /// 初始化生命值：1 格 = 1 血，默认初始 5 格 5 血。
-    /// </summary>
-    private void InitializeHealthValue()
-    {
-        if (!forceInitialHealthAtStart || playerHealth == null)
-        {
-            return;
-        }
-
-        playerHealth.SetMaxHealth(initialMaskCount, true);
     }
 
     /// <summary>

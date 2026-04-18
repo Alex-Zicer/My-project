@@ -3,14 +3,17 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 /// <summary>
-/// 玩家存档组件：保存与恢复玩家位置和当前血量。
+/// 玩家存档组件：保存与恢复玩家位置、当前血量和当前金钱。
 /// </summary>
 public class PlayerStats : SaveableBehaviour
 {
     private const float MinHealthValue = 0f; // 血量下限。
+    private const int MinMoneyValue = 0;     // 金钱下限。
 
     // 玩家生命组件引用。
     [SerializeField] private Health _health;
+    // 玩家金钱组件引用。
+    [SerializeField] private Money _money;
 
     // 位置记录目标（默认使用当前 Transform）。
     [SerializeField] private Transform _targetTransform;
@@ -29,6 +32,9 @@ public class PlayerStats : SaveableBehaviour
 
         // 玩家当前血量。
         public float currentHealth;
+
+        // 玩家当前金钱。
+        public int currentMoney;
     }
 
     /// <summary>
@@ -46,6 +52,11 @@ public class PlayerStats : SaveableBehaviour
             _health = GetComponent<Health>();
         }
 
+        if (_money == null)
+        {
+            _money = GetComponent<Money>();
+        }
+
         base.Awake();
     }
 
@@ -57,13 +68,15 @@ public class PlayerStats : SaveableBehaviour
     {
         Vector3 position = _targetTransform != null ? _targetTransform.position : Vector3.zero;
         float healthValue = _health != null ? _health.currentHealth : MinHealthValue;
+        int moneyValue = _money != null ? _money.CurrentMoney : MinMoneyValue;
 
         return new PlayerState
         {
             posX = position.x,
             posY = position.y,
             posZ = position.z,
-            currentHealth = Mathf.Max(healthValue, MinHealthValue)
+            currentHealth = Mathf.Max(healthValue, MinHealthValue),
+            currentMoney = Mathf.Max(moneyValue, MinMoneyValue)
         };
     }
 
@@ -91,6 +104,13 @@ public class PlayerStats : SaveableBehaviour
             float restoredHealth = Mathf.Clamp(playerState.currentHealth, MinHealthValue, maxHealth);
             _health.currentHealth = restoredHealth;
             _health.OnHealthChanged?.Invoke(_health.currentHealth, _health.maxHealth);
+        }
+
+        if (_money != null)
+        {
+            int restoredMoney = Mathf.Max(playerState.currentMoney, MinMoneyValue);
+            // 通过组件入口恢复金钱，确保 UI 监听方收到 OnMoneyChanged 回调。
+            _money.SetMoney(restoredMoney);
         }
     }
 

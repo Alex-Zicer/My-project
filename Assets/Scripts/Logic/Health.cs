@@ -9,6 +9,9 @@ public class Health : MonoBehaviour
     public float currentHealth;   // 当前生命值。
 
     public System.Action<float, float> OnHealthChanged; // 生命变化事件：current, max。
+    public System.Action OnDeath; // 死亡事件（当前生命降至 0 时触发一次）。
+
+    private bool _hasDied; // 本轮生命周期内是否已触发过死亡。
 
     /// <summary>
     /// 更新血量
@@ -18,6 +21,12 @@ public class Health : MonoBehaviour
     {
         // 保护：无效伤害直接忽略。
         if (amount <= 0f)
+        {
+            return;
+        }
+
+        // 已死亡对象不再重复处理受伤逻辑。
+        if (_hasDied)
         {
             return;
         }
@@ -32,15 +41,14 @@ public class Health : MonoBehaviour
             currentHealth -= amount;
         }
 
-        // 如果是玩家就更新血条
-        if (gameObject.CompareTag("Player"))
-        {
-            OnHealthChanged?.Invoke(currentHealth, maxHealth);
-        }
+        // 广播生命值变化：由外部系统决定如何响应（UI、音效、状态切换等）。
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         if (currentHealth == 0)
         {
-            Die();
+            // 仅广播死亡事件；具体死亡效果由对象自身系统处理。
+            _hasDied = true;
+            OnDeath?.Invoke();
         }
     }
 
@@ -58,10 +66,13 @@ public class Health : MonoBehaviour
 
         // 回血上限不超过最大生命值。
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
-        if (gameObject.CompareTag("Player"))
+        if (currentHealth > 0f)
         {
-            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+            _hasDied = false;
         }
+
+        // 广播生命值变化：由外部系统决定如何响应（UI、音效、状态切换等）。
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
     /// <summary>
@@ -85,23 +96,10 @@ public class Health : MonoBehaviour
             currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         }
 
-        if (gameObject.CompareTag("Player"))
-        {
-            OnHealthChanged?.Invoke(currentHealth, maxHealth);
-        }
-    }
+        // 只要当前生命大于 0，就允许后续再次触发死亡事件。
+        _hasDied = currentHealth <= 0f;
 
-    /// <summary>
-    /// 血量为0时的死亡函数
-    /// </summary>
-    private void Die()
-    {
-        if (!gameObject.CompareTag("Player"))
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-        }
+        // 广播生命值变化：由外部系统决定如何响应（UI、音效、状态切换等）。
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 }
