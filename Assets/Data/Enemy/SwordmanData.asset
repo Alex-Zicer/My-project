@@ -19,9 +19,10 @@ MonoBehaviour:
   patrolWaitTime: 1.5
   chaseSpeed: 2
   chaseRange: 3
-  attackDamage: 10
+  attackDamage: 5
   attackRange: 0.5
   attackExitRange: 1.5
   attackRate: 0.5
+  attackHitSfxEvent: {fileID: 0}
   hurtDuration: 0.76
   knockbackForce: 1
