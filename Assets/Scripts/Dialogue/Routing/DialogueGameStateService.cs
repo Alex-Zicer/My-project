@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(DialogueGameStateSaveable))]
 public class DialogueGameStateService : MonoBehaviour, IDialogueGameStateReader, IDialogueGameStateWriter
 {
     // 单例实例引用。
@@ -29,6 +30,12 @@ public class DialogueGameStateService : MonoBehaviour, IDialogueGameStateReader,
 
             return _instance;
         }
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void InitializeOnLoad()
+    {
+        _ = Instance;
     }
 
     /// <summary>
@@ -70,6 +77,7 @@ public class DialogueGameStateService : MonoBehaviour, IDialogueGameStateReader,
         }
 
         _instance = this;
+        EnsureSaveableComponent();
         DontDestroyOnLoad(gameObject);
     }
 
@@ -126,5 +134,48 @@ public class DialogueGameStateService : MonoBehaviour, IDialogueGameStateReader,
         // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(key)) return;
         _boolStates.Remove(key);
+    }
+
+    /// <summary>
+    /// 获取全部剧情布尔状态快照，用于存档序列化。
+    /// </summary>
+    public Dictionary<string, bool> GetAllBoolStates()
+    {
+        return new Dictionary<string, bool>(_boolStates);
+    }
+
+    /// <summary>
+    /// 使用外部快照覆盖全部剧情布尔状态。
+    /// </summary>
+    public void ReplaceAllBoolStates(IReadOnlyDictionary<string, bool> states)
+    {
+        _boolStates.Clear();
+        if (states == null || states.Count == 0)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<string, bool> pair in states)
+        {
+            if (string.IsNullOrWhiteSpace(pair.Key))
+            {
+                continue;
+            }
+
+            _boolStates[pair.Key] = pair.Value;
+        }
+    }
+
+    /// <summary>
+    /// 确保持久化组件已挂载到状态服务对象上。
+    /// </summary>
+    private void EnsureSaveableComponent()
+    {
+        if (GetComponent<DialogueGameStateSaveable>() != null)
+        {
+            return;
+        }
+
+        gameObject.AddComponent<DialogueGameStateSaveable>();
     }
 }

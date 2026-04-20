@@ -62,6 +62,34 @@ public class DialogueMemoryProgressStore : IDialogueProgressStore
     }
 
     /// <summary>
+    /// 获取首次对话进度键快照，用于存档序列化。
+    /// </summary>
+    public List<string> GetFirstPlayedKeys()
+    {
+        return new List<string>(_firstPlayed);
+    }
+
+    /// <summary>
+    /// 获取重复对话进度键快照，用于存档序列化。
+    /// </summary>
+    public List<string> GetRepeatPlayedKeys()
+    {
+        return new List<string>(_repeatPlayed);
+    }
+
+    /// <summary>
+    /// 使用外部快照覆盖当前全部进度数据。
+    /// </summary>
+    public void ReplaceAll(IReadOnlyList<string> firstPlayedKeys, IReadOnlyList<string> repeatPlayedKeys)
+    {
+        _firstPlayed.Clear();
+        _repeatPlayed.Clear();
+
+        AddKeys(_firstPlayed, firstPlayedKeys);
+        AddKeys(_repeatPlayed, repeatPlayedKeys);
+    }
+
+    /// <summary>
     /// 拼接 NPC、Profile 与规则的进度键。
     /// </summary>
     private static string BuildKey(string npcId, string profileId, string ruleId)
@@ -95,6 +123,28 @@ public class DialogueMemoryProgressStore : IDialogueProgressStore
         for (int i = 0; i < toRemove.Count; i++)
         {
             set.Remove(toRemove[i]);
+        }
+    }
+
+    /// <summary>
+    /// 将快照键集合写回目标集合。
+    /// </summary>
+    private static void AddKeys(HashSet<string> target, IReadOnlyList<string> keys)
+    {
+        if (target == null || keys == null || keys.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < keys.Count; i++)
+        {
+            string key = keys[i];
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                continue;
+            }
+
+            target.Add(key);
         }
     }
 }

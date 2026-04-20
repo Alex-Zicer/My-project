@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class DialoguePageController : MonoBehaviour, IDialogueView
@@ -15,9 +17,9 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     [SerializeField] private DialogueChoiceButtonView choiceButtonPrefab;
 
     [Header("输入设置")]
-    [SerializeField] private KeyCode nextKey = KeyCode.E;
-    [SerializeField] private bool allowSpaceAsNext = true;
-    [SerializeField] private bool allowReturnAsNext = true;
+    [SerializeField] private float navigateDeadzone = 0.5f;
+    [SerializeField] private float firstNavigateRepeatDelay = 0.25f;
+    [SerializeField] private float navigateRepeatInterval = 0.12f;
 
     // 收到“下一句”输入时抛出的事件。
     public event Action OnNextRequested;
@@ -33,6 +35,21 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
 
     // 当前节点是否正在显示选项。
     private bool _showingChoices;
+
+    // 对话页 UI 输入动作集合。
+    private PlayerControls _inputActions;
+
+    // 当前是否已启用 UI 输入。
+    private bool _uiInputEnabled;
+
+    // 当前选中的选项索引。
+    private int _selectedChoiceIndex = -1;
+
+    // 下一次允许连续导航的时间点。
+    private float _nextNavigateTime;
+
+    // 上一次导航方向。
+    private int _lastNavigateDirection;
 
     /// <summary>
     /// 在编辑器中自动补齐默认引用。
@@ -56,6 +73,11 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
         {
             page = GetComponent<UIPage>();
         }
+
+        if (_inputActions == null)
+        {
+            _inputActions = new PlayerControls();
+        }
     }
 
     /// <summary>
@@ -65,6 +87,7 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     {
         _isOpen = true;
         DialogueService.Instance.BindView(this);
+        EnableUiInput();
     }
 
     /// <summary>
@@ -74,6 +97,7 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     {
         _isOpen = false;
         _showingChoices = false;
+        DisableUiInput();
         ClearChoices();
 
         // 服务存在时才执行解绑，避免在退出阶段触发隐式创建。
@@ -88,18 +112,19 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     /// </summary>
     private void Update()
     {
-        if (!_isOpen || _showingChoices)
+        if (!_isOpen || !_uiInputEnabled)
         {
             return;
         }
 
-        bool pressed = Input.GetKeyDown(nextKey);
-        if (allowSpaceAsNext) pressed |= Input.GetKeyDown(KeyCode.Space);
-        if (allowReturnAsNext) pressed |= Input.GetKeyDown(KeyCode.Return);
-
-        if (pressed)
+        if (_inputActions.UI.Submit.WasPressedThisFrame())
         {
-            OnNextRequested?.Invoke();
+            HandleSubmitRequested();
+        }
+
+        if (_showingChoices)
+        {
+            HandleChoiceNavigation();
         }
     }
 
@@ -118,6 +143,7 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
         }
 
         _isOpen = true;
+        EnableUiInput();
     }
 
     /// <summary>
@@ -126,6 +152,7 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     public void Close()
     {
         ClearChoices();
+        DisableUiInput();
 
         if (page != null)
         {
@@ -189,6 +216,9 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
             buttonView.Setup(choice.Index, choice.Text, HandleChoiceClicked);
             _spawnedChoices.Add(buttonView);
         }
+
+        ConfigureChoiceNavigation();
+        SelectChoice(0);
     }
 
     /// <summary>
@@ -196,6 +226,11 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     /// </summary>
     public void ClearChoices()
     {
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+
         // 清理旧选项按钮，避免跨节点残留。
         for (int i = 0; i < _spawnedChoices.Count; i++)
         {
@@ -206,6 +241,9 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
         }
 
         _spawnedChoices.Clear();
+        _selectedChoiceIndex = -1;
+        _nextNavigateTime = 0f;
+        _lastNavigateDirection = 0;
         _showingChoices = false;
     }
 
@@ -214,6 +252,173 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     /// </summary>
     private void HandleChoiceClicked(int index)
     {
+        _selectedChoiceIndex = index;
         OnChoiceSelected?.Invoke(index);
+    }
+
+    /// <summary>
+    /// 启用对话页 UI ActionMap。
+    /// </summary>
+    private void EnableUiInput()
+    {
+        if (_uiInputEnabled)
+        {
+            return;
+        }
+
+        if (_inputActions == null)
+        {
+            _inputActions = new PlayerControls();
+        }
+
+        _inputActions.UI.Enable();
+        _uiInputEnabled = true;
+    }
+
+    /// <summary>
+    /// 禁用对话页 UI ActionMap。
+    /// </summary>
+    private void DisableUiInput()
+    {
+        if (!_uiInputEnabled || _inputActions == null)
+        {
+            return;
+        }
+
+        _inputActions.UI.Disable();
+        _uiInputEnabled = false;
+    }
+
+    /// <summary>
+    /// 处理提交键请求：无选项时继续，有选项时提交当前选择。
+    /// </summary>
+    private void HandleSubmitRequested()
+    {
+        if (_showingChoices)
+        {
+            SubmitCurrentChoice();
+            return;
+        }
+
+        OnNextRequested?.Invoke();
+    }
+
+    /// <summary>
+    /// 处理选项导航输入。
+    /// </summary>
+    private void HandleChoiceNavigation()
+    {
+        Vector2 navigate = _inputActions.UI.Navigate.ReadValue<Vector2>();
+        int direction = ResolveNavigateDirection(navigate);
+        if (direction == 0)
+        {
+            _lastNavigateDirection = 0;
+            return;
+        }
+
+        float now = Time.unscaledTime;
+        bool isNewDirection = direction != _lastNavigateDirection;
+        if (!isNewDirection && now < _nextNavigateTime)
+        {
+            return;
+        }
+
+        MoveSelection(direction);
+        _lastNavigateDirection = direction;
+        _nextNavigateTime = now + (isNewDirection ? firstNavigateRepeatDelay : navigateRepeatInterval);
+    }
+
+    /// <summary>
+    /// 根据导航轴值解析上下移动方向。
+    /// </summary>
+    private int ResolveNavigateDirection(Vector2 navigate)
+    {
+        if (_spawnedChoices.Count == 0)
+        {
+            return 0;
+        }
+
+        float vertical = navigate.y;
+        if (Mathf.Abs(vertical) < navigateDeadzone)
+        {
+            return 0;
+        }
+
+        return vertical > 0f ? -1 : 1;
+    }
+
+    /// <summary>
+    /// 按方向移动当前选项焦点。
+    /// </summary>
+    private void MoveSelection(int direction)
+    {
+        if (_spawnedChoices.Count == 0)
+        {
+            return;
+        }
+
+        int nextIndex = _selectedChoiceIndex;
+        if (nextIndex < 0)
+        {
+            nextIndex = direction > 0 ? 0 : _spawnedChoices.Count - 1;
+        }
+        else
+        {
+            nextIndex = Mathf.Clamp(nextIndex + direction, 0, _spawnedChoices.Count - 1);
+        }
+
+        SelectChoice(nextIndex);
+    }
+
+    /// <summary>
+    /// 选中指定索引的选项按钮。
+    /// </summary>
+    private void SelectChoice(int index)
+    {
+        if (index < 0 || index >= _spawnedChoices.Count)
+        {
+            return;
+        }
+
+        _selectedChoiceIndex = index;
+        DialogueChoiceButtonView selectedButton = _spawnedChoices[index];
+        selectedButton?.Select();
+    }
+
+    /// <summary>
+    /// 提交当前选中的选项按钮。
+    /// </summary>
+    private void SubmitCurrentChoice()
+    {
+        if (_spawnedChoices.Count == 0)
+        {
+            return;
+        }
+
+        if (_selectedChoiceIndex < 0 || _selectedChoiceIndex >= _spawnedChoices.Count)
+        {
+            SelectChoice(0);
+        }
+
+        if (_selectedChoiceIndex < 0 || _selectedChoiceIndex >= _spawnedChoices.Count)
+        {
+            return;
+        }
+
+        _spawnedChoices[_selectedChoiceIndex]?.Submit();
+    }
+
+    /// <summary>
+    /// 为动态生成的选项按钮配置上下导航关系。
+    /// </summary>
+    private void ConfigureChoiceNavigation()
+    {
+        for (int i = 0; i < _spawnedChoices.Count; i++)
+        {
+            DialogueChoiceButtonView current = _spawnedChoices[i];
+            Selectable up = i > 0 ? _spawnedChoices[i - 1].GetSelectable() : null;
+            Selectable down = i < _spawnedChoices.Count - 1 ? _spawnedChoices[i + 1].GetSelectable() : null;
+            current?.SetNavigation(up, down);
+        }
     }
 }

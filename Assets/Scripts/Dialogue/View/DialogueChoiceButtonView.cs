@@ -1,6 +1,7 @@
 ﻿using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class DialogueChoiceButtonView : MonoBehaviour
@@ -64,6 +65,63 @@ public class DialogueChoiceButtonView : MonoBehaviour
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(OnClick);
         }
+    }
+
+    /// <summary>
+    /// 配置当前按钮的上下导航关系。
+    /// </summary>
+    public void SetNavigation(Selectable selectOnUp, Selectable selectOnDown)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        Navigation navigation = button.navigation;
+        navigation.mode = Navigation.Mode.Explicit;
+        navigation.selectOnUp = selectOnUp;
+        navigation.selectOnDown = selectOnDown;
+        navigation.selectOnLeft = null;
+        navigation.selectOnRight = null;
+        button.navigation = navigation;
+    }
+
+    /// <summary>
+    /// 选中当前按钮。
+    /// </summary>
+    public void Select()
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.Select();
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(button.gameObject);
+        }
+    }
+
+    /// <summary>
+    /// 触发当前按钮提交。
+    /// </summary>
+    public void Submit()
+    {
+        if (button == null || !button.IsInteractable())
+        {
+            return;
+        }
+
+        button.onClick.Invoke();
+    }
+
+    /// <summary>
+    /// 获取当前按钮对应的可选控件。
+    /// </summary>
+    public Selectable GetSelectable()
+    {
+        return button;
     }
 
     /// <summary>

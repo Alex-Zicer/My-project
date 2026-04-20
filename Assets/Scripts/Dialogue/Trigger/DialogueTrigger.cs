@@ -1,5 +1,6 @@
 ﻿using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public class DialogueTrigger : MonoBehaviour
@@ -18,6 +19,8 @@ public class DialogueTrigger : MonoBehaviour
 
     [Header("Interaction")]
     [SerializeField] private KeyCode interactKey = KeyCode.E;
+
+    [SerializeField] private string interactInputLabel = "E / Submit";
 
     [SerializeField] private Transform interactOrigin;
 
@@ -43,11 +46,19 @@ public class DialogueTrigger : MonoBehaviour
     // _hintVisible 运行时字段。
     private bool _hintVisible;
 
+    // 触发器输入动作集合。
+    private PlayerControls _inputActions;
+
     /// <summary>
     /// 初始化组件并确保运行时状态有效。
     /// </summary>
     private void Awake()
     {
+        if (_inputActions == null)
+        {
+            _inputActions = new PlayerControls();
+        }
+
         // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (interactOrigin == null)
         {
@@ -74,6 +85,12 @@ public class DialogueTrigger : MonoBehaviour
     /// </summary>
     private void OnEnable()
     {
+        if (_inputActions == null)
+        {
+            _inputActions = new PlayerControls();
+        }
+
+        _inputActions.UI.Enable();
         SetHintVisible(false, true);
     }
 
@@ -82,6 +99,11 @@ public class DialogueTrigger : MonoBehaviour
     /// </summary>
     private void OnDisable()
     {
+        if (_inputActions != null)
+        {
+            _inputActions.UI.Disable();
+        }
+
         _playerInRange = false;
         SetHintVisible(false, true);
     }
@@ -118,7 +140,7 @@ public class DialogueTrigger : MonoBehaviour
             RefreshHintTransform();
         }
 
-        if (!Input.GetKeyDown(interactKey))
+        if (_inputActions == null || !_inputActions.UI.Submit.WasPressedThisFrame())
         {
             return;
         }
@@ -244,7 +266,9 @@ public class DialogueTrigger : MonoBehaviour
             return;
         }
 
-        string keyName = interactKey.ToString().ToUpperInvariant();
+        string keyName = string.IsNullOrWhiteSpace(interactInputLabel)
+            ? interactKey.ToString().ToUpperInvariant()
+            : interactInputLabel;
         // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (string.IsNullOrWhiteSpace(hintFormat))
         {

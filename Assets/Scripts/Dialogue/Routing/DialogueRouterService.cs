@@ -4,6 +4,7 @@ using UnityEngine;
 /// <summary>
 /// 对话路由服务：根据 NPC、Profile 与当前剧情布尔状态， 解析本次交互应播放的对话入口（首次/重复），并在对话完成后写回进度与状态。
 /// </summary>
+[RequireComponent(typeof(DialogueProgressSaveable))]
 public class DialogueRouterService : MonoBehaviour
 {
     /// <summary>
@@ -59,11 +60,26 @@ public class DialogueRouterService : MonoBehaviour
         }
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void InitializeOnLoad()
+    {
+        _ = Instance;
+    }
+
     /// <summary>
     /// 延迟创建路由服务单例并跨场景保留。
     /// </summary>
     private static void CreateInstance()
     {
+        DialogueRouterService existing =
+            FindFirstObjectByType<DialogueRouterService>(FindObjectsInactive.Include);
+        if (existing != null)
+        {
+            _instance = existing;
+            DontDestroyOnLoad(existing.gameObject);
+            return;
+        }
+
         var go = new GameObject("DialogueRouterService");
         _instance = go.AddComponent<DialogueRouterService>();
         DontDestroyOnLoad(go);
@@ -81,6 +97,7 @@ public class DialogueRouterService : MonoBehaviour
         }
 
         _instance = this;
+        EnsureSaveableComponent();
         DontDestroyOnLoad(gameObject);
     }
 
@@ -103,6 +120,21 @@ public class DialogueRouterService : MonoBehaviour
         // 守卫条件：不满足时直接返回，避免进入无效流程。
         if (progressStore == null) return;
         _progressStore = progressStore;
+    }
+
+    /// <summary>
+    /// 获取可序列化的内存进度仓库；若当前仓库不可序列化，则替换为内存实现。
+    /// </summary>
+    public DialogueMemoryProgressStore GetOrCreateMemoryProgressStore()
+    {
+        if (_progressStore is DialogueMemoryProgressStore memoryStore)
+        {
+            return memoryStore;
+        }
+
+        DialogueMemoryProgressStore newStore = new DialogueMemoryProgressStore();
+        _progressStore = newStore;
+        return newStore;
     }
 
     /// <summary>
@@ -356,5 +388,18 @@ public class DialogueRouterService : MonoBehaviour
         if (reference.primarySO != null) return true;
         if (reference.fallbackSO != null) return true;
         return !string.IsNullOrWhiteSpace(reference.keyOrPath);
+    }
+
+    /// <summary>
+    /// 确保持久化组件已挂载到路由服务对象上。
+    /// </summary>
+    private void EnsureSaveableComponent()
+    {
+        if (GetComponent<DialogueProgressSaveable>() != null)
+        {
+            return;
+        }
+
+        gameObject.AddComponent<DialogueProgressSaveable>();
     }
 }
