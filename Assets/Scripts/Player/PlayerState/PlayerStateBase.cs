@@ -1,33 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public abstract class PlayerStateBase : IPlayerState
 {
     protected PlayerController player;
-    protected Animator anim;
     protected Rigidbody2D rb;
-
-    // 动画状态哈希
-    // 说明：
-    // - CrossFade/Play 用 int hash 时，建议使用“完整路径”以避免状态在子状态机/不同层导致找不到。
-    // - 默认都在 Base Layer 上播放（layerIndex=0）。
-    protected const int BaseLayerIndex = 0;
-    private const string BaseLayerPathPrefix = "Base Layer.";
-
-    protected static readonly int MovementHash = Animator.StringToHash(BaseLayerPathPrefix + "Movement");
-    protected static readonly int JumpHash = Animator.StringToHash(BaseLayerPathPrefix + "Jump");
-    protected static readonly int FallHash = Animator.StringToHash(BaseLayerPathPrefix + "Fall");
-    protected static readonly int LandHash = Animator.StringToHash(BaseLayerPathPrefix + "Land");
-    protected static readonly int HurtHash = Animator.StringToHash(BaseLayerPathPrefix + "Hurt");
-    protected static readonly int DeadHash = Animator.StringToHash(BaseLayerPathPrefix + "Dead");
-    protected static readonly int Attack1Hash = Animator.StringToHash(BaseLayerPathPrefix + "Attack1");
-    protected static readonly int Attack2Hash = Animator.StringToHash(BaseLayerPathPrefix + "Attack2");
-
-    //动画参数哈希
-    protected static readonly int HorizontalSpeedHash = Animator.StringToHash("HorizontalSpeed");
-    protected static readonly int VerticalSpeedHash = Animator.StringToHash("VerticalSpeed");
-    protected static readonly int IsGroundHash = Animator.StringToHash("IsGround");
 
     public abstract PlayerStateType StateType { get; }
 
@@ -38,23 +14,7 @@ public abstract class PlayerStateBase : IPlayerState
     public PlayerStateBase(PlayerController player)
     {
         this.player = player;
-        this.anim   = player.animator;
-        this.rb     = player.Rb;
-    }
-
-    /// <summary>
-    /// 动画器是否可用（是否存在 Animator 且挂了 AnimatorController）。
-    /// 用于避免 CrossFade 时出现 “Invalid Layer Index -1 / State could not be found” 这类误导性报错。
-    /// </summary>
-    protected bool IsAnimatorReady()
-    {
-        if (anim == null) return false;
-        if (anim.runtimeAnimatorController == null)
-        {
-            Debug.LogWarning("Animator 未挂载 AnimatorController，无法播放动画。");
-            return false;
-        }
-        return true;
+        this.rb = player.Rb;
     }
 
     /// <summary>
@@ -100,13 +60,17 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 某些状态结束后回到移动模式
+    /// 某些状态结束后回到可移动相位
     /// </summary>
-    protected void ReturnToMovementState()
+    protected void ReturnToLocomotionState()
     {
         if (player.IsGround)
         {
             player.StateMachine.TransitionTo(PlayerStateType.Movement);
+        }
+        else if (player.CanWallSlide)
+        {
+            player.StateMachine.TransitionTo(PlayerStateType.WallSlide);
         }
         else
         {
@@ -115,7 +79,8 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 改变人物朝向，基于玩家的输入来判断人物应该面朝左还是面朝右
+    /// 改变人物朝向，基于玩家的输入来判断人物应该面朗左还是面朗右。
+    /// Knight 精灵默认朝左：scale.x = 1 就是左，scale.x = -1 就是右。
     /// </summary>
     protected void FlipCharacter()
     {
@@ -123,11 +88,26 @@ public abstract class PlayerStateBase : IPlayerState
 
         if (direction > 0.1f)
         {
-            player.transform.localScale = new Vector3(1, 1, 1); //面朝右
+            player.transform.localScale = new Vector3(-1, 1, 1); // 面朝右（翻转）
         }
         else if (direction < -0.1f)
         {
-            player.transform.localScale = new Vector3(-1, 1, 1); //面朝左
+            player.transform.localScale = new Vector3(1, 1, 1);  // 面朝左（默认）
+        }
+    }
+
+    /// <summary>
+    /// 直接按世界方向设置朝向。direction &gt; 0 表示朝右，&lt; 0 表示朝左。
+    /// </summary>
+    protected void FaceWorldDirection(float direction)
+    {
+        if (direction > 0.1f)
+        {
+            player.transform.localScale = new Vector3(-1, 1, 1);
+        }
+        else if (direction < -0.1f)
+        {
+            player.transform.localScale = new Vector3(1, 1, 1);
         }
     }
 

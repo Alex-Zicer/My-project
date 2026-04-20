@@ -1,16 +1,28 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public enum PlayerStateType
+﻿public enum PlayerStateType
 {
     Movement,
     Jump,
     Fall,
     Land,
-    Attack,
+    WallSlide,
+    Dash,
+    Action,
     Hurt,
     Dead
+}
+
+public enum PlayerJumpKind
+{
+    None,
+    Normal,
+    Double,
+    Wall
+}
+
+public enum PlayerActionKind
+{
+    None,
+    Slash
 }
 
 public interface IPlayerState

@@ -16,7 +16,14 @@ MonoBehaviour:
   moveSpeed: 2
   moveSpeedMultiplier: 10
   defence: 5
-  JumpForce: 4
+  JumpForce: 6
+  dashSpeed: 14
+  dashDuration: 0.16
+  dashCooldown: 0.5
+  wallSlideSpeed: 2
+  wallJumpHorizontalSpeed: 8
+  wallJumpForce: 12
+  slashDuration: 0.22
   hitShakeIntensity: 0.3
   hitShakeFrequency: 1
   hitShakeDuration: 0.2

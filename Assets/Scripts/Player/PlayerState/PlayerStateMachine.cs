@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerStateMachine
@@ -73,11 +72,20 @@ public class PlayerStateMachine
         //如果当前状态无法转换到目标状态，则直接返回
         if (currentState != null && !currentState.CanTransitionTo(stateType))
         {
+            if (player.EnableStateDebugLogs)
+            {
+                Debug.Log($"[PlayerStateMachine] 阻止切换: {currentState.StateType} -> {stateType}", player);
+            }
             return;
         }
 
+        PlayerStateType oldStateType = CurrentStateType;
         currentState?.Exit();
         currentState = newState;
+        if (player.EnableStateDebugLogs)
+        {
+            Debug.Log($"[PlayerStateMachine] 状态切换: {oldStateType} -> {stateType}", player);
+        }
         currentState.Enter();
     }
 

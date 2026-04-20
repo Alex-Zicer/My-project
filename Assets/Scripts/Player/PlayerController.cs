@@ -2,18 +2,22 @@
 using UnityEngine.InputSystem;
 using System;
 
+[RequireComponent(typeof(PlayerAnimationDriver))]
 public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 {
-    private const float InitialHealthValue = 5f; // 分段血条初始生命值（1 格 = 1 血）。
+    private const float InitialHealthValue = 5f; // 分段血条初始生命值（1 格 = 1 血）
 
     [Header("数据引用")]
     [SerializeField] private PlayerData playerData;
-    [SerializeField] private WeaponData defaultWeapon;
+    [SerializeField] private bool enableStateDebugLogs;
 
     [Header("组件引用")]
     [SerializeField] private Health health;
-    private PlayerControls inputActions;//玩家输入系统的引用，使用Unity的新输入系统来处理玩家的输入
-    [SerializeField] private LayerMask enemyLayer;
+    private PlayerControls inputActions;         // Unity 新输入系统
+    private PlayerAnimationDriver _animDriver;   // 动画驱动层（唯一写入 Animator 参数的模块）
+    private PlayerJumpKind _pendingJumpKind;
+    private PlayerActionKind _pendingActionKind;
+    private float _nextDashReadyTime;
 
     [Header("跳跃设置")]
     [Tooltip("地面层，用于检测玩家是否站在地面上")]
@@ -22,10 +26,14 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public Transform groundCheck;
     [Tooltip("地面检测的范围大小")]
     public Vector2 groundCheckSize = new Vector2(0.5f, 0.1f);
-    [Tooltip("相对于中心点的偏移，确保检测点位于玩家脚下")]
-    public float groundCheckOffset = 0.1f;
-    [Tooltip("跳跃段数")]
-    public int canJumpCount = 2;
+
+    [Header("墙体检测")]
+    [Tooltip("墙体层")]
+    public LayerMask wallLayer;
+    [Tooltip("检测盒中心相对角色中心的水平偏移，根据玩家朝向自动正负")]
+    public float wallCheckOffset = 0.4f;
+    [Tooltip("墙体检测范围大小")]
+    public Vector2 wallCheckSize = new Vector2(0.1f, 0.8f);
 
     #region 接口事件
     //用于ICharacterController接口的事件，其他系统可以订阅这些事件来响应玩家的跳跃和着陆行为
@@ -35,7 +43,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public event Action OnAttackHit; // 攻击命中敌人事件（用于帧冻结 + 镜头抖动）。
 
     /// <summary>
-    /// 供 PlayerAttackState 调用，广播“攻击命中敌人”反馈事件。
+    /// 供攻击特效命中逻辑调用，广播“攻击命中敌人”反馈事件。
     /// </summary>
     public void NotifyAttackHit() => OnAttackHit?.Invoke();
 
@@ -48,34 +56,35 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public Rigidbody2D Rb { get; private set; }
     public PlayerData PlayerData => playerData;
     public Animator animator { get; private set; }
-    public WeaponData CurrentWeapon { get; private set; }
-    public LayerMask EnemyLayer => enemyLayer;
-    public float FacingDirection => transform.localScale.x >= 0f ? 1f : -1f;
+    public float DefaultGravityScale { get; private set; }
+    public bool EnableStateDebugLogs => enableStateDebugLogs;
 
     #endregion
 
     public float HorizontalSpeed => Mathf.Abs(Rb.velocity.x);
     public float VerticalSpeed => Rb.velocity.y;
     public bool IsGround { get; private set; }
-    public bool IsDead => StateMachine.CurrentStateType == PlayerStateType.Dead;
+    public bool IsWall { get; private set; }
+    public bool CanWallSlide => IsWall && !IsGround && VerticalSpeed < -0.01f;
+    public float FacingDirectionX => transform.localScale.x < 0f ? 1f : -1f;
+    // 贴墙且向下下落时的下滑速度绝对值；未贴墙、在地面或上升时为 0
+    public float WallDownSpeed => IsWall && !IsGround && VerticalSpeed < 0 ? Mathf.Abs(VerticalSpeed) : 0f;
+    public bool IsDead => StateMachine != null && StateMachine.CurrentStateType == PlayerStateType.Dead;
     public bool IsInputEnabled => inputActions != null && inputActions.Player.enabled;
 
 
     private void Awake()
     {
-        //获取组件
         Rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        _animDriver = GetComponent<PlayerAnimationDriver>();
         inputActions = new PlayerControls();
-        Rb.freezeRotation = true; // 冻结旋转，确保玩家不会因为物理碰撞而旋转
+        Rb.freezeRotation = true;
+        DefaultGravityScale = Rb.gravityScale;
 
-        CurrentWeapon = defaultWeapon;
-
-        //初始化玩家血量
         health = GetComponent<Health>();
         health.SetMaxHealth(InitialHealthValue, true);
 
-        //初始化状态机
         InitializeStateMachine();
     }
 
@@ -90,7 +99,9 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         StateMachine.RegisterState(new PlayerJumpState(this));
         StateMachine.RegisterState(new PlayerFallState(this));
         StateMachine.RegisterState(new PlayerLandState(this));
-        StateMachine.RegisterState(new PlayerAttackState(this));
+        StateMachine.RegisterState(new PlayerWallSlideState(this));
+        StateMachine.RegisterState(new PlayerDashState(this));
+        StateMachine.RegisterState(new PlayerActionState(this));
         StateMachine.RegisterState(new PlayerHurtState(this));
         StateMachine.RegisterState(new PlayerDeadState(this));
 
@@ -103,6 +114,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
         //订阅跳跃事件，当玩家按下跳跃键时调用OnJumpPerformed方法
         inputActions.Player.Jump.performed += OnJumpPerformed;
+        inputActions.Player.Dash.performed += OnDashPerformed;
         //订阅攻击事件，当玩家按下攻击键时调用OnAttackPerformed方法
         inputActions.Player.Attack.performed += OnAttackPerformed;
     }
@@ -113,26 +125,21 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
         //取消订阅跳跃事件，防止内存泄漏
         inputActions.Player.Jump.performed -= OnJumpPerformed;
+        inputActions.Player.Dash.performed -= OnDashPerformed;
         //取消订阅攻击事件，防止内存泄漏
         inputActions.Player.Attack.performed -= OnAttackPerformed;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // 输入可能在暂停等场景被禁用；禁用时强制为 0，避免残留输入驱动角色。
-        if (IsInputEnabled)
-        {
-            // 获取玩家的输入，更新移动向量
-            MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
-        }
-        else
-        {
-            MoveInput = Vector2.zero;
-        }
+        // 禁用输入时强制为零，避免残留输入驱动角色
+        MoveInput = IsInputEnabled ? inputActions.Player.Move.ReadValue<Vector2>() : Vector2.zero;
 
         CheckGroundStatus();
+        CheckWallStatus();
         StateMachine.Update();
+        // 每帧将物理与逻辑事实同步到 Animator 参数（由 PlayerAnimationDriver 统一写入）
+        _animDriver.SyncFrame(HorizontalSpeed, VerticalSpeed, IsGround, IsWall, WallDownSpeed, IsDead);
     }
 
     private void FixedUpdate()
@@ -141,62 +148,132 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     }
 
     /// <summary>
-    /// 检测人物是否站在地面上
+    /// 检测玩家是否站在地面上，结果写入 IsGround 属性。
     /// </summary>
     private void CheckGroundStatus()
     {
-        //使用OverlapBox检测玩家是否在地面上，groundCheck是一个空物体，放置在玩家脚下，检测范围为0.2f，检测的层为groundLayer
         IsGround = Physics2D.OverlapBox(groundCheck.position, groundCheckSize, 0f, groundLayer);
     }
 
     /// <summary>
-    /// 实现玩家跳跃功能的方法，当玩家按下跳跃键时被调用。它通过设置刚体的垂直速度来实现跳跃效果。
+    /// 检测玩家是否贴墙，结果写入 IsWall 属性。
+    /// 根据 localScale.x 符号动态计算检测盒中心，无需子物体。
     /// </summary>
-    /// <param name="context">用来实现事件系统的参数</param>
+    private void CheckWallStatus()
+    {
+        // Knight 默认朝左：scale.x = 1 就是左，= -1 就是右，取反后与运动方向对齐
+        float facing = -Mathf.Sign(transform.localScale.x);
+        Vector2 origin = (Vector2)transform.position + new Vector2(facing * wallCheckOffset, 0f);
+        IsWall = Physics2D.OverlapBox(origin, wallCheckSize, 0f, wallLayer);
+    }
+
+    /// <summary>
+    /// 处理跳跃输入：验证可跳状态后消耗跳跃次数，触发动画 Trigger 并切换逻辑状态。
+    /// </summary>
+    /// <param name="context">输入系统回调参数</param>
     private void OnJumpPerformed(InputAction.CallbackContext context)
     {
-        PlayerStateType currentType = StateMachine.CurrentStateType;
-        bool inJumpableState = currentType == PlayerStateType.Movement ||
-                               currentType == PlayerStateType.Jump ||
-                               currentType == PlayerStateType.Fall;
-        if (!inJumpableState) return;
+        if (IsDead) return;
 
-        var jumpState = StateMachine.CurrentState as PlayerJumpState
-                     ?? StateMachine.GetState<PlayerJumpState>();
-        if (jumpState != null && jumpState.TryConsumeJump())
+        PlayerStateType currentType = StateMachine.CurrentStateType;
+        PlayerJumpState jumpState = StateMachine.GetState<PlayerJumpState>();
+        if (jumpState == null) return;
+
+        bool accepted = false;
+        PlayerJumpKind jumpKind = PlayerJumpKind.None;
+
+        if (currentType == PlayerStateType.WallSlide)
         {
-            StateMachine.TransitionTo(PlayerStateType.Jump);
-            OnJump?.Invoke();
+            accepted = jumpState.TryConsumeWallJump(out jumpKind);
+        }
+        else
+        {
+            bool inJumpableState = currentType == PlayerStateType.Movement ||
+                                   currentType == PlayerStateType.Jump ||
+                                   currentType == PlayerStateType.Fall;
+            if (!inJumpableState) return;
+
+            accepted = jumpState.TryConsumeStandardJump(IsGround, out jumpKind);
+        }
+
+        if (!accepted)
+        {
+            return;
+        }
+
+        _pendingJumpKind = jumpKind;
+        if (!StateMachine.TryTransitionTo(PlayerStateType.Jump))
+        {
+            _pendingJumpKind = PlayerJumpKind.None;
+            return;
+        }
+
+        TriggerJumpAnimation(jumpKind);
+        if (EnableStateDebugLogs)
+        {
+            Debug.Log($"[PlayerController] 接受跳跃: kind={jumpKind}, ground={IsGround}, wall={IsWall}, remaining={jumpState.RemainingJumps}", this);
+        }
+
+        OnJump?.Invoke();
+    }
+
+    /// <summary>
+    /// 处理冲刺输入：仅在地面移动相位允许进入 Dash 状态。
+    /// </summary>
+    /// <param name="context">输入系统回调参数</param>
+    private void OnDashPerformed(InputAction.CallbackContext context)
+    {
+        if (IsDead) return;
+        if (StateMachine.CurrentStateType != PlayerStateType.Movement) return;
+        if (Time.time < _nextDashReadyTime) return;
+
+        if (!StateMachine.TryTransitionTo(PlayerStateType.Dash))
+        {
+            return;
+        }
+
+        _nextDashReadyTime = Time.time + playerData.dashCooldown;
+        _animDriver.TriggerDash();
+
+        if (EnableStateDebugLogs)
+        {
+            Debug.Log($"[PlayerController] 接受冲刺: nextReady={_nextDashReadyTime:F2}", this);
         }
     }
 
     /// <summary>
-    /// 处理玩家按下攻击键时的函数
+    /// 处理攻击输入：将 Slash 纳入代码 Action 状态，而不是直接裸触发 Animator。
     /// </summary>
-    /// <param name="context">用来实现事件系统的参数</param>
+    /// <param name="context">输入系统回调参数</param>
     private void OnAttackPerformed(InputAction.CallbackContext context)
     {
-        PlayerStateType current = StateMachine.CurrentStateType;
-        //如果当前状态就是攻击状态，则进行下一段攻击
-        if (current == PlayerStateType.Attack)
+        PlayerStateType currentType = StateMachine.CurrentStateType;
+        bool canStartAction = currentType == PlayerStateType.Movement ||
+                              currentType == PlayerStateType.Jump ||
+                              currentType == PlayerStateType.Fall ||
+                              currentType == PlayerStateType.WallSlide;
+        if (!canStartAction) return;
+
+        _pendingActionKind = PlayerActionKind.Slash;
+        if (!StateMachine.TryTransitionTo(PlayerStateType.Action))
         {
-            bool queued = (StateMachine.CurrentState as PlayerAttackState)?.QueueNextAttack() == true;
-            if (queued)
-            {
-                OnAttack?.Invoke();
-            }
+            _pendingActionKind = PlayerActionKind.None;
+            return;
         }
-        else if (IsGround && current != PlayerStateType.Hurt && current != PlayerStateType.Dead)
+
+        TriggerActionAnimation(PlayerActionKind.Slash);
+        OnAttack?.Invoke();
+
+        if (EnableStateDebugLogs)
         {
-            StateMachine.TransitionTo(PlayerStateType.Attack);//进行第一段攻击
-            OnAttack?.Invoke();
+            Debug.Log("[PlayerController] 接受动作: Slash", this);
         }
     }
 
     /// <summary>
-    /// 计算受到的伤害
+    /// 计算并应用伤害，根据剩余血量切换受击或死亡状态。
     /// </summary>
-    /// <param name="rawDamage">受到的原始伤害</param>
+    /// <param name="rawDamage">原始伤害值</param>
     public void TakeDamage(float rawDamage)
     {
         if (IsDead) return;
@@ -207,21 +284,59 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         if (health.currentHealth > 0)
         {
             OnHit?.Invoke();
+            _pendingJumpKind = PlayerJumpKind.None;
+            _pendingActionKind = PlayerActionKind.None;
+            // 先触发 Hurt 动画再切状态，避免 Trigger 被 SyncFrame 的下一帧覆盖
+            _animDriver.TriggerHurt();
             StateMachine.TransitionTo(PlayerStateType.Hurt);
         }
         else
         {
+            _pendingJumpKind = PlayerJumpKind.None;
+            _pendingActionKind = PlayerActionKind.None;
             StateMachine.TransitionTo(PlayerStateType.Dead);
+            // PlayerController.enabled=false 后 Update 停止，手动同步确保 IsDead 立即写入 Animator
+            _animDriver.SyncFrame(HorizontalSpeed, VerticalSpeed, IsGround, IsWall, WallDownSpeed, true);
         }
     }
 
     /// <summary>
-    /// 获取武器数据
+    /// 消费挂起的跳跃上下文，供 JumpState.Enter 使用。
     /// </summary>
-    /// <param name="weapon">当前武器</param>
-    public void EquipWeapon(WeaponData weapon)
+    public PlayerJumpKind ConsumePendingJumpKind()
     {
-        CurrentWeapon = weapon;
+        PlayerJumpKind jumpKind = _pendingJumpKind;
+        _pendingJumpKind = PlayerJumpKind.None;
+        return jumpKind;
+    }
+
+    /// <summary>
+    /// 消费挂起的动作上下文，供 ActionState.Enter 使用。
+    /// </summary>
+    public PlayerActionKind ConsumePendingActionKind()
+    {
+        PlayerActionKind actionKind = _pendingActionKind;
+        _pendingActionKind = PlayerActionKind.None;
+        return actionKind;
+    }
+
+    /// <summary>
+    /// 根据跳跃类型触发 Animator 的 Jump / DoubleJump Trigger。
+    /// </summary>
+    public void TriggerJumpAnimation(PlayerJumpKind jumpKind)
+    {
+        _animDriver.TriggerJump(jumpKind == PlayerJumpKind.Double);
+    }
+
+    /// <summary>
+    /// 根据动作类型触发对应 Animator Trigger。
+    /// </summary>
+    public void TriggerActionAnimation(PlayerActionKind actionKind)
+    {
+        if (actionKind == PlayerActionKind.Slash)
+        {
+            _animDriver.TriggerSlash();
+        }
     }
 
     /// <summary>
@@ -242,66 +357,6 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
             if (inputActions.Player.enabled) inputActions.Player.Disable();
             MoveInput = Vector2.zero;
         }
-    }
-
-    /// <summary>
-    /// 获取攻击朝向
-    /// </summary>
-    /// <param name="attackOffset">攻击偏移点</param>
-    /// <returns></returns>
-    public Vector2 GetAttackWorldPosition(Vector2 attackOffset)
-    {
-        Vector2 facingOffset = attackOffset;
-        facingOffset.x *= FacingDirection;
-        return (Vector2)transform.position + facingOffset;
-    }
-
-    /// <summary>
-    /// 尝试获取攻击预览
-    /// </summary>
-    /// <param name="attackPos">攻击点</param>
-    /// <param name="attackRange">攻击范围i</param>
-    /// <param name="isActiveAttack">是否处于攻击状态</param>
-    /// <returns></returns>
-    private bool TryGetAttackPreview(out Vector2 attackPos, out float attackRange, out bool isActiveAttack)
-    {
-        attackPos = Vector2.zero;
-        attackRange = 0f;
-        isActiveAttack = false;
-
-        if (Application.isPlaying && StateMachine?.CurrentState is PlayerAttackState attackState &&
-            attackState.TryGetDebugAttackGizmo(out attackPos, out attackRange))
-        {
-            isActiveAttack = true;
-            return true;
-        }
-
-        WeaponData previewWeapon = Application.isPlaying ? CurrentWeapon : defaultWeapon;
-        if (previewWeapon == null || previewWeapon.attackData == null || previewWeapon.attackData.Length == 0 ||
-            previewWeapon.attackData[0] == null)
-        {
-            return false;
-        }
-
-        AttackData previewData = previewWeapon.attackData[0];
-        attackPos = GetAttackWorldPosition(previewData.attackOffset);
-        attackRange = previewData.attackRange;
-        return true;
-    }
-
-    /// <summary>
-    /// 画出攻击判定范围
-    /// </summary>
-    private void OnDrawGizmosSelected()
-    {
-        if (!TryGetAttackPreview(out Vector2 attackPos, out float attackRange, out bool isActiveAttack))
-        {
-            return;
-        }
-
-        Gizmos.color = isActiveAttack ? Color.red : Color.yellow;
-        Gizmos.DrawLine(transform.position, attackPos);
-        Gizmos.DrawWireSphere(attackPos, attackRange);
     }
 
 }

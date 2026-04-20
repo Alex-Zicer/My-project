@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerFallState : PlayerStateBase
 {
@@ -10,21 +7,24 @@ public class PlayerFallState : PlayerStateBase
     public PlayerFallState(PlayerController player) : base(player) { }
 
     /// <summary>
-    /// 播放下落动画，设置IsGround参数为false
+    /// 进入下落状态，动画过渡由 Knight.controller 的 VerticalSpeed &lt; 0 条件驱动
     /// </summary>
     public override void Enter()
     {
-        anim.CrossFade(FallHash, 0.1f);
-        anim.SetBool(IsGroundHash, false);
     }
 
     public override void Update()
     {
-        anim.SetFloat(VerticalSpeedHash, rb.velocity.y);
-
         if (player.IsGround && rb.velocity.y <= 0.1f)
         {
             player.StateMachine.TransitionTo(PlayerStateType.Land);
+            return;
+        }
+
+        if (player.CanWallSlide)
+        {
+            player.StateMachine.TransitionTo(PlayerStateType.WallSlide);
+            return;
         }
 
         FlipCharacter();

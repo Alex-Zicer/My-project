@@ -16,16 +16,36 @@ public class PlayerData : ScriptableObject
     [Tooltip("跳跃速度")]
     public float JumpForce;
 
+    [Header("位移技能")]
+    [Tooltip("冲刺速度")]
+    public float dashSpeed = 14f;
+    [Tooltip("冲刺持续时间")]
+    public float dashDuration = 0.16f;
+    [Tooltip("冲刺冷却时间")]
+    public float dashCooldown = 0.5f;
+
+    [Header("贴墙与墙跳")]
+    [Tooltip("贴墙下滑时的最大下落速度")]
+    public float wallSlideSpeed = 2f;
+    [Tooltip("墙跳的水平速度")]
+    public float wallJumpHorizontalSpeed = 8f;
+    [Tooltip("墙跳的竖直速度")]
+    public float wallJumpForce = 12f;
+
+    [Header("动作状态")]
+    [Tooltip("斩击动作的锁定时长")]
+    public float slashDuration = 0.22f;
+
     [Header("受击反馈")]
-    public float hitShakeIntensity  = 0.3f;
-    public float hitShakeFrequency  = 1f;
-    public float hitShakeDuration   = 0.2f;
+    public float hitShakeIntensity = 0.3f;
+    public float hitShakeFrequency = 1f;
+    public float hitShakeDuration = 0.2f;
 
     [Header("攻击命中反馈")]
     public float attackHitStopDuration = 0.05f;
-    public float attackShakeIntensity  = 0.2f;
-    public float attackShakeFrequency  = 1f;
-    public float attackShakeDuration   = 0.1f;
+    public float attackShakeIntensity = 0.2f;
+    public float attackShakeFrequency = 1f;
+    public float attackShakeDuration = 0.1f;
 
 
 

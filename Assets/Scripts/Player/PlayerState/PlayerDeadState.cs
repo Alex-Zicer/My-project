@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerDeadState : PlayerStateBase
 {
@@ -9,20 +7,19 @@ public class PlayerDeadState : PlayerStateBase
     public PlayerDeadState(PlayerController player) : base(player) { }
 
     /// <summary>
-    /// 设置死亡动画触发器，把玩家速度调整为0，并禁用玩家的输入
+    /// 速度归零并切换为运动学状态，禁用输入。
+    /// IsDead=true 已由 PlayerController.TakeDamage 写入 Animator。
     /// </summary>
     public override void Enter()
     {
-        anim.CrossFade(DeadHash, 0.1f);
         rb.velocity = Vector2.zero;
-        rb.isKinematic = true;//脱离物理规律
-
+        rb.isKinematic = true; // 脱离物理规律
         player.enabled = false;
     }
 
     public override void Exit()
     {
-        rb.isKinematic = true;
+        rb.isKinematic = false;
     }
 
     /// <summary>

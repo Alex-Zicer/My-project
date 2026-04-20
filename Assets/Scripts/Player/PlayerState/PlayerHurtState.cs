@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerHurtState : PlayerStateBase
 {
@@ -11,15 +9,11 @@ public class PlayerHurtState : PlayerStateBase
     public PlayerHurtState(PlayerController player) : base(player) { }
 
     /// <summary>
-    /// 设置触发器，并初始化硬直计时器
+    /// 初始化硬直计时器（Hurt Trigger 已由 PlayerController.TakeDamage 触发）
     /// </summary>
     public override void Enter()
     {
         hurtTimer = 0;
-        if (!IsAnimatorReady()) return;
-
-        // 使用完整路径 hash + 显式 layerIndex，避免状态在不同层/子状态机时找不到
-        anim.CrossFade(HurtHash, 0.1f, BaseLayerIndex);
     }
 
     /// <summary>
@@ -30,7 +24,7 @@ public class PlayerHurtState : PlayerStateBase
         hurtTimer += Time.deltaTime;
         if (hurtTimer > hurtDuration)
         {
-            ReturnToMovementState();
+            ReturnToLocomotionState();
         }
     }
 
