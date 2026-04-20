@@ -247,7 +247,12 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     private void OnDashPerformed(InputAction.CallbackContext context)
     {
         if (IsDead) return;
-        if (StateMachine.CurrentStateType != PlayerStateType.Movement) return;
+
+        PlayerStateType currentType = StateMachine.CurrentStateType;
+        bool canDash = currentType == PlayerStateType.Movement ||
+                       currentType == PlayerStateType.Jump ||
+                       currentType == PlayerStateType.Fall;
+        if (!canDash) return;
         if (Time.time < _nextDashReadyTime) return;
 
         if (!StateMachine.TryTransitionTo(PlayerStateType.Dash))

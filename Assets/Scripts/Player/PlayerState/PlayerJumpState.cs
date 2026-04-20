@@ -139,6 +139,7 @@ public class PlayerJumpState : PlayerStateBase
                state == PlayerStateType.Hurt ||
                state == PlayerStateType.Fall ||
                state == PlayerStateType.Land ||
+               state == PlayerStateType.Dash ||
                state == PlayerStateType.WallSlide ||
                state == PlayerStateType.Jump;   // 二段跳
     }

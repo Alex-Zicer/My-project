@@ -57,12 +57,15 @@ public class PlayerDashState : PlayerStateBase
     }
 
     /// <summary>
-    /// Dash 只允许被受击或死亡打断。
+    /// Dash 进行中只允许被受击或死亡打断；Dash 结束后放行所有状态。
     /// </summary>
     /// <param name="state">目标状态。</param>
     public override bool CanTransitionTo(PlayerStateType state)
     {
-        return state == PlayerStateType.Hurt ||
-               state == PlayerStateType.Dead;
+        if (state == PlayerStateType.Hurt || state == PlayerStateType.Dead)
+            return true;
+
+        // Dash 计时结束后才允许切换到其他状态（由 Update 的 ReturnToLocomotionState 触发）。
+        return _dashTimer >= player.PlayerData.dashDuration;
     }
 }
