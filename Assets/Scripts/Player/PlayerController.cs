@@ -1,7 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.InputSystem;
-using System;
 
+/// <summary>
+/// 玩家控制器主体。
+/// 负责输入采样、地面与墙体检测、逻辑状态机驱动，以及通过动画事件生成攻击特效。
+/// </summary>
 [RequireComponent(typeof(PlayerAnimationDriver))]
 public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 {
@@ -13,8 +18,12 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
     [Header("组件引用")]
     [SerializeField] private Health health;
+    [Tooltip("攻击特效的生成参考点；为空时默认使用玩家自身 Transform")]
+    [SerializeField] private Transform attackEffectSpawnPoint;
     private PlayerControls inputActions;         // Unity 新输入系统
     private PlayerAnimationDriver _animDriver;   // 动画驱动层（唯一写入 Animator 参数的模块）
+    // Resources 预制体缓存，避免每次攻击都重复加载磁盘资源。
+    private readonly Dictionary<string, GameObject> _attackEffectCache = new Dictionary<string, GameObject>();
     private PlayerJumpKind _pendingJumpKind;
     private PlayerActionKind _pendingActionKind;
     private float _nextDashReadyTime;
@@ -36,7 +45,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public Vector2 wallCheckSize = new Vector2(0.1f, 0.8f);
 
     #region 接口事件
-    //用于ICharacterController接口的事件，其他系统可以订阅这些事件来响应玩家的跳跃和着陆行为
+    // 通过事件把关键动作广播给镜头、音效或其他反馈系统，减少模块间直接耦合。
     public event Action OnJump;
     public event Action OnAttack;
     public event Action OnHit;       // 玩家受击事件（当前不用于相机反馈）。
@@ -72,7 +81,9 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public bool IsDead => StateMachine != null && StateMachine.CurrentStateType == PlayerStateType.Dead;
     public bool IsInputEnabled => inputActions != null && inputActions.Player.enabled;
 
-
+    /// <summary>
+    /// 获取组件、缓存基础引用，并初始化玩家状态机。
+    /// </summary>
     private void Awake()
     {
         Rb = GetComponent<Rigidbody2D>();
@@ -95,6 +106,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     {
         StateMachine = new PlayerStateMachine(this);
 
+        // 所有逻辑状态在 Awake 时一次性注册，运行时只做切换不做重复分配。
         StateMachine.RegisterState(new PlayerMovementState(this));
         StateMachine.RegisterState(new PlayerJumpState(this));
         StateMachine.RegisterState(new PlayerFallState(this));
@@ -108,28 +120,35 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         StateMachine.Initialize(PlayerStateType.Movement);//设置待机状态为初始状态
     }
 
+    /// <summary>
+    /// 组件启用时开启输入并订阅按键事件。
+    /// </summary>
     private void OnEnable()
     {
         inputActions.Player.Enable();
 
-        //订阅跳跃事件，当玩家按下跳跃键时调用OnJumpPerformed方法
+        // 订阅输入事件，所有动作都先进入逻辑校验，再决定是否切换状态。
         inputActions.Player.Jump.performed += OnJumpPerformed;
         inputActions.Player.Dash.performed += OnDashPerformed;
-        //订阅攻击事件，当玩家按下攻击键时调用OnAttackPerformed方法
         inputActions.Player.Attack.performed += OnAttackPerformed;
     }
 
+    /// <summary>
+    /// 组件禁用时关闭输入并取消事件订阅。
+    /// </summary>
     private void OnDisable()
     {
         inputActions.Player.Disable();
 
-        //取消订阅跳跃事件，防止内存泄漏
+        // 取消订阅，避免组件反复启停时重复绑定。
         inputActions.Player.Jump.performed -= OnJumpPerformed;
         inputActions.Player.Dash.performed -= OnDashPerformed;
-        //取消订阅攻击事件，防止内存泄漏
         inputActions.Player.Attack.performed -= OnAttackPerformed;
     }
 
+    /// <summary>
+    /// 采样输入、检测地面/墙体，并驱动当前逻辑状态与 Animator 参数同步。
+    /// </summary>
     void Update()
     {
         // 禁用输入时强制为零，避免残留输入驱动角色
@@ -142,6 +161,9 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         _animDriver.SyncFrame(HorizontalSpeed, VerticalSpeed, IsGround, IsWall, WallDownSpeed, IsDead);
     }
 
+    /// <summary>
+    /// 将物理控制委托给当前逻辑状态。
+    /// </summary>
     private void FixedUpdate()
     {
         StateMachine.FixedUpdate();
@@ -208,6 +230,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
             return;
         }
 
+        // JumpState 负责物理起跳；动画 Trigger 由控制器在逻辑接受后统一发出。
         TriggerJumpAnimation(jumpKind);
         if (EnableStateDebugLogs)
         {
@@ -247,6 +270,8 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     /// <param name="context">输入系统回调参数</param>
     private void OnAttackPerformed(InputAction.CallbackContext context)
     {
+        if (IsDead) return;
+
         PlayerStateType currentType = StateMachine.CurrentStateType;
         bool canStartAction = currentType == PlayerStateType.Movement ||
                               currentType == PlayerStateType.Jump ||
@@ -340,6 +365,46 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     }
 
     /// <summary>
+    /// 供角色攻击动画的 Animation Event 调用，按 PlayerEffects 文件夹下的资源名生成攻击特效。
+    /// 例如在 Slash 动画的命中帧上传入 "SlashEffect"。
+    /// </summary>
+    /// <param name="effectName">Assets/Resources/PlayerEffects/ 下的预制体名称，不带扩展名。</param>
+    public void SpawnAttackEffect(string effectName)
+    {
+        if (string.IsNullOrWhiteSpace(effectName))
+        {
+            Debug.LogWarning("[PlayerController] 攻击特效名称为空，无法生成特效。", this);
+            return;
+        }
+
+        // 统一拼接 PlayerEffects 子目录前缀，Animation Event 只需填文件名。
+        string effectResourcePath = $"PlayerEffects/{effectName}";
+        GameObject effectPrefab = LoadAttackEffectPrefab(effectResourcePath);
+        if (effectPrefab == null)
+        {
+            Debug.LogWarning(
+                $"[PlayerController] 未找到攻击特效预制体：Assets/Resources/{effectResourcePath}。请将预制体放到该目录下。",
+                this);
+            return;
+        }
+
+        Transform effectOrigin = attackEffectSpawnPoint != null ? attackEffectSpawnPoint : transform;
+        GameObject effectInstance = Instantiate(effectPrefab, effectOrigin.position, effectOrigin.rotation);
+
+        if (effectInstance.TryGetComponent<PlayerAttackEffect>(out PlayerAttackEffect attackEffect))
+        {
+            // 由特效脚本自行决定偏移、命中窗口和销毁时机，控制器只负责生成与归属绑定。
+            attackEffect.Initialize(this, effectOrigin);
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[PlayerController] 特效 {effectPrefab.name} 缺少 PlayerAttackEffect 脚本，无法执行伤害判定。",
+                effectInstance);
+        }
+    }
+
+    /// <summary>
     /// 外部（如暂停系统）开关玩家输入。仅控制 InputActionMap，不影响组件启用状态。
     /// </summary>
     public void SetInputEnabled(bool enabled)
@@ -357,6 +422,27 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
             if (inputActions.Player.enabled) inputActions.Player.Disable();
             MoveInput = Vector2.zero;
         }
+    }
+
+    /// <summary>
+    /// 按路径读取并缓存攻击特效预制体，避免每次攻击都重复 Resources.Load。
+    /// </summary>
+    /// <param name="effectResourcePath">Resources 下完整相对路径（已含 PlayerEffects/ 前缀）。</param>
+    /// <returns>找到则返回预制体，否则返回 null。</returns>
+    private GameObject LoadAttackEffectPrefab(string effectResourcePath)
+    {
+        if (_attackEffectCache.TryGetValue(effectResourcePath, out GameObject cachedPrefab))
+        {
+            return cachedPrefab;
+        }
+
+        GameObject effectPrefab = Resources.Load<GameObject>(effectResourcePath);
+        if (effectPrefab != null)
+        {
+            _attackEffectCache[effectResourcePath] = effectPrefab;
+        }
+
+        return effectPrefab;
     }
 
 }

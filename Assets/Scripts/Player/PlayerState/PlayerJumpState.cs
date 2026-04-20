@@ -1,5 +1,9 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// 玩家跳跃状态。
+/// 负责普通跳、二段跳和墙跳的起跳施力，并在空中根据地面/墙体情况切换到后续相位。
+/// </summary>
 public class PlayerJumpState : PlayerStateBase
 {
     public override PlayerStateType StateType => PlayerStateType.Jump;
@@ -11,6 +15,10 @@ public class PlayerJumpState : PlayerStateBase
     private float _airtimeTimer;
     private const float MinAirtime = 0.1f;
 
+    /// <summary>
+    /// 当前剩余跳跃次数。
+    /// 主要用于调试日志和外部观测，不直接暴露修改入口。
+    /// </summary>
     public int RemainingJumps => _remainingJumps;
 
     public PlayerJumpState(PlayerController player) : base(player) { }
@@ -58,6 +66,10 @@ public class PlayerJumpState : PlayerStateBase
         _remainingJumps = MaxJumpCount;
     }
 
+    /// <summary>
+    /// 根据挂起的 JumpKind 一次性施加起跳速度。
+    /// 墙跳会额外修正朝向与水平速度。
+    /// </summary>
     public override void Enter()
     {
         _currentJumpKind = player.ConsumePendingJumpKind();
@@ -81,6 +93,9 @@ public class PlayerJumpState : PlayerStateBase
         }
     }
 
+    /// <summary>
+    /// 在空中检测落地、贴墙和自然下落的相位切换。
+    /// </summary>
     public override void Update()
     {
         _airtimeTimer += Time.deltaTime;
@@ -104,11 +119,19 @@ public class PlayerJumpState : PlayerStateBase
         FlipCharacter();
     }
 
+    /// <summary>
+    /// 空中状态仍允许水平移动修正。
+    /// </summary>
     public override void FixedUpdate()
     {
         SmoothSpeed();
     }
 
+    /// <summary>
+    /// Jump 状态的合法切换范围。
+    /// 允许切到 Fall、Land、WallSlide，以及再次进入 Jump 以承接二段跳。
+    /// </summary>
+    /// <param name="state">目标状态。</param>
     public override bool CanTransitionTo(PlayerStateType state)
     {
         return state == PlayerStateType.Dead ||

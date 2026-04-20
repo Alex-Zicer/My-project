@@ -1,5 +1,9 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// 玩家状态基类。
+/// 封装了所有状态共享的玩家引用、基础切换工具和朝向/移动辅助方法。
+/// </summary>
 public abstract class PlayerStateBase : IPlayerState
 {
     protected PlayerController player;
@@ -18,7 +22,7 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 虚函数，方便子类重写，进入状态时执行的逻辑
+    /// 进入状态时执行的逻辑。
     /// </summary>
     public virtual void Enter()
     {
@@ -26,7 +30,7 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 退出状态时执行的逻辑
+    /// 退出状态时执行的逻辑。
     /// </summary>
     public virtual void Exit()
     {
@@ -34,7 +38,7 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 每帧更新逻辑
+    /// 每帧更新逻辑。
     /// </summary>
     public virtual void Update()
     {
@@ -42,7 +46,7 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 固定时间更新逻辑
+    /// 固定时间更新逻辑。
     /// </summary>
     public virtual void FixedUpdate()
     {
@@ -60,7 +64,8 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 某些状态结束后回到可移动相位
+    /// 某些状态结束后回到可移动相位。
+    /// 地面优先回 Movement；空中贴墙时回 WallSlide；否则回 Fall。
     /// </summary>
     protected void ReturnToLocomotionState()
     {
@@ -79,7 +84,7 @@ public abstract class PlayerStateBase : IPlayerState
     }
 
     /// <summary>
-    /// 改变人物朝向，基于玩家的输入来判断人物应该面朗左还是面朗右。
+    /// 基于玩家输入改变人物朝向。
     /// Knight 精灵默认朝左：scale.x = 1 就是左，scale.x = -1 就是右。
     /// </summary>
     protected void FlipCharacter()
@@ -111,6 +116,9 @@ public abstract class PlayerStateBase : IPlayerState
         }
     }
 
+    /// <summary>
+    /// 平滑逼近目标水平速度，避免角色横向移动瞬间突变。
+    /// </summary>
     protected void SmoothSpeed()
     {
         float targetXVelocity = player.MoveInput.x * player.PlayerData.moveSpeed;

@@ -1,5 +1,9 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// 玩家受击状态。
+/// 在固定硬直时间内锁定角色，硬直结束后回到可移动相位。
+/// </summary>
 public class PlayerHurtState : PlayerStateBase
 {
     public override PlayerStateType StateType => PlayerStateType.Hurt;
@@ -17,7 +21,7 @@ public class PlayerHurtState : PlayerStateBase
     }
 
     /// <summary>
-    /// 受击0.5秒后切换回移动状态
+    /// 硬直结束后切换回可移动相位。
     /// </summary>
     public override void Update()
     {
@@ -29,18 +33,17 @@ public class PlayerHurtState : PlayerStateBase
     }
 
     /// <summary>
-    /// 检测能否转换到对应状态
+    /// 检测当前受击状态能否转换到目标状态。
     /// </summary>
-    /// <param name="state">目标状态</param>
-    /// <returns></returns>
+    /// <param name="state">目标状态。</param>
     public override bool CanTransitionTo(PlayerStateType state)
     {
-        //受击状态结束之后可以向任何状态转变
+        // 受击状态结束之后可以向任何状态转变。
         if (hurtTimer >= hurtDuration)
         {
             return true;
         }
-        //受击过程中只能转换到死亡状态
+        // 受击过程中只能转换到死亡状态。
         return state == PlayerStateType.Dead;
     }
 }

@@ -71,6 +71,7 @@
 - 新增挂起上下文：`_pendingJumpKind`、`_pendingActionKind`
 - 新增 Dash 冷却字段：`_nextDashReadyTime`
 - 新增公开事实：`CanWallSlide`、`FacingDirectionX`、`DefaultGravityScale`
+- 新增攻击特效生成参考点：`attackEffectSpawnPoint`
 - `Update()` 顺序改为：采样输入 -> 地面检测 -> 墙体检测 -> 状态机 Update -> Animator 同步
 
 输入处理已改为“请求状态切换”而不是“直接裸写动画”：
@@ -78,6 +79,10 @@
 - `OnJumpPerformed()`：根据当前状态和墙体/地面情况决定 `PlayerJumpKind`
 - `OnDashPerformed()`：只在 `Movement` 相位进入 `Dash`
 - `OnAttackPerformed()`：不再直接触发 Slash，而是进入 `Action`
+
+同时新增了可被 Animation Event 直接调用的通用攻击特效接口：
+
+- `SpawnAttackEffect(string effectResourcePath)`：通过 Resources 路径通用生成攻击特效预制体
 
 新的状态注册已接入：
 
@@ -164,6 +169,11 @@
 - 离地则回 `Fall`
 - 计时结束则回到可移动相位
 
+已修复：
+
+- 早期版本在 `Land` 中没有持续驱动水平速度，地面摩擦可能让角色一进 `Land` 就明显掉速甚至接近 0
+- 当前版本在 `Land.FixedUpdate()` 中继续执行 `SmoothSpeed()`，并保留一个很短的落地窗口
+
 #### PlayerHurtState
 
 文件：`Assets/Scripts/Player/PlayerState/PlayerHurtState.cs`
@@ -186,11 +196,6 @@
 
 - 早期版本里 `CanTransitionTo()` 只允许 `Hurt/Dead`，会导致 Slash 结束后永远卡在 `Action`
 - 当前版本改为：锁定期间只允许 `Hurt/Dead` 打断，锁定结束后允许退出到可移动相位
-
-已修复：
-
-- 早期版本在 `Land` 中没有持续驱动水平速度，地面摩擦可能让角色一进 `Land` 就明显掉速甚至接近 0
-- 当前版本在 `Land.FixedUpdate()` 中继续执行 `SmoothSpeed()`，并保留一个很短的落地窗口
 
 文件：`Assets/Scripts/Player/PlayerState/PlayerActionState.cs`
 
@@ -227,7 +232,29 @@
 - 落地则进 `Land`
 - 脱离贴墙条件则回 `Fall`
 
-### 8. 保留旧文件但标记废弃
+### 8. 新增动画事件攻击判定系统
+
+新增文件：`Assets/Scripts/Player/Attack/PlayerAttackEffect.cs`
+
+当前实现：
+
+- 角色攻击动画仍由 `PlayerAnimationDriver.TriggerSlash()` 驱动
+- 在攻击动画的命中帧，通过 Animation Event 调用 `PlayerController.SpawnAttackEffect(string effectResourcePath)`
+- `PlayerController` 按 Resources 路径加载并实例化特效预制体
+- 特效预制体上挂载 `PlayerAttackEffect` 与 `Collider2D(IsTrigger)`
+- 特效生成后立即初始化归属者、朝向、偏移，并启用伤害判定
+- 在 `hitboxDuration` 到时关闭 Collider，在 `effectLifetime` 到时销毁特效
+- 对同一个敌人实例只结算一次伤害，并通过 `NotifyAttackHit()` 广播命中反馈
+
+这个设计满足“同一个通用生成接口支持不同攻击动画”的要求：
+
+- Slash 动画可以传入 `PlayerEffects/SlashEffect`
+- 突刺动画可以传入 `PlayerEffects/ThrustEffect`
+- 远程攻击动画可以传入 `PlayerEffects/ProjectileEffect`
+
+只要对应预制体放在 `Assets/Resources/PlayerEffects/` 下，并挂好 `PlayerAttackEffect`，就不需要为每个技能再写一套新的生成逻辑。
+
+### 9. 保留旧文件但标记废弃
 
 文件：`Assets/Scripts/Player/PlayerState/PlayerAttackState.cs`
 
@@ -285,6 +312,7 @@
 
 - 所有本次修改文件的脚本级错误检查通过
 - 全工程错误检查通过
+- 攻击特效生成接口与伤害判定脚本已通过当前 C# 编译检查
 
 这说明：
 
@@ -304,6 +332,7 @@
 5. `Movement/Jump/Fall -> Action(Slash) -> Movement/Fall/WallSlide`
 6. `Any -> Hurt -> Locomotion`
 7. `Any -> Dead`
+8. `Slash 动画事件 -> SpawnAttackEffect("PlayerEffects/SlashEffect") -> 特效命中敌人 -> 关闭判定 -> 自动销毁`
 
 ### 2. 重点复测最初报告的问题
 
@@ -332,7 +361,24 @@
 
 如果项目使用 JSON 覆盖 `PlayerData`，也要确认 JSON 是否需要同步这些字段。
 
-### 4. 视手感决定是否继续细化
+### 4. 在 Unity 中补攻击特效资源与动画事件
+
+当前代码已完成，但以下资源配置仍需在 Unity 编辑器中手动完成：
+
+1. 创建攻击特效预制体，例如 `SlashEffect.prefab`
+2. 将预制体放到 `Assets/Resources/PlayerEffects/` 下
+3. 在特效预制体上挂：
+	- `Collider2D`，并勾选 `Is Trigger`
+	- `PlayerAttackEffect`
+4. 按需要填写 `spawnOffset`、`damage`、`hitboxDuration`、`effectLifetime`
+5. 在玩家对象上设置 `attackEffectSpawnPoint`（可选）
+6. 在玩家攻击动画的命中帧添加 Animation Event：
+	- 函数名：`SpawnAttackEffect`
+	- 字符串参数：`PlayerEffects/SlashEffect`
+
+如果后续要接突刺或远程攻击，只需要换动画事件传入的字符串路径，不需要再新增一套专用生成函数。
+
+### 5. 视手感决定是否继续细化
 
 当前实现故意保持轻量，还没有做这些扩展：
 
@@ -342,6 +388,7 @@
 - WallSlide 朝向锁定策略
 - ActionState 的更细 cancel window
 - Jump buffer / coyote time
+- 攻击特效命中窗口改为由特效自身动画事件精确控制，而不是简单时间窗口
 
 这些都可以在现有结构上继续加，不需要再推翻整个状态机。
 
@@ -352,4 +399,5 @@
 1. 先在 Unity 里开 `enableStateDebugLogs` 跑 Play Mode，确认原始 bug 是否已消失。
 2. 如果 bug 仍在，先区分“代码状态真的进 Jump”还是“只是 Animator 看起来进 Jump”。
 3. 再根据 Play Mode 结果决定要不要继续改 `Knight.controller` 里的 Jump / DoubleJump / Land 过渡条件。
-4. 最后再做手感层优化，不要直接把手感调参与结构性问题混在一起处理。
+4. 然后检查攻击动画事件是否正确触发 `SpawnAttackEffect`，以及 `SlashEffect` 预制体是否放在 `Assets/Resources/PlayerEffects/` 下。
+5. 最后再做手感层优化，不要直接把手感调参与结构性问题混在一起处理。

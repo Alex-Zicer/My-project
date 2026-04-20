@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 玩家状态机。
+/// 负责注册状态、切换状态，并把 Update / FixedUpdate 分发给当前状态实例。
+/// </summary>
 public class PlayerStateMachine
 {
     private Dictionary<PlayerStateType, IPlayerState> states;
@@ -10,7 +14,7 @@ public class PlayerStateMachine
     public IPlayerState CurrentState => currentState;
 
     /// <summary>
-    /// 获取玩家当前的状态，如果为空，就返回Idle
+    /// 获取玩家当前的状态；若当前状态为空，则默认视为 Movement。
     /// </summary>
     public PlayerStateType CurrentStateType => currentState?.StateType ?? PlayerStateType.Movement;
 
@@ -104,11 +108,17 @@ public class PlayerStateMachine
         return true;
     }
 
+    /// <summary>
+    /// 将逐帧逻辑转发给当前状态。
+    /// </summary>
     public void Update()
     {
         currentState?.Update();
     }
 
+    /// <summary>
+    /// 将物理帧逻辑转发给当前状态。
+    /// </summary>
     public void FixedUpdate()
     {
         currentState?.FixedUpdate();

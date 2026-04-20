@@ -1,8 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.IO;
 using UnityEngine;
-using System.IO;
 
+/// <summary>
+/// 玩家数值配置资产。
+/// 保存移动、跳跃、冲刺、贴墙与攻击反馈等基础参数，供 PlayerController 和各状态读取。
+/// </summary>
 [CreateAssetMenu(fileName = "NewPlayerData", menuName = "Data/PlayerData")]
 public class PlayerData : ScriptableObject
 {
@@ -46,10 +48,11 @@ public class PlayerData : ScriptableObject
     public float attackShakeIntensity = 0.2f;
     public float attackShakeFrequency = 1f;
     public float attackShakeDuration = 0.1f;
-
-
-
-    [ContextMenu("Load From JSON")] //直接在Inspector菜单里右键点击即可触发
+    /// <summary>
+    /// 从 StreamingAssets 中读取玩家数据 JSON，并覆盖当前 ScriptableObject。
+    /// 该函数主要用于个人练习 Demo 中的快速调参与导入。
+    /// </summary>
+    [ContextMenu("Load From JSON")] // 直接在 Inspector 菜单里右键点击即可触发。
     public void LoadFromJson()
     {
         string path = Path.Combine(Application.streamingAssetsPath, "PlayerData.json");
@@ -58,7 +61,7 @@ public class PlayerData : ScriptableObject
         {
             string jsonContent = File.ReadAllText(path);
 
-            //将json数据直接注入到这个脚本中
+            // 将 JSON 数据直接覆盖到当前 ScriptableObject 中。
             JsonUtility.FromJsonOverwrite(jsonContent, this);
 
             Debug.Log("json文件数据导入成功");

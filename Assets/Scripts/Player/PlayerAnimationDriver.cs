@@ -25,6 +25,9 @@ public class PlayerAnimationDriver : MonoBehaviour
     private static readonly int SlashTriggerHash = Animator.StringToHash("Slash");
     private static readonly int HurtTriggerHash = Animator.StringToHash("Hurt");
 
+    /// <summary>
+    /// 缓存 Animator 组件。
+    /// </summary>
     private void Awake()
     {
         _animator = GetComponent<Animator>();
@@ -57,6 +60,7 @@ public class PlayerAnimationDriver : MonoBehaviour
     /// <param name="isDoubleJump">true 时触发 DoubleJump Trigger，否则触发 Jump Trigger</param>
     public void TriggerJump(bool isDoubleJump)
     {
+        // 先清掉同类 Trigger，避免上一帧残留导致 Animator 误消费。
         _animator.ResetTrigger(JumpTriggerHash);
         _animator.ResetTrigger(DoubleJumpTriggerHash);
         _animator.SetTrigger(isDoubleJump ? DoubleJumpTriggerHash : JumpTriggerHash);
