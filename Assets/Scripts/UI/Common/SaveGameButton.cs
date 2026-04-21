@@ -19,7 +19,7 @@ public class SaveGameButton : MonoBehaviour
     /// </summary>
     public void SaveGame()
     {
-        int safeSlotIndex = Mathf.Max(_slotIndex, MinSlotIndex);
+        int safeSlotIndex = ResolveTargetSlotIndex();
         _ = SaveManager.Instance.Save(safeSlotIndex);
 
         if (_enableClickLog)
@@ -39,12 +39,26 @@ public class SaveGameButton : MonoBehaviour
             return;
         }
 
-        int safeSlotIndex = Mathf.Max(_slotIndex, MinSlotIndex);
+        int safeSlotIndex = ResolveTargetSlotIndex();
         _ = SaveManager.Instance.Load(safeSlotIndex);
 
         if (_enableClickLog)
         {
             Debug.Log($"[SaveGameButton] 已触发加载，槽位={safeSlotIndex}");
         }
+    }
+
+    /// <summary>
+    /// 优先返回当前活动槽位；若尚未绑定，再回退到 Inspector 配置槽位。
+    /// </summary>
+    /// <returns>最终用于存取档的槽位编号。</returns>
+    private int ResolveTargetSlotIndex()
+    {
+        if (SaveManager.HasInstance && SaveManager.Instance.HasCurrentSlot)
+        {
+            return SaveManager.Instance.CurrentSlotIndex;
+        }
+
+        return Mathf.Max(_slotIndex, MinSlotIndex);
     }
 }

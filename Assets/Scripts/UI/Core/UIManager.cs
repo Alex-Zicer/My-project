@@ -48,12 +48,27 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 从指定槽位开始新游戏：记录当前槽位、清空常驻运行时状态，再进入 GamePlay。
+    /// </summary>
+    /// <param name="slotIndex">开始新游戏使用的槽位编号。</param>
+    public void StartNewGameFromSlot(int slotIndex)
+    {
+        int safeSlotIndex = Mathf.Max(slotIndex, MinSlotIndex);
+        _pendingLoadSlot = NoPendingLoadSlot;
+        SaveManager.Instance.SetCurrentSlot(safeSlotIndex);
+        ResetPersistentRuntimeStateForNewGame();
+        LoadGamePlay();
+    }
+
+    /// <summary>
     /// 先切换到 GamePlay，再在场景就绪后执行读档。
     /// </summary>
     /// <param name="slotIndex">读档槽位编号。</param>
     public void LoadGamePlayFromSave(int slotIndex)
     {
-        _pendingLoadSlot = Mathf.Max(slotIndex, MinSlotIndex);
+        int safeSlotIndex = Mathf.Max(slotIndex, MinSlotIndex);
+        _pendingLoadSlot = safeSlotIndex;
+        SaveManager.Instance.SetCurrentSlot(safeSlotIndex);
         LoadGamePlay();
     }
 
@@ -193,6 +208,27 @@ public class UIManager : MonoBehaviour
         // 等一帧，确保场景对象完成 Awake/注册后再恢复状态。
         await Task.Yield();
         await SaveManager.Instance.Load(slotToLoad);
+    }
+
+    /// <summary>
+    /// 开始新游戏前，清空会跨场景保留的运行时状态，避免把旧局数据带入新局。
+    /// </summary>
+    private void ResetPersistentRuntimeStateForNewGame()
+    {
+        if (Inventory.Instance != null)
+        {
+            Inventory.Instance.ReplaceAllItems(new List<InventoryItem>());
+        }
+
+        if (DialogueRouterService.HasInstance)
+        {
+            DialogueRouterService.Instance.GetOrCreateMemoryProgressStore().ResetAll();
+        }
+
+        if (DialogueGameStateService.HasInstance)
+        {
+            DialogueGameStateService.Instance.ReplaceAllBoolStates(new Dictionary<string, bool>());
+        }
     }
 
     /// <summary>

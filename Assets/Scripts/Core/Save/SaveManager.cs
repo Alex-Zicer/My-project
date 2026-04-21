@@ -12,6 +12,7 @@ public sealed class SaveManager : MonoBehaviour
 {
     private const int CurrentSaveVersion = 1; // 当前存档格式版本号。
     private const int MinSlotIndex = 0; // 合法槽位最小值。
+    private const int NoActiveSlotIndex = -1; // 当前未绑定任何活动槽位。
     private const string SaveDirectoryName = "Saves"; // 存档目录名。
     private const string SaveFileNamePattern = "save_{0}.json"; // 存档文件命名格式。
 
@@ -23,6 +24,7 @@ public sealed class SaveManager : MonoBehaviour
     private readonly Dictionary<string, ISaveable> _saveableObjects = new Dictionary<string, ISaveable>(); // 当前场景已注册对象。
     private ISaveSerializer _serializer; // 序列化器扩展点。
     private ISaveFileHandler _fileHandler; // 文件处理扩展点。
+    private int _currentSlotIndex = NoActiveSlotIndex; // 当前正在使用的槽位。
 
     /// <summary>
     /// 存档完成事件（参数：槽位编号）。
@@ -48,6 +50,16 @@ public sealed class SaveManager : MonoBehaviour
     /// 当前是否已存在单例实例。
     /// </summary>
     public static bool HasInstance => _instance != null;
+
+    /// <summary>
+    /// 当前活动槽位编号；未绑定时返回 -1。
+    /// </summary>
+    public int CurrentSlotIndex => _currentSlotIndex;
+
+    /// <summary>
+    /// 当前是否已经绑定活动槽位。
+    /// </summary>
+    public bool HasCurrentSlot => _currentSlotIndex >= MinSlotIndex;
 
     /// <summary>
     /// 存档管理器单例入口（若场景中不存在则自动创建）。
@@ -125,6 +137,28 @@ public sealed class SaveManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 设置当前活动槽位，供“开始新游戏/读档后继续保存”复用。
+    /// </summary>
+    /// <param name="slotIndex">要绑定的槽位编号。</param>
+    public void SetCurrentSlot(int slotIndex)
+    {
+        if (!IsSlotIndexValid(slotIndex, nameof(SetCurrentSlot)))
+        {
+            return;
+        }
+
+        _currentSlotIndex = slotIndex;
+    }
+
+    /// <summary>
+    /// 清除当前活动槽位绑定。
+    /// </summary>
+    public void ClearCurrentSlot()
+    {
+        _currentSlotIndex = NoActiveSlotIndex;
+    }
+
+    /// <summary>
     /// 注册可存档对象。
     /// </summary>
     /// <param name="id">对象唯一 ID。</param>
@@ -192,6 +226,7 @@ public sealed class SaveManager : MonoBehaviour
                 Debug.Log($"[SaveManager] 存档成功，槽位={slotIndex}，路径={filePath}");
             }
 
+            _currentSlotIndex = slotIndex;
             OnSaveCompleted?.Invoke(slotIndex);
         }
         catch (Exception exception)
@@ -242,6 +277,7 @@ public sealed class SaveManager : MonoBehaviour
                 Debug.Log($"[SaveManager] 读档成功，槽位={slotIndex}，场景={saveData.sceneName}，时间={saveData.timestamp}");
             }
 
+            _currentSlotIndex = slotIndex;
             OnLoadCompleted?.Invoke(slotIndex);
         }
         catch (Exception exception)
