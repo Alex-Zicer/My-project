@@ -38,7 +38,6 @@ public class Inventory : MonoBehaviour
         // 切换场景时保留背包数据
         // 子对象挂在已常驻根节点下时无需再次调用，避免 Unity 警告。
         if (transform.parent == null)
-        if (transform.parent == null)
         {
             DontDestroyOnLoad(gameObject);
         }

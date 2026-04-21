@@ -54,7 +54,13 @@ public class ButtonAnimationTrigger : MonoBehaviour, IPointerEnterHandler, IPoin
     {
         // 缓存按钮自身的交互状态组件，避免后续重复获取。
         _selectable = GetComponent<Selectable>();
+    }
 
+    /// <summary>
+    /// 等待 Animator 完成初始化后，再设置动画目标的初始状态。
+    /// </summary>
+    private void Start()
+    {
         // 初始化动画目标的悬停状态，并默认隐藏动画对象。
         InitializeTargets();
     }

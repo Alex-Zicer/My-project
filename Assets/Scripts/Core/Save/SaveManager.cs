@@ -151,14 +151,6 @@ public sealed class SaveManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 清除当前活动槽位绑定。
-    /// </summary>
-    public void ClearCurrentSlot()
-    {
-        _currentSlotIndex = NoActiveSlotIndex;
-    }
-
-    /// <summary>
     /// 注册可存档对象。
     /// </summary>
     /// <param name="id">对象唯一 ID。</param>
