@@ -1974,18 +1974,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e0401c727e4a6e4dadfff80459981a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useProfileRouting: 1
+  useProfileRouting: 0
   npcId: npc_001
   dialogueProfile: {fileID: 11400000, guid: f326bd56be686f24d94f487a19c93c62, type: 2}
   dialogueReference:
-    sourceType: 0
-    primarySO: {fileID: 11400000, guid: cd81f0171202dba4fbdd6e2552d8925b, type: 2}
-    keyOrPath: 
-    fallbackSO: {fileID: 11400000, guid: cd81f0171202dba4fbdd6e2552d8925b, type: 2}
-    firstStartNodeId: 
+    sourceType: 1
+    primarySO: {fileID: 0}
+    keyOrPath: Dialogue/demo_showcase_dialogue.json
+    fallbackSO: {fileID: 0}
+    firstStartNodeId: start
     repeatStartNodeId: 
   oneShot: 0
   interactKey: 101
+  interactInputLabel: E
   interactOrigin: {fileID: 978591780}
   triggerZone: {fileID: 978591783}
   interactHintRoot: {fileID: 1066231280}
@@ -5725,7 +5726,7 @@ PrefabInstance:
     - target: {fileID: 8051788652507024363, guid: 3b52b7f711319694581fcf857e75ee58, type: 3}
       propertyPath: choiceButtonPrefab
       value: 
-      objectReference: {fileID: 4414645693593958499, guid: beae0afa19e92d04b823c9ab2da5460f, type: 3}
+      objectReference: {fileID: -4932069345773875756, guid: 6ce4f885fbe85564a9edbf6c17e71895, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

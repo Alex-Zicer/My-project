@@ -77,6 +77,7 @@ public class SoDialogueProvider : IDialogueProvider
         var node = new DialogueNodeData
         {
             nodeId = source.nodeId,
+            speakerId = source.speakerId,
             speakerName = source.speakerName,
             speakerPortrait = source.speakerPortrait,
             content = source.content,

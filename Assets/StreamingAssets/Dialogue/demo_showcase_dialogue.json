@@ -1,0 +1,117 @@
+﻿{
+  "dialogueId": "demo_showcase_dialogue",
+  "startNodeId": "start",
+  "nodes": [
+    {
+      "nodeId": "start",
+      "speakerId": "guide",
+      "content": "欢迎来到这段对话演示。你现在看到的是一份由 JSON 驱动的分支对话数据。",
+      "nextNodeId": "",
+      "isEndNode": false,
+      "choices": [
+        {
+          "choiceText": "这个对话系统能展示什么？",
+          "nextNodeId": "feature_intro"
+        },
+        {
+          "choiceText": "JSON 数据是怎么组织的？",
+          "nextNodeId": "json_intro"
+        },
+        {
+          "choiceText": "先结束这段演示。",
+          "nextNodeId": "quick_end"
+        }
+      ]
+    },
+    {
+      "nodeId": "feature_intro",
+      "speakerId": "guide",
+      "content": "当前版本重点展示 4 个点：对话图节点跳转、分支选项、打字机播放，以及 UI 层的完整呈现。",
+      "nextNodeId": "feature_choice",
+      "isEndNode": false,
+      "choices": []
+    },
+    {
+      "nodeId": "feature_choice",
+      "speakerId": "player",
+      "content": "我想继续看看更具体的内容。",
+      "nextNodeId": "",
+      "isEndNode": false,
+      "choices": [
+        {
+          "choiceText": "看看 UI 展示相关内容",
+          "nextNodeId": "ui_showcase"
+        },
+        {
+          "choiceText": "看看分支跳转相关内容",
+          "nextNodeId": "branch_showcase"
+        }
+      ]
+    },
+    {
+      "nodeId": "ui_showcase",
+      "speakerId": "guide",
+      "content": "UI 层会负责显示说话人、正文、选项按钮，并在对话开始和结束时接管页面显隐。",
+      "nextNodeId": "summary",
+      "isEndNode": false,
+      "choices": []
+    },
+    {
+      "nodeId": "branch_showcase",
+      "speakerId": "guide",
+      "content": "分支节点会根据你点击的选项跳到不同 nodeId。也就是说，对话内容不是写死顺序，而是按图结构推进。",
+      "nextNodeId": "summary",
+      "isEndNode": false,
+      "choices": []
+    },
+    {
+      "nodeId": "json_intro",
+      "speakerId": "guide",
+      "content": "一段对话至少包含 dialogueId、startNodeId 和 nodes。每个节点都可以配置文本、下一节点、结束标记和可选分支。",
+      "nextNodeId": "json_detail",
+      "isEndNode": false,
+      "choices": []
+    },
+    {
+      "nodeId": "json_detail",
+      "speakerId": "player",
+      "content": "也就是说，只要改 JSON，就能调整对话结构和内容，而不一定要修改运行时代码。",
+      "nextNodeId": "summary",
+      "isEndNode": false,
+      "choices": []
+    },
+    {
+      "nodeId": "summary",
+      "speakerId": "guide",
+      "content": "这份示例同时覆盖了线性推进、分支选择和多说话人切换，适合直接拿来展示当前对话系统的核心能力。",
+      "nextNodeId": "",
+      "isEndNode": false,
+      "choices": [
+        {
+          "choiceText": "回到开头再看一遍",
+          "nextNodeId": "start"
+        },
+        {
+          "choiceText": "结束演示",
+          "nextNodeId": "final_end"
+        }
+      ]
+    },
+    {
+      "nodeId": "quick_end",
+      "speakerId": "guide",
+      "content": "好的，这段演示到这里结束。你可以稍后再回来查看完整分支。",
+      "nextNodeId": "",
+      "isEndNode": true,
+      "choices": []
+    },
+    {
+      "nodeId": "final_end",
+      "speakerId": "guide",
+      "content": "演示结束。当前系统已经具备数据驱动、分支推进和 UI 展示这三项核心能力。",
+      "nextNodeId": "",
+      "isEndNode": true,
+      "choices": []
+    }
+  ]
+}

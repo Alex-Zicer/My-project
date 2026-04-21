@@ -18,6 +18,9 @@ public class DialogueNodeData
     // nodeId 标识。
     public string nodeId;
 
+    // speakerId 标识。
+    public string speakerId;
+
     // speakerName 运行时字段。
     public string speakerName;
 

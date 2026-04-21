@@ -433,6 +433,7 @@ public class DialogueService : MonoBehaviour
         }
 
         _state = DialogueRunState.WaitingNext;
+        _view?.ShowContinueButton();
     }
 
     /// <summary>

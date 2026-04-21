@@ -40,6 +40,16 @@ public class DialogueReference
     public string repeatStartNodeId;
 
     /// <summary>
+    /// 判断当前引用是否至少配置了一个可用数据源。
+    /// </summary>
+    public bool IsConfigured()
+    {
+        if (primarySO != null) return true;
+        if (fallbackSO != null) return true;
+        return !string.IsNullOrWhiteSpace(keyOrPath);
+    }
+
+    /// <summary>
     /// 从 ScriptableObject 快速构造对话引用。
     /// </summary>
     public static DialogueReference FromSo(DialogueDataSO so, string startNodeId = null)
@@ -48,6 +58,19 @@ public class DialogueReference
         {
             sourceType = DialogueSourceType.So,
             primarySO = so,
+            firstStartNodeId = startNodeId
+        };
+    }
+
+    /// <summary>
+    /// 从 JSON 路径快速构造对话引用。
+    /// </summary>
+    public static DialogueReference FromJson(string path, string startNodeId = null)
+    {
+        return new DialogueReference
+        {
+            sourceType = DialogueSourceType.Json,
+            keyOrPath = path,
             firstStartNodeId = startNodeId
         };
     }

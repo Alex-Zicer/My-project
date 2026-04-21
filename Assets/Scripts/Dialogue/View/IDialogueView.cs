@@ -30,6 +30,10 @@ void SetContent(string text, bool isTyping);
 /// </summary>
 void ShowChoices(IReadOnlyList<DialogueChoiceViewModel> choices);
 /// <summary>
+/// 生成并显示线性推进用的继续按钮。
+/// </summary>
+void ShowContinueButton();
+/// <summary>
 /// 销毁并清空当前选项按钮。
 /// </summary>
 void ClearChoices();

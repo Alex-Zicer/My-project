@@ -8,6 +8,8 @@ using UnityEngine.UI;
 
 public class DialoguePageController : MonoBehaviour, IDialogueView
 {
+    private const string ContinueButtonText = "继续";
+
     [Header("界面引用")]
     [SerializeField] private UIPage page;
     [SerializeField] private TextMeshProUGUI speakerText;
@@ -222,6 +224,27 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     }
 
     /// <summary>
+    /// 生成并显示线性推进用的继续按钮。
+    /// </summary>
+    public void ShowContinueButton()
+    {
+        ClearChoices();
+
+        if (choicesRoot == null || choiceButtonPrefab == null)
+        {
+            return;
+        }
+
+        _showingChoices = true;
+        DialogueChoiceButtonView buttonView = Instantiate(choiceButtonPrefab, choicesRoot);
+        buttonView.Setup(0, ContinueButtonText, HandleContinueClicked);
+        _spawnedChoices.Add(buttonView);
+
+        ConfigureChoiceNavigation();
+        SelectChoice(0);
+    }
+
+    /// <summary>
     /// 销毁并清空当前选项按钮。
     /// </summary>
     public void ClearChoices()
@@ -254,6 +277,15 @@ public class DialoguePageController : MonoBehaviour, IDialogueView
     {
         _selectedChoiceIndex = index;
         OnChoiceSelected?.Invoke(index);
+    }
+
+    /// <summary>
+    /// 将继续按钮点击回传给运行层。
+    /// </summary>
+    private void HandleContinueClicked(int index)
+    {
+        _selectedChoiceIndex = index;
+        OnNextRequested?.Invoke();
     }
 
     /// <summary>

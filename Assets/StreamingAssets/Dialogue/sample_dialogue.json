@@ -4,8 +4,7 @@
   "nodes": [
     {
       "nodeId": "start",
-      "speakerName": "Village Elder",
-      "portraitResourcePath": "",
+      "speakerId": "elder",
       "content": "Welcome, traveler. What do you need?",
       "nextNodeId": "",
       "isEndNode": false,
@@ -22,8 +21,7 @@
     },
     {
       "nodeId": "directions",
-      "speakerName": "Village Elder",
-      "portraitResourcePath": "",
+      "speakerId": "elder",
       "content": "Head east and follow the stone road.",
       "nextNodeId": "bye",
       "isEndNode": false,
@@ -31,8 +29,7 @@
     },
     {
       "nodeId": "bye",
-      "speakerName": "Village Elder",
-      "portraitResourcePath": "",
+      "speakerId": "elder",
       "content": "Safe travels.",
       "nextNodeId": "",
       "isEndNode": true,

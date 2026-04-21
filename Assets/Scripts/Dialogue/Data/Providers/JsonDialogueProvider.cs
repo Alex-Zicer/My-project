@@ -5,6 +5,11 @@ using UnityEngine;
 
 public class JsonDialogueProvider : IDialogueProvider
 {
+    private const string SpeakerDatabaseResourcePath = "Dialogue/DialogueSpeakerDatabase";
+
+    // 说话人资料表缓存。
+    private static DialogueSpeakerDatabaseSO _speakerDatabase;
+
     [Serializable]
     private class DialogueJsonDocument
     {
@@ -24,11 +29,8 @@ public class JsonDialogueProvider : IDialogueProvider
         // nodeId 标识。
         public string nodeId;
 
-        // speakerName 运行时字段。
-        public string speakerName;
-
-        // portraitResourcePath 运行时字段。
-        public string portraitResourcePath;
+        // speakerId 标识。
+        public string speakerId;
 
         // content 运行时字段。
         public string content;
@@ -153,14 +155,17 @@ public class JsonDialogueProvider : IDialogueProvider
     /// </summary>
     private static DialogueNodeData ConvertNode(DialogueJsonNode jsonNode)
     {
+        ResolveSpeakerPresentation(jsonNode.speakerId, out string speakerName, out Sprite speakerPortrait);
+
         var node = new DialogueNodeData
         {
             nodeId = jsonNode.nodeId,
-            speakerName = jsonNode.speakerName,
+            speakerId = jsonNode.speakerId,
+            speakerName = speakerName,
             content = jsonNode.content,
             nextNodeId = jsonNode.nextNodeId,
             isEndNode = jsonNode.isEndNode,
-            speakerPortrait = TryLoadPortrait(jsonNode.portraitResourcePath),
+            speakerPortrait = speakerPortrait,
             choices = new List<DialogueChoiceData>()
         };
 
@@ -188,17 +193,62 @@ public class JsonDialogueProvider : IDialogueProvider
     }
 
     /// <summary>
-    /// 按资源路径加载角色头像精灵。
+    /// 根据 speakerId 解析最终用于 UI 显示的名称和头像。
     /// </summary>
-    private static Sprite TryLoadPortrait(string resourcePath)
+    /// <param name="speakerId">说话人标识。</param>
+    /// <param name="speakerName">最终用于显示的名称。</param>
+    /// <param name="speakerPortrait">最终用于显示的头像。</param>
+    private static void ResolveSpeakerPresentation(string speakerId, out string speakerName, out Sprite speakerPortrait)
     {
-        // 守卫条件：不满足时直接返回，避免进入无效流程。
-        if (string.IsNullOrWhiteSpace(resourcePath))
+        speakerName = speakerId;
+        speakerPortrait = null;
+
+        if (!TryGetSpeakerEntry(speakerId, out DialogueSpeakerEntry entry))
         {
-            return null;
+            return;
         }
 
-        return Resources.Load<Sprite>(resourcePath);
+        if (!string.IsNullOrWhiteSpace(entry.DisplayName))
+        {
+            speakerName = entry.DisplayName;
+        }
+
+        if (entry.Portrait != null)
+        {
+            speakerPortrait = entry.Portrait;
+        }
+    }
+
+    /// <summary>
+    /// 尝试从资料表中查找说话人信息。
+    /// </summary>
+    /// <param name="speakerId">说话人标识。</param>
+    /// <param name="entry">查找到的资料项。</param>
+    /// <returns>查找到返回 true，否则返回 false。</returns>
+    private static bool TryGetSpeakerEntry(string speakerId, out DialogueSpeakerEntry entry)
+    {
+        entry = null;
+        if (string.IsNullOrWhiteSpace(speakerId))
+        {
+            return false;
+        }
+
+        DialogueSpeakerDatabaseSO database = LoadSpeakerDatabase();
+        return database != null && database.TryGetSpeaker(speakerId, out entry);
+    }
+
+    /// <summary>
+    /// 加载对话说话人资料表。
+    /// </summary>
+    /// <returns>资料表资源；未找到时返回 null。</returns>
+    private static DialogueSpeakerDatabaseSO LoadSpeakerDatabase()
+    {
+        if (_speakerDatabase == null)
+        {
+            _speakerDatabase = Resources.Load<DialogueSpeakerDatabaseSO>(SpeakerDatabaseResourcePath);
+        }
+
+        return _speakerDatabase;
     }
 
     /// <summary>
