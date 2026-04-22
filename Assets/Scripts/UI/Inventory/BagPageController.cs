@@ -25,6 +25,8 @@ public class BagPageController : MonoBehaviour
 
     // 当前筛选类型，null 表示显示全部
     private ItemType? _currentFilter = null;
+    // 当前选中的格子视图，用于切换高亮。
+    private BagSlotView _selectedSlot;
 
     // -------------------------------------------------------
     // Unity 生命周期
@@ -49,6 +51,7 @@ public class BagPageController : MonoBehaviour
         if (Inventory.Instance != null)
             Inventory.Instance.OnInventoryChanged -= Refresh;
 
+        _selectedSlot = null;
         pool.ReturnAll();
     }
 
@@ -100,6 +103,9 @@ public class BagPageController : MonoBehaviour
     /// </summary>
     private void Refresh()
     {
+        // 当前阶段的交互约定：只要列表发生刷新（如切换分类、排序、数量变化），
+        // 就主动清空选中高亮，让玩家重新点击选择，避免旧选择在新列表中造成误解。
+        _selectedSlot = null;
         pool.ReturnAll();
 
         if (Inventory.Instance == null) return;
@@ -113,6 +119,7 @@ public class BagPageController : MonoBehaviour
         {
             BagSlotView slot = pool.Get(contentRoot);
             slot.Bind(item);
+            slot.OnClicked += HandleSlotClicked;
             if (detailedPanel != null)
             {
                 slot.OnHoverEnter += detailedPanel.Show;
@@ -130,6 +137,33 @@ public class BagPageController : MonoBehaviour
             BagSlotView slot = pool.Get(contentRoot);
             slot.Bind(null);
         }
+    }
+
+    /// <summary>
+    /// 处理格子点击，切换当前选中项并显示高亮。
+    /// </summary>
+    /// <param name="item">被点击的物品。</param>
+    /// <param name="slot">被点击的格子。</param>
+    private void HandleSlotClicked(InventoryItem item, BagSlotView slot)
+    {
+        if (item == null || slot == null) return;
+
+        ApplySelectedSlot(slot);
+    }
+
+    /// <summary>
+    /// 应用当前选中的格子高亮，并取消旧格子的高亮。
+    /// </summary>
+    /// <param name="slot">要高亮显示的格子。</param>
+    private void ApplySelectedSlot(BagSlotView slot)
+    {
+        if (_selectedSlot != null && _selectedSlot != slot)
+        {
+            _selectedSlot.SetSelected(false);
+        }
+
+        _selectedSlot = slot;
+        _selectedSlot.SetSelected(true);
     }
 
 }
