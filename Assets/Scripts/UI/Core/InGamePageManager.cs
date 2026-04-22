@@ -42,6 +42,7 @@ public class InGamePageManager : BasePageManager
         _hasLockedInputByBag = false;
         Time.timeScale = 1;
         base.Initialize();
+        SyncCursorState();
     }
 
     /// <summary>
@@ -52,6 +53,7 @@ public class InGamePageManager : BasePageManager
     {
         base.GoToPageByName(pageName);
         SyncBagInputLock();
+        SyncCursorState();
     }
 
     /// <summary>
@@ -61,6 +63,7 @@ public class InGamePageManager : BasePageManager
     {
         base.Back();
         SyncBagInputLock();
+        SyncCursorState();
     }
 
     /// <summary>
@@ -70,6 +73,7 @@ public class InGamePageManager : BasePageManager
     {
         base.CloseCurrentPage();
         SyncBagInputLock();
+        SyncCursorState();
     }
 
     // 暂停开关入口：
@@ -162,6 +166,14 @@ public class InGamePageManager : BasePageManager
         {
             SetPlayerInputEnabled(true);
         }
+    }
+
+    // 页面切换后同步光标显隐：
+    // 只要当前存在游戏内页面（如暂停、背包、对话），就显示光标；否则恢复玩法态隐藏。
+    private void SyncCursorState()
+    {
+        if (UIManager.Instance == null) return;
+        UIManager.Instance.RefreshCursorState();
     }
 
     private void Update()

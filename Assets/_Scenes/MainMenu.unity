@@ -1887,6 +1887,9 @@ MonoBehaviour:
   mainMenuPageManager: {fileID: 0}
   inGamePageManager: {fileID: 0}
   hudManager: {fileID: 0}
+  _cursorTexture: {fileID: 2800000, guid: 83cddb70db62e4d47906b39c609ebc38, type: 3}
+  _cursorHotSpot: {x: 0, y: 0}
+  _lockCursorDuringGameplay: 1
   eventSystem: {fileID: 689535276}
 --- !u!1001 &1811931125
 PrefabInstance:

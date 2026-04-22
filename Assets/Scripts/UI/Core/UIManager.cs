@@ -20,6 +20,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private InGamePageManager inGamePageManager;
     [SerializeField] private HUDManager hudManager;
 
+    [Header("Cursor")]
+    [SerializeField] private Texture2D _cursorTexture;
+    [SerializeField] private Vector2 _cursorHotSpot = Vector2.zero;
+    [SerializeField] private bool _lockCursorDuringGameplay = true;
+
     public MainMenuPageManager MainMenuPage => mainMenuPageManager;
     public InGamePageManager InGamePage => inGamePageManager;
     public HUDManager HUD => hudManager;
@@ -45,6 +50,48 @@ public class UIManager : MonoBehaviour
     public void LoadGamePlay()
     {
         SceneLoader.Instance.LoadScene("GamePlay");
+    }
+
+    /// <summary>
+    /// 刷新当前上下文对应的光标状态。
+    /// 主菜单场景始终显示光标；游戏内仅在打开页面时显示，其余时间隐藏。
+    /// </summary>
+    public void RefreshCursorState()
+    {
+        ApplyCustomCursor();
+
+        if (!isInGameScene)
+        {
+            ShowCursorForUI();
+            return;
+        }
+
+        bool shouldShowCursor = inGamePageManager != null && !string.IsNullOrEmpty(inGamePageManager.CurrentPageKey);
+        if (shouldShowCursor)
+        {
+            ShowCursorForUI();
+            return;
+        }
+
+        HideCursorForGameplay();
+    }
+
+    /// <summary>
+    /// 显示光标并解除锁定，用于主菜单、暂停、背包等 UI 页面。
+    /// </summary>
+    public void ShowCursorForUI()
+    {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    /// <summary>
+    /// 隐藏光标；若开启了玩法锁定，则同时锁定鼠标。
+    /// </summary>
+    public void HideCursorForGameplay()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = _lockCursorDuringGameplay ? CursorLockMode.Locked : CursorLockMode.None;
     }
 
     /// <summary>
@@ -151,6 +198,7 @@ public class UIManager : MonoBehaviour
         {
             DontDestroyOnLoad(gameObject);
         }
+        ApplyCustomCursor();
         EnsureSubManagers();
     }
 
@@ -355,6 +403,7 @@ public class UIManager : MonoBehaviour
             if (inGamePageManager != null) inGamePageManager.CloseAll();
             if (hudManager != null) hudManager.SetHUDActive(false);
             Time.timeScale = 1;
+            RefreshCursorState();
             return;
         }
 
@@ -362,6 +411,7 @@ public class UIManager : MonoBehaviour
         if (inGamePageManager != null) inGamePageManager.Initialize();
         if (hudManager != null) hudManager.SetHUDActive(true);
         Time.timeScale = 1;
+        RefreshCursorState();
     }
 
     /// <summary>
@@ -384,5 +434,13 @@ public class UIManager : MonoBehaviour
                 inGamePageManager.TogglePause();
             }
         }
+    }
+
+    /// <summary>
+    /// 应用自定义光标图片。未配置贴图时沿用系统默认光标。
+    /// </summary>
+    private void ApplyCustomCursor()
+    {
+        Cursor.SetCursor(_cursorTexture, _cursorHotSpot, CursorMode.Auto);
     }
 }
