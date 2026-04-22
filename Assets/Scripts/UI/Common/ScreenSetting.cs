@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class ScreenSetting : MonoBehaviour
 {
+    private const string ResolutionWidthPrefsKey = "screen.resolution.width";
+    private const string ResolutionHeightPrefsKey = "screen.resolution.height";
+    private const string WindowModePrefsKey = "screen.windowMode";
+
     [Header("组件的引用")]
     [Tooltip("分辨率下拉菜单的引用，用于显示和选择屏幕分辨率。")]
     public TMP_Dropdown resolutionDropdown;
@@ -18,6 +22,7 @@ public class ScreenSetting : MonoBehaviour
     {
         InitResolution();
         InitWindowMode();
+        ApplySavedScreenSettings();
     }
 
     #region 屏幕分辨率设置
@@ -37,6 +42,8 @@ public class ScreenSetting : MonoBehaviour
         HashSet<string> seenResolutions = new HashSet<string>();
 
         int currentResolutionIndex = 0;
+        int savedWidth = PlayerPrefs.GetInt(ResolutionWidthPrefsKey, Screen.currentResolution.width);
+        int savedHeight = PlayerPrefs.GetInt(ResolutionHeightPrefsKey, Screen.currentResolution.height);
 
         //遍历所有分辨率，构建选项列表，并找到当前屏幕分辨率的索引
         for (int i = 0; i < allResolutions.Length; i++)
@@ -54,8 +61,8 @@ public class ScreenSetting : MonoBehaviour
                 options.Add(option);
             }
 
-            if (allResolutions[i].width == Screen.currentResolution.width &&
-                allResolutions[i].height == Screen.currentResolution.height)
+            if (allResolutions[i].width == savedWidth &&
+                allResolutions[i].height == savedHeight)
             {
                 currentResolutionIndex = options.Count - 1;
             }
@@ -65,7 +72,7 @@ public class ScreenSetting : MonoBehaviour
 
         //将选项列表添加到下拉菜单中，并设置当前分辨率为默认选项
         resolutionDropdown.AddOptions(options);
-        resolutionDropdown.value = currentResolutionIndex;
+        resolutionDropdown.SetValueWithoutNotify(currentResolutionIndex);
 
         //刷新下拉菜单显示当前选项
         resolutionDropdown.RefreshShownValue();
@@ -77,9 +84,16 @@ public class ScreenSetting : MonoBehaviour
     /// <param name="resolutionIndex">分辨率索引</param>
     public void SetResolution(int resolutionIndex)
     {
+        if (resolutions == null || resolutions.Length == 0) return;
+        if (resolutionIndex < 0 || resolutionIndex >= resolutions.Length) return;
+
         Resolution res = resolutions[resolutionIndex];
-        //设置屏幕分辨率，保持当前的全屏模式
-        Screen.SetResolution(res.width, res.height, Screen.fullScreen);
+        //设置屏幕分辨率，保持当前窗口模式
+        Screen.SetResolution(res.width, res.height, Screen.fullScreenMode);
+
+        PlayerPrefs.SetInt(ResolutionWidthPrefsKey, res.width);
+        PlayerPrefs.SetInt(ResolutionHeightPrefsKey, res.height);
+        PlayerPrefs.Save();
 
         Debug.Log("分辨率已设置为: " + res.width + " x " + res.height);
     }
@@ -92,19 +106,8 @@ public class ScreenSetting : MonoBehaviour
         windowModeDropdown.ClearOptions();
         //添加窗口模式选项到下拉菜单中
         windowModeDropdown.AddOptions(new List<string> { "全屏", "无边框","窗口化" });
-        //根据当前的全屏模式设置下拉菜单的默认选项
-        if (Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen)
-        {
-            windowModeDropdown.value = 0; //无边框
-        }
-        else if(Screen.fullScreenMode == FullScreenMode.FullScreenWindow)
-        {
-            windowModeDropdown.value = 1; //无边框
-        }
-        else
-        {
-            windowModeDropdown.value = 2; //窗口化
-        }
+        int savedWindowModeIndex = PlayerPrefs.GetInt(WindowModePrefsKey, GetCurrentWindowModeIndex());
+        windowModeDropdown.SetValueWithoutNotify(savedWindowModeIndex);
         //刷新下拉菜单显示当前选项
         windowModeDropdown.RefreshShownValue();
     }
@@ -131,7 +134,41 @@ public class ScreenSetting : MonoBehaviour
                 Debug.Log("已设置为窗口化模式");
                 break;
         }
+        PlayerPrefs.SetInt(WindowModePrefsKey, modeIndex);
+        PlayerPrefs.Save();
         Debug.Log("窗口模式已设置为: " + Screen.fullScreenMode);
     }
     #endregion
+
+    /// <summary>
+    /// 启动时应用已保存的窗口模式与分辨率。
+    /// 先恢复窗口模式，再恢复分辨率，避免窗口状态覆盖分辨率设置。
+    /// </summary>
+    private void ApplySavedScreenSettings()
+    {
+        int savedWindowModeIndex = PlayerPrefs.GetInt(WindowModePrefsKey, GetCurrentWindowModeIndex());
+        SetWindowMode(savedWindowModeIndex);
+
+        int savedResolutionIndex = resolutionDropdown != null ? resolutionDropdown.value : 0;
+        SetResolution(savedResolutionIndex);
+    }
+
+    /// <summary>
+    /// 将当前 FullScreenMode 转换为下拉菜单索引。
+    /// </summary>
+    /// <returns>窗口模式索引。</returns>
+    private int GetCurrentWindowModeIndex()
+    {
+        if (Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen)
+        {
+            return 0;
+        }
+
+        if (Screen.fullScreenMode == FullScreenMode.FullScreenWindow)
+        {
+            return 1;
+        }
+
+        return 2;
+    }
 }

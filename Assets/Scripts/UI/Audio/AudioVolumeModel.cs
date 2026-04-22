@@ -154,6 +154,7 @@ public sealed class AudioVolumeModel
     private static void SaveVolume(string prefsKey, float value)
     {
         PlayerPrefs.SetFloat(prefsKey, Mathf.Clamp01(value));
+        PlayerPrefs.Save();
     }
 
     /// <summary>
