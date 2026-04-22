@@ -1,5 +1,6 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// 背包页面总控制器。挂在 BagPage GameObject 上，负责：
@@ -20,13 +21,21 @@ public class BagPageController : MonoBehaviour
     [Tooltip("末尾至少保留几行空格子")]
     [SerializeField] private int minEmptyRows = 1;
 
-    [Header("悬停面板")]
+    [Header("详情面板")]
     [SerializeField] private DetailedPanelController detailedPanel;
+
+    [Header("操作面板")]
+    [SerializeField] private GameObject actionPanelRoot;
+    [SerializeField] private Button sellButton;
+    [SerializeField] private Button equipButton;
+    [SerializeField] private Button dropButton;
 
     // 当前筛选类型，null 表示显示全部
     private ItemType? _currentFilter = null;
     // 当前选中的格子视图，用于切换高亮。
     private BagSlotView _selectedSlot;
+    // 当前选中的物品。操作面板点击按钮时从这里读取目标条目。
+    private InventoryItem _selectedItem;
 
     // -------------------------------------------------------
     // Unity 生命周期
@@ -36,6 +45,16 @@ public class BagPageController : MonoBehaviour
     {
         if (Inventory.Instance != null)
             Inventory.Instance.OnInventoryChanged += Refresh;
+
+        if (dropButton != null)
+        {
+            dropButton.onClick.AddListener(HandleDropClicked);
+        }
+
+        if (actionPanelRoot != null)
+        {
+            actionPanelRoot.SetActive(false);
+        }
 
         if (detailedPanel != null)
         {
@@ -51,7 +70,13 @@ public class BagPageController : MonoBehaviour
         if (Inventory.Instance != null)
             Inventory.Instance.OnInventoryChanged -= Refresh;
 
+        if (dropButton != null)
+        {
+            dropButton.onClick.RemoveListener(HandleDropClicked);
+        }
+
         _selectedSlot = null;
+        _selectedItem = null;
         pool.ReturnAll();
     }
 
@@ -104,8 +129,16 @@ public class BagPageController : MonoBehaviour
     private void Refresh()
     {
         // 当前阶段的交互约定：只要列表发生刷新（如切换分类、排序、数量变化），
-        // 就主动清空选中高亮，让玩家重新点击选择，避免旧选择在新列表中造成误解。
+        // 就主动清空选中高亮和详情面板，让玩家重新点击选择，避免旧选择在新列表中造成误解。
+        HideActionPanel();
+
+        if (detailedPanel != null)
+        {
+            detailedPanel.Hide();
+        }
+
         _selectedSlot = null;
+        _selectedItem = null;
         pool.ReturnAll();
 
         if (Inventory.Instance == null) return;
@@ -120,11 +153,6 @@ public class BagPageController : MonoBehaviour
             BagSlotView slot = pool.Get(contentRoot);
             slot.Bind(item);
             slot.OnClicked += HandleSlotClicked;
-            if (detailedPanel != null)
-            {
-                slot.OnHoverEnter += detailedPanel.Show;
-                slot.OnHoverExit  += detailedPanel.Hide;
-            }
         }
 
         // 补空格子：总格子数取 "已填充行+minEmptyRows 行" 与 preWarmCount 两者的较大值，
@@ -148,7 +176,15 @@ public class BagPageController : MonoBehaviour
     {
         if (item == null || slot == null) return;
 
+        _selectedItem = item;
         ApplySelectedSlot(slot);
+
+        if (detailedPanel != null)
+        {
+            detailedPanel.ShowSelected(item);
+        }
+
+        ShowActionPanelForItem(item);
     }
 
     /// <summary>
@@ -164,6 +200,79 @@ public class BagPageController : MonoBehaviour
 
         _selectedSlot = slot;
         _selectedSlot.SetSelected(true);
+    }
+
+    /// <summary>
+    /// 处理操作面板中的丢弃请求。
+    /// 杂物按 1 个消耗；不可叠加装备按实例 ID 精确移除。
+    /// </summary>
+    private void HandleDropClicked()
+    {
+        if (_selectedItem == null || Inventory.Instance == null) return;
+        if (_selectedItem.ItemData == null) return;
+
+        bool removed = _selectedItem.IsStackable
+            ? Inventory.Instance.RemoveItem(_selectedItem.ItemData, 1)
+            : Inventory.Instance.RemoveItemByInstanceId(_selectedItem.InstanceId);
+
+        // 只有真正移除成功时才主动隐藏面板，随后会由 OnInventoryChanged 触发完整刷新。
+        if (!removed) return;
+
+        HideActionPanel();
+
+        if (detailedPanel != null)
+        {
+            detailedPanel.Hide();
+        }
+    }
+
+    /// <summary>
+    /// 根据当前选中物品类型切换操作面板按钮状态。
+    /// 杂物显示“出售 + 丢弃”，装备显示“装备 + 丢弃”。
+    /// 其中出售和装备当前阶段只展示，不接实际功能。
+    /// </summary>
+    /// <param name="item">当前选中的物品。</param>
+    private void ShowActionPanelForItem(InventoryItem item)
+    {
+        if (actionPanelRoot == null || item?.ItemData == null)
+        {
+            HideActionPanel();
+            return;
+        }
+
+        bool isMiscItem = item.ItemData.itemType == ItemType.Misc;
+
+        // 用 SetActive 控制按钮是否参与 LayoutGroup 排版，避免隐藏按钮留下空位。
+        if (sellButton != null)
+        {
+            sellButton.gameObject.SetActive(isMiscItem);
+            sellButton.interactable = false;
+        }
+
+        if (equipButton != null)
+        {
+            equipButton.gameObject.SetActive(!isMiscItem);
+            equipButton.interactable = false;
+        }
+
+        if (dropButton != null)
+        {
+            dropButton.gameObject.SetActive(true);
+            dropButton.interactable = true;
+        }
+
+        actionPanelRoot.SetActive(true);
+    }
+
+    /// <summary>
+    /// 隐藏整个操作面板。
+    /// </summary>
+    private void HideActionPanel()
+    {
+        if (actionPanelRoot != null)
+        {
+            actionPanelRoot.SetActive(false);
+        }
     }
 
 }

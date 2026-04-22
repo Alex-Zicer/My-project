@@ -4,11 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 悬停详情面板控制器。
+/// 详情面板控制器。
 /// 挂在 DetailedPanel 预制体上（Canvas 根节点直接子节点）。
-/// 由 BagPageController 在格子悬停时调用 Show/Hide。
-/// 面板固定显示在格子左上方（空间不足时切换到右上方），带淡入淡出效果。
-/// 注意：面板始终保持 active，仅通过 CanvasGroup.alpha 控制可见性，避免 SetActive 导致协程异常。
+/// 由 BagPageController 在格子选中时调用 ShowSelected/Hide。
+/// 面板位置由场景中手动摆放，代码只负责刷新内容与播放淡入淡出效果。
+/// 当前不额外处理射线相关设置，显示与隐藏只通过 CanvasGroup.alpha 控制。
 /// </summary>
 [RequireComponent(typeof(CanvasGroup))]
 public class DetailedPanelController : MonoBehaviour
@@ -22,49 +22,25 @@ public class DetailedPanelController : MonoBehaviour
     [Header("动画")]
     [SerializeField] private float fadeDuration = 0.12f;
 
-    private RectTransform _rectTransform;
     private CanvasGroup _canvasGroup;
-    private Canvas _rootCanvas;
     private Coroutine _fadeCoroutine;
 
     private void Awake()
     {
-        _rectTransform = GetComponent<RectTransform>();
         _canvasGroup = GetComponent<CanvasGroup>();
-        _rootCanvas = GetComponentInParent<Canvas>();
-
-        // 禁用所有子 Graphic 的射线检测，防止面板遮挡格子触发 OnPointerExit
-        foreach (var graphic in GetComponentsInChildren<Graphic>(true))
-            graphic.raycastTarget = false;
-
-        // 初始不可见、不拦截射线，但保持 active 以便随时启动协程
         _canvasGroup.alpha = 0f;
-        _canvasGroup.blocksRaycasts = false;
     }
 
     /// <summary>
-    /// 显示面板，定位到格子左上方（或右上方），淡入显示。
+    /// 按固定位置显示当前选中的物品详情。
     /// </summary>
-    /// <param name="item">要显示的物品数据</param>
-    /// <param name="slotRect">触发悬停的格子 RectTransform，用于定位面板位置</param>
-    public void Show(InventoryItem item, RectTransform slotRect)
+    /// <param name="item">当前选中的物品。</param>
+    public void ShowSelected(InventoryItem item)
     {
-        if (_canvasGroup == null || _rectTransform == null) return;
+        if (_canvasGroup == null) return;
         if (item?.ItemData == null) return;
 
-        ItemDataBase data = item.ItemData;
-        nameText.text = data.itemName;
-        statsText.text = data.GetStatsText();
-        descriptionText.text = data.description;
-        iconImage.sprite = data.icon;
-        iconImage.enabled = data.icon != null;
-
-        // 强制重建布局以获得准确的面板尺寸，再计算位置
-        LayoutRebuilder.ForceRebuildLayoutImmediate(_rectTransform);
-        PositionNearSlot(slotRect);
-
-        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
-        _fadeCoroutine = StartCoroutine(FadeTo(1f));
+        ShowInternal(item);
     }
 
     /// <summary>
@@ -78,66 +54,45 @@ public class DetailedPanelController : MonoBehaviour
         _fadeCoroutine = StartCoroutine(FadeTo(0f));
     }
 
-    // -------------------------------------------------------
-    // 定位
-    // -------------------------------------------------------
-
     /// <summary>
-    /// 将面板定位到格子附近。
-    /// 优先放在格子左侧，空间不足时切换到右侧。
-    /// 同时处理顶部和底部边界，确保面板不会超出 Canvas 范围。
+    /// 刷新当前详情面板的显示内容。
     /// </summary>
-    /// <param name="slotRect">格子的 RectTransform</param>
-    private void PositionNearSlot(RectTransform slotRect)
+    /// <param name="item">要显示的物品。</param>
+    private void ShowInternal(InventoryItem item)
     {
-        if (_rootCanvas == null) return;
+        ItemDataBase data = item.ItemData;
+        nameText.text = data.itemName;
+        statsText.text = FormatStatsText(data.GetStatsText());
+        descriptionText.text = data.description;
+        iconImage.sprite = data.icon;
+        iconImage.enabled = data.icon != null;
 
-        RectTransform canvasRect = _rootCanvas.transform as RectTransform;
-        Camera cam = _rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _rootCanvas.worldCamera;
-
-        Vector3[] corners = new Vector3[4];
-        slotRect.GetWorldCorners(corners);
-        // corners: 0=左下, 1=左上, 2=右上, 3=右下
-
-        Vector2 slotUpperLeft  = WorldToCanvasLocal(canvasRect, cam, corners[1]);
-        Vector2 slotUpperRight = WorldToCanvasLocal(canvasRect, cam, corners[2]);
-
-        Vector2 size = _rectTransform.rect.size;
-
-        // pivot 设为左上角：anchoredPosition 即面板左上角在 Canvas 本地坐标
-        _rectTransform.pivot = new Vector2(0f, 1f);
-
-        // 默认：面板放在格子左侧，顶部与格子顶部对齐
-        Vector2 pos = new Vector2(slotUpperLeft.x - size.x, slotUpperLeft.y);
-
-        // 若超出 Canvas 左侧边界，改为放在格子右侧
-        if (pos.x < canvasRect.rect.xMin + 5f)
-            pos = slotUpperRight;
-
-        // 防止超出顶部边界（面板顶部 = pos.y）
-        if (pos.y > canvasRect.rect.yMax - 5f)
-            pos.y = canvasRect.rect.yMax - 5f;
-
-        // 防止超出底部边界（面板底部 = pos.y - size.y）
-        if (pos.y - size.y < canvasRect.rect.yMin + 5f)
-            pos.y = canvasRect.rect.yMin + size.y + 5f;
-
-        _rectTransform.anchoredPosition = pos;
+        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
+        _fadeCoroutine = StartCoroutine(FadeTo(1f));
     }
 
     /// <summary>
-    /// 将世界坐标转换为 Canvas 本地坐标。
-    /// 用于将格子的世界坐标转换为面板的 anchoredPosition。
+    /// 统一格式化物品属性文本。
+    /// 当前约定：若数据层已经主动换行，则原样保留；
+    /// 否则把用于分隔字段的连续双空格替换为换行，统一详情面板显示样式。
     /// </summary>
-    /// <param name="canvasRect">Canvas 的 RectTransform</param>
-    /// <param name="cam">渲染相机，Overlay 模式下为 null</param>
-    /// <param name="worldPos">世界坐标点</param>
-    /// <returns>Canvas 本地坐标</returns>
-    private Vector2 WorldToCanvasLocal(RectTransform canvasRect, Camera cam, Vector3 worldPos)
+    /// <param name="rawStatsText">数据层返回的原始属性文本。</param>
+    /// <returns>适合详情面板展示的格式化文本。</returns>
+    private static string FormatStatsText(string rawStatsText)
     {
-        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(cam, worldPos);
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, cam, out Vector2 localPoint);
-        return localPoint;
+        if (string.IsNullOrWhiteSpace(rawStatsText))
+        {
+            return string.Empty;
+        }
+
+        // 已经显式换行的文本不再二次处理，避免破坏个别物品的自定义排版。
+        if (rawStatsText.Contains("\n"))
+        {
+            return rawStatsText;
+        }
+
+        // 当前项目里的属性字段通常用双空格分隔，这里统一替换为换行输出。
+        return rawStatsText.Replace("  ", "\n");
     }
 
     // -------------------------------------------------------
@@ -160,10 +115,21 @@ public class DetailedPanelController : MonoBehaviour
             if (_canvasGroup == null) yield break;
 
             elapsed += Time.unscaledDeltaTime;
-            _canvasGroup.alpha = Mathf.Lerp(start, target, elapsed / fadeDuration);
+            ApplyVisibility(Mathf.Lerp(start, target, elapsed / fadeDuration));
             yield return null;
         }
         if (_canvasGroup != null)
-            _canvasGroup.alpha = target;
+            ApplyVisibility(target);
+    }
+
+    /// <summary>
+    /// 统一应用详情面板的可见性状态。
+    /// </summary>
+    /// <param name="alpha">目标透明度。</param>
+    private void ApplyVisibility(float alpha)
+    {
+        if (_canvasGroup == null) return;
+
+        _canvasGroup.alpha = alpha;
     }
 }
