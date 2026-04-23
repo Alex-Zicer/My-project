@@ -22,11 +22,15 @@ public class InGamePageManager : BasePageManager
     [Header("Bag")]
     [SerializeField] private string bagPageKey = "BagPage";
 
+    // 商店页面的 PageKey（需与 UIPage 配置一致）。
+    [Header("Shop")]
+    [SerializeField] private string shopPageKey = "ShopPage";
+
     // 当前是否处于暂停状态。
     // true: 游戏暂停；false: 游戏运行。
     public bool IsPause { get; private set; }
-    // 背包页输入锁标记：true 表示当前由“背包页面”触发了输入禁用。
-    // 用于防止重复 Disable/Enable，并在离开背包时按条件恢复输入。
+    // 页面输入锁标记：true 表示当前由“背包/商店页面”触发了输入禁用。
+    // 用于防止重复 Disable/Enable，并在离开这些页面时按条件恢复输入。
     private bool _hasLockedInputByBag;
 
     private void Reset()
@@ -143,12 +147,12 @@ public class InGamePageManager : BasePageManager
         player.SetInputEnabled(enabled);
     }
 
-    // 根据当前页面同步背包输入锁：
-    // 在背包页时锁输入；离开背包页时仅在非暂停、非对话状态下恢复输入。
+    // 根据当前页面同步背包/商店输入锁：
+    // 在背包页或商店页时锁输入；离开后仅在非暂停、非对话状态下恢复输入。
     private void SyncBagInputLock()
     {
-        // 当前页面是背包页：仅在首次进入时执行一次输入禁用。
-        bool shouldLock = CurrentPageKey == bagPageKey;
+        // 当前页面是“会阻断玩法操作”的 UI 页时，仅在首次进入时执行一次输入禁用。
+        bool shouldLock = CurrentPageKey == bagPageKey || CurrentPageKey == shopPageKey;
         if (shouldLock)
         {
             if (_hasLockedInputByBag) return;
@@ -187,6 +191,14 @@ public class InGamePageManager : BasePageManager
         {
             if (CurrentPageKey == bagPageKey) CloseCurrentPage();
             else GoToPageByName(bagPageKey);
+        }
+
+        // P 键切换商店：
+        // 当前已在商店页 -> 关闭当前页；否则 -> 打开商店页。
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            if (CurrentPageKey == shopPageKey) CloseCurrentPage();
+            else GoToPageByName(shopPageKey);
         }
     }
 

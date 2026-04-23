@@ -19,6 +19,7 @@ MonoBehaviour:
   itemType: 0
   isStackable: 0
   maxStackSize: 99
+  buyPrice: 50
   attackComboCount: 2
   attackData:
   - damage: 5

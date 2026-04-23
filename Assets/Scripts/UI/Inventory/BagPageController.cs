@@ -30,6 +30,10 @@ public class BagPageController : MonoBehaviour
     [SerializeField] private Button equipButton;
     [SerializeField] private Button dropButton;
 
+    [Header("运行时依赖")]
+    [Tooltip("玩家金钱组件。背包出售成功后通过它增加金额。")]
+    [SerializeField] private Money playerMoney;
+
     // 当前筛选类型，null 表示显示全部
     private ItemType? _currentFilter = null;
     // 当前选中的格子视图，用于切换高亮。
@@ -49,6 +53,11 @@ public class BagPageController : MonoBehaviour
         if (dropButton != null)
         {
             dropButton.onClick.AddListener(HandleDropClicked);
+        }
+
+        if (sellButton != null)
+        {
+            sellButton.onClick.AddListener(HandleSellClicked);
         }
 
         if (actionPanelRoot != null)
@@ -73,6 +82,11 @@ public class BagPageController : MonoBehaviour
         if (dropButton != null)
         {
             dropButton.onClick.RemoveListener(HandleDropClicked);
+        }
+
+        if (sellButton != null)
+        {
+            sellButton.onClick.RemoveListener(HandleSellClicked);
         }
 
         _selectedSlot = null;
@@ -227,6 +241,30 @@ public class BagPageController : MonoBehaviour
     }
 
     /// <summary>
+    /// 处理操作面板中的出售请求。
+    /// 当前阶段只支持出售 Misc：每次卖出 1 个，并按配置的 sellPrice 增加金钱。
+    /// </summary>
+    private void HandleSellClicked()
+    {
+        if (_selectedItem == null || Inventory.Instance == null || playerMoney == null) return;
+        if (_selectedItem.ItemData is not MiscData miscData) return;
+
+        // 先从背包移除，再增加金钱。
+        // 这样可以保证“卖出成功”以背包扣除成功为准，避免未来扩展失败分支时出现白拿钱的问题。
+        bool removed = Inventory.Instance.RemoveItem(miscData, 1);
+        if (!removed) return;
+
+        playerMoney.AddMoney(Mathf.Max(0, miscData.sellPrice));
+
+        HideActionPanel();
+
+        if (detailedPanel != null)
+        {
+            detailedPanel.Hide();
+        }
+    }
+
+    /// <summary>
     /// 根据当前选中物品类型切换操作面板按钮状态。
     /// 杂物显示“出售 + 丢弃”，装备显示“装备 + 丢弃”。
     /// 其中出售和装备当前阶段只展示，不接实际功能。
@@ -246,7 +284,7 @@ public class BagPageController : MonoBehaviour
         if (sellButton != null)
         {
             sellButton.gameObject.SetActive(isMiscItem);
-            sellButton.interactable = false;
+            sellButton.interactable = isMiscItem && playerMoney != null;
         }
 
         if (equipButton != null)

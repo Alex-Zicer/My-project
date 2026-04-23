@@ -40,7 +40,20 @@ public class DetailedPanelController : MonoBehaviour
         if (_canvasGroup == null) return;
         if (item?.ItemData == null) return;
 
-        ShowInternal(item);
+        ShowInternal(item.ItemData);
+    }
+
+    /// <summary>
+    /// 按固定位置显示指定静态物品数据的详情。
+    /// 供商店页面直接复用详情面板，无需额外构造运行时背包条目。
+    /// </summary>
+    /// <param name="itemData">要显示的物品数据。</param>
+    public void ShowSelected(ItemDataBase itemData)
+    {
+        if (_canvasGroup == null) return;
+        if (itemData == null) return;
+
+        ShowInternal(itemData);
     }
 
     /// <summary>
@@ -50,6 +63,14 @@ public class DetailedPanelController : MonoBehaviour
     public void Hide()
     {
         if (_canvasGroup == null) return;
+        // 页面关闭时，详情面板可能已经跟着父节点一起失活。
+        // 这时不能再启动协程，直接把透明度置为 0，避免重复在调用方分散判断。
+        if (!gameObject.activeInHierarchy)
+        {
+            ApplyVisibility(0f);
+            return;
+        }
+
         if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
         _fadeCoroutine = StartCoroutine(FadeTo(0f));
     }
@@ -57,10 +78,9 @@ public class DetailedPanelController : MonoBehaviour
     /// <summary>
     /// 刷新当前详情面板的显示内容。
     /// </summary>
-    /// <param name="item">要显示的物品。</param>
-    private void ShowInternal(InventoryItem item)
+    /// <param name="data">要显示的物品静态数据。</param>
+    private void ShowInternal(ItemDataBase data)
     {
-        ItemDataBase data = item.ItemData;
         nameText.text = data.itemName;
         statsText.text = FormatStatsText(data.GetStatsText());
         descriptionText.text = data.description;
