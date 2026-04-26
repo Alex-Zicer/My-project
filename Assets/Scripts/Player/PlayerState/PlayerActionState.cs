@@ -10,6 +10,10 @@ public class PlayerActionState : PlayerStateBase
 
     private float _actionTimer;
     private float _actionDuration;
+    private PlayerActionKind _currentActionKind;
+    private PlayerActionKind _queuedActionKind;
+
+    public PlayerActionKind CurrentActionKind => _currentActionKind;
 
     public PlayerActionState(PlayerController player) : base(player) { }
 
@@ -19,17 +23,26 @@ public class PlayerActionState : PlayerStateBase
     public override void Enter()
     {
         _actionTimer = 0f;
+        _queuedActionKind = PlayerActionKind.None;
         PlayerActionKind actionKind = player.ConsumePendingActionKind();
+        _currentActionKind = actionKind;
 
         switch (actionKind)
         {
             case PlayerActionKind.Slash:
+            case PlayerActionKind.SlashAlt:
                 _actionDuration = player.PlayerData.slashDuration;
                 break;
             default:
                 _actionDuration = 0f;
                 break;
         }
+    }
+
+    public override void Exit()
+    {
+        _currentActionKind = PlayerActionKind.None;
+        _queuedActionKind = PlayerActionKind.None;
     }
 
     /// <summary>
@@ -40,6 +53,11 @@ public class PlayerActionState : PlayerStateBase
         _actionTimer += Time.deltaTime;
         if (_actionTimer >= _actionDuration)
         {
+            if (TryConsumeQueuedCombo())
+            {
+                return;
+            }
+
             ReturnToLocomotionState();
             return;
         }
@@ -71,5 +89,46 @@ public class PlayerActionState : PlayerStateBase
 
         // Slash 锁定期间阻止离开 Action；动作时间结束后允许返回可移动相位。
         return _actionTimer >= _actionDuration;
+    }
+
+    /// <summary>
+    /// 在第一段地面斩击期间缓存第二段输入。
+    /// </summary>
+    public bool TryQueueGroundCombo(PlayerActionKind actionKind)
+    {
+        if (actionKind != PlayerActionKind.SlashAlt)
+        {
+            return false;
+        }
+
+        if (_currentActionKind != PlayerActionKind.Slash)
+        {
+            return false;
+        }
+
+        if (_queuedActionKind != PlayerActionKind.None)
+        {
+            return false;
+        }
+
+        if (!player.IsGround)
+        {
+            return false;
+        }
+
+        _queuedActionKind = actionKind;
+        return true;
+    }
+
+    private bool TryConsumeQueuedCombo()
+    {
+        if (_queuedActionKind == PlayerActionKind.None || !player.IsGround)
+        {
+            return false;
+        }
+
+        PlayerActionKind nextActionKind = _queuedActionKind;
+        _queuedActionKind = PlayerActionKind.None;
+        return player.TryStartAction(nextActionKind);
     }
 }

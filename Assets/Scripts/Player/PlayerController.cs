@@ -280,26 +280,50 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         if (IsDead) return;
 
         PlayerStateType currentType = StateMachine.CurrentStateType;
+        if (currentType == PlayerStateType.Action)
+        {
+            PlayerActionState actionState = StateMachine.GetState<PlayerActionState>();
+            if (actionState != null && actionState.TryQueueGroundCombo(PlayerActionKind.SlashAlt))
+            {
+                if (EnableStateDebugLogs)
+                {
+                    Debug.Log("[PlayerController] 缓存第二段攻击: SlashAlt", this);
+                }
+            }
+
+            return;
+        }
+
         bool canStartAction = currentType == PlayerStateType.Movement ||
                               currentType == PlayerStateType.Jump ||
                               currentType == PlayerStateType.Fall ||
                               currentType == PlayerStateType.WallSlide;
         if (!canStartAction) return;
 
-        _pendingActionKind = PlayerActionKind.Slash;
+        TryStartAction(PlayerActionKind.Slash);
+    }
+
+    /// <summary>
+    /// 尝试启动一次动作攻击。输入来源可以是玩家按键，也可以是动作状态接续的连段。
+    /// </summary>
+    public bool TryStartAction(PlayerActionKind actionKind)
+    {
+        _pendingActionKind = actionKind;
         if (!StateMachine.TryTransitionTo(PlayerStateType.Action))
         {
             _pendingActionKind = PlayerActionKind.None;
-            return;
+            return false;
         }
 
-        TriggerActionAnimation(PlayerActionKind.Slash);
+        TriggerActionAnimation(actionKind);
         OnAttack?.Invoke();
 
         if (EnableStateDebugLogs)
         {
-            Debug.Log("[PlayerController] 接受动作: Slash", this);
+            Debug.Log($"[PlayerController] 接受动作: {actionKind}", this);
         }
+
+        return true;
     }
 
     /// <summary>
@@ -387,9 +411,14 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     /// </summary>
     public void TriggerActionAnimation(PlayerActionKind actionKind)
     {
-        if (actionKind == PlayerActionKind.Slash)
+        switch (actionKind)
         {
-            _animDriver.TriggerSlash();
+            case PlayerActionKind.Slash:
+                _animDriver.TriggerSlash();
+                break;
+            case PlayerActionKind.SlashAlt:
+                _animDriver.TriggerSlashAlt();
+                break;
         }
     }
 
@@ -405,6 +434,8 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
             Debug.LogWarning("[PlayerController] 攻击特效名称为空，无法生成特效。", this);
             return;
         }
+
+        effectName = ResolveAttackEffectName(effectName);
 
         // 统一拼接 PlayerEffects 子目录前缀，Animation Event 只需填文件名。
         string effectResourcePath = $"PlayerEffects/{effectName}";
@@ -472,6 +503,26 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         }
 
         return effectPrefab;
+    }
+
+    /// <summary>
+    /// 根据当前动作种类决定动画事件应生成的攻击特效。
+    /// 第二段攻击暂时复用 Slash 动画事件，但改用 SlashAltEffect。
+    /// </summary>
+    private string ResolveAttackEffectName(string defaultEffectName)
+    {
+        if (StateMachine == null || StateMachine.CurrentStateType != PlayerStateType.Action)
+        {
+            return defaultEffectName;
+        }
+
+        PlayerActionState actionState = StateMachine.GetState<PlayerActionState>();
+        if (actionState == null)
+        {
+            return defaultEffectName;
+        }
+
+        return actionState.CurrentActionKind == PlayerActionKind.SlashAlt ? "SlashAltEffect" : defaultEffectName;
     }
 
     /// <summary>

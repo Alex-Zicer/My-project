@@ -83,6 +83,14 @@ public class PlayerAnimationDriver : MonoBehaviour
     }
 
     /// <summary>
+    /// 第二段攻击当前先复用 Slash Trigger，后续接入独立动画时再拆分。
+    /// </summary>
+    public void TriggerSlashAlt()
+    {
+        TriggerSlash();
+    }
+
+    /// <summary>
     /// 触发受击（Hurt）Trigger。
     /// </summary>
     public void TriggerHurt()

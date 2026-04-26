@@ -35,7 +35,8 @@ public enum PlayerJumpKind
 public enum PlayerActionKind
 {
     None,
-    Slash
+    Slash,
+    SlashAlt
 }
 
 /// <summary>
