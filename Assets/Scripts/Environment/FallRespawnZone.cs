@@ -8,7 +8,6 @@ public class FallRespawnZone : MonoBehaviour
 {
     [SerializeField] private Transform _respawnPoint;
     [SerializeField] private float _fallDamage = 1f;
-    [SerializeField] private bool _ignoreDefense = true;
 
     /// <summary>
     /// 配置掉落区的重生点与伤害值。
@@ -60,13 +59,7 @@ public class FallRespawnZone : MonoBehaviour
             return;
         }
 
-        float rawDamage = _fallDamage;
-        if (_ignoreDefense && player.PlayerData != null)
-        {
-            rawDamage += player.PlayerData.defence;
-        }
-
-        player.TakeDamage(rawDamage);
+        player.TakeDamage(_fallDamage);
     }
 
     private void RespawnPlayer(PlayerController player)

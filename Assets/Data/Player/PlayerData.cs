@@ -13,8 +13,8 @@ public class PlayerData : ScriptableObject
     public float moveSpeed;//移动速度
     [Tooltip("启动加速度，保证人物不会突然变向")]
     public float moveSpeedMultiplier;//移动加速度，确保人物不会突然转向
-    [Tooltip("防御力")]
-    public float defence;//玩家防御力
+    [Tooltip("基础攻击力")]
+    public float attack;//玩家攻击力
     [Tooltip("跳跃速度")]
     public float JumpForce;
 

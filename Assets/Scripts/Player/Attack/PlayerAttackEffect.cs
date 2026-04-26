@@ -56,6 +56,7 @@ public class PlayerAttackEffect : MonoBehaviour
         _lifeTimer = 0f;
         _destroyDelay = Mathf.Max(effectLifetime, hitboxDuration);
         _isInitialized = true;
+        damage = ResolveDamage(owner);
 
         _hitTargetIds.Clear();
         ApplySpawnPose();
@@ -176,5 +177,18 @@ public class PlayerAttackEffect : MonoBehaviour
             Mathf.Abs(_initialScale.x) * Mathf.Sign(_owner.transform.localScale.x),
             _initialScale.y,
             _initialScale.z);
+    }
+
+    /// <summary>
+    /// 从玩家基础数值读取本次攻击伤害，不依赖武器系统。
+    /// </summary>
+    private float ResolveDamage(PlayerController owner)
+    {
+        if (owner == null || owner.PlayerData == null)
+        {
+            return Mathf.Max(damage, 0f);
+        }
+
+        return Mathf.Max(owner.PlayerData.attack, 0f);
     }
 }

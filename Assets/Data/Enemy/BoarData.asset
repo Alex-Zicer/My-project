@@ -15,7 +15,9 @@ MonoBehaviour:
   enemyName: Boar
   maxHealth: 10
   moveSpeed: 1.5
-  defence: 1
-  attackDamage: 0
-  attackRange: 0
+  defence: 0
+  attackDamage: 1
+  attackRange: 0.5
   attackCooldown: 0
+  attackExitRange: 1.5
+  attackRate: 1

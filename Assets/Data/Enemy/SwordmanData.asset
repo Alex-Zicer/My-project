@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: SwordmanData
   m_EditorClassIdentifier: 
   enemyName: "\u5251\u58EB"
-  maxHealth: 20
-  defence: 2
+  maxHealth: 10
+  defence: 0
   patrolSpeed: 1
   patrolWaitTime: 1.5
   chaseSpeed: 2
   chaseRange: 3
-  attackDamage: 5
+  attackDamage: 1
   attackRange: 0.5
   attackExitRange: 1.5
   attackRate: 0.5

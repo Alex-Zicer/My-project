@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,6 +28,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     private PlayerJumpKind _pendingJumpKind;
     private PlayerActionKind _pendingActionKind;
     private float _nextDashReadyTime;
+    private Coroutine _deathDestroyCoroutine;
 
     [Header("跳跃设置")]
     [Tooltip("地面层，用于检测玩家是否站在地面上")]
@@ -158,7 +160,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         CheckWallStatus();
         StateMachine.Update();
         // 每帧将物理与逻辑事实同步到 Animator 参数（由 PlayerAnimationDriver 统一写入）
-        _animDriver.SyncFrame(HorizontalSpeed, VerticalSpeed, IsGround, IsWall, WallDownSpeed, IsDead);
+        _animDriver.SyncFrame(HorizontalSpeed, VerticalSpeed, IsGround, IsWall, WallDownSpeed);
     }
 
     /// <summary>
@@ -308,7 +310,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     {
         if (IsDead) return;
 
-        float finalDamage = Mathf.Max(rawDamage - playerData.defence, 0);
+        float finalDamage = Mathf.Max(rawDamage, 0f);
         health.UpdateHealth(finalDamage);
 
         if (health.currentHealth > 0)
@@ -325,9 +327,31 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
             _pendingJumpKind = PlayerJumpKind.None;
             _pendingActionKind = PlayerActionKind.None;
             StateMachine.TransitionTo(PlayerStateType.Dead);
-            // PlayerController.enabled=false 后 Update 停止，手动同步确保 IsDead 立即写入 Animator
-            _animDriver.SyncFrame(HorizontalSpeed, VerticalSpeed, IsGround, IsWall, WallDownSpeed, true);
         }
+    }
+
+    /// <summary>
+    /// 启动玩家死亡序列：锁定输入与物理，并在死亡动画完整播放后销毁对象。
+    /// </summary>
+    public void BeginDeathSequence()
+    {
+        if (_deathDestroyCoroutine != null)
+        {
+            return;
+        }
+
+        SetInputEnabled(false);
+
+        if (Rb != null)
+        {
+            Rb.velocity = Vector2.zero;
+            Rb.isKinematic = true;
+        }
+
+        DisableTriggerColliders();
+        _animDriver.TriggerDeath();
+
+        _deathDestroyCoroutine = StartCoroutine(WaitForDeathAnimationThenDestroy());
     }
 
     /// <summary>
@@ -448,6 +472,77 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         }
 
         return effectPrefab;
+    }
+
+    /// <summary>
+    /// 等待 Animator 进入并完整播放死亡状态，再销毁玩家对象。
+    /// </summary>
+    private IEnumerator WaitForDeathAnimationThenDestroy()
+    {
+        if (animator == null)
+        {
+            Destroy(gameObject);
+            yield break;
+        }
+
+        int deathShortNameHash = Animator.StringToHash("Death");
+        int deathFullPathHash = Animator.StringToHash("Base Layer.Death");
+        const float enterTimeout = 0.25f;
+        const float destroyFallbackDelay = 5f;
+
+        float elapsed = 0f;
+        while (elapsed < enterTimeout)
+        {
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+            if (IsInDeathState(stateInfo, deathShortNameHash, deathFullPathHash))
+            {
+                break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        elapsed = 0f;
+        while (elapsed < destroyFallbackDelay)
+        {
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+            bool inDeadState = IsInDeathState(stateInfo, deathShortNameHash, deathFullPathHash);
+            if (inDeadState && !animator.IsInTransition(0) && stateInfo.normalizedTime >= 1f)
+            {
+                break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// 判断 Animator 是否已进入 Death 状态。
+    /// </summary>
+    private bool IsInDeathState(AnimatorStateInfo stateInfo, int deathShortNameHash, int deathFullPathHash)
+    {
+        return stateInfo.shortNameHash == deathShortNameHash ||
+               stateInfo.fullPathHash == deathFullPathHash;
+    }
+
+    /// <summary>
+    /// 仅关闭 Trigger 判定，保留实体碰撞体，避免死亡过程中立刻穿过地面。
+    /// </summary>
+    private void DisableTriggerColliders()
+    {
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+        for (int index = 0; index < colliders.Length; index++)
+        {
+            Collider2D collider2D = colliders[index];
+            if (collider2D != null && collider2D.isTrigger)
+            {
+                collider2D.enabled = false;
+            }
+        }
     }
 
 }

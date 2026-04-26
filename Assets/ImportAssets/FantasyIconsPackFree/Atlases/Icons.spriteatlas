@@ -107,6 +107,7 @@ SpriteAtlas:
     - dc038b2ab22c65c4488779487c9dae97: 21300000
     - 0c6de69acca756c409be4810a8510ac5: 21300000
     - e8f4e1ea22c66c7478593a19e0add994: 21300000
+    - bff433fa88a92eb4dbdab16572cf91ab: 21300000
     - d359cffafe45e0e4c82527e85234799b: 21300000
     - f60a784b4c692634c923c83dc6d7addb: 21300000
     - a889cb8ba677b3e418c33307c1336099: 21300000
@@ -193,6 +194,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: dc038b2ab22c65c4488779487c9dae97, type: 3}
   - {fileID: 21300000, guid: 0c6de69acca756c409be4810a8510ac5, type: 3}
   - {fileID: 21300000, guid: e8f4e1ea22c66c7478593a19e0add994, type: 3}
+  - {fileID: 21300000, guid: bff433fa88a92eb4dbdab16572cf91ab, type: 3}
   - {fileID: 21300000, guid: d359cffafe45e0e4c82527e85234799b, type: 3}
   - {fileID: 21300000, guid: f60a784b4c692634c923c83dc6d7addb, type: 3}
   - {fileID: 21300000, guid: a889cb8ba677b3e418c33307c1336099, type: 3}
@@ -278,6 +280,7 @@ SpriteAtlas:
   - WoodenClub
   - WoodenShield
   - HunterBow
+  - Brown
   - ManticoreArmor
   - ManticoreArmor
   - BattleguardArmor

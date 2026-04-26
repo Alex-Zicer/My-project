@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
   m_Name: UGUI
   m_EditorClassIdentifier: 
-  m_GroupName: Packed Assets
+  m_GroupName: UGUI
   m_Data:
     m_SerializedData: []
   m_GUID: 4574a3fe6a66c13478797986d4d6f7d4

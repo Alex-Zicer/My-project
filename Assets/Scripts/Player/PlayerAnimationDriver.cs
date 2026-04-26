@@ -16,7 +16,6 @@ public class PlayerAnimationDriver : MonoBehaviour
     private static readonly int IsGroundHash = Animator.StringToHash("IsGround");
     private static readonly int IsTouchWallHash = Animator.StringToHash("IsTouchWall");
     private static readonly int WallDownSpeedHash = Animator.StringToHash("WallDownSpeed");
-    private static readonly int IsDeadHash = Animator.StringToHash("IsDead");
 
     // 一次性 Trigger 参数哈希（每次逻辑事件只触发一次）
     private static readonly int JumpTriggerHash = Animator.StringToHash("Jump");
@@ -24,6 +23,7 @@ public class PlayerAnimationDriver : MonoBehaviour
     private static readonly int DashTriggerHash = Animator.StringToHash("Dash");
     private static readonly int SlashTriggerHash = Animator.StringToHash("Slash");
     private static readonly int HurtTriggerHash = Animator.StringToHash("Hurt");
+    private static readonly int DeathTriggerHash = Animator.StringToHash("Death");
 
     /// <summary>
     /// 缓存 Animator 组件。
@@ -41,17 +41,15 @@ public class PlayerAnimationDriver : MonoBehaviour
     /// <param name="isGround">是否站在地面</param>
     /// <param name="isTouchWall">是否贴墙</param>
     /// <param name="wallDownSpeed">贴墙下滑速度绝对值（非下滑时为 0）</param>
-    /// <param name="isDead">是否已死亡</param>
     public void SyncFrame(float horizontalSpeed, float verticalSpeed,
                           bool isGround, bool isTouchWall,
-                          float wallDownSpeed, bool isDead)
+                          float wallDownSpeed)
     {
         _animator.SetFloat(HorizontalSpeedHash, horizontalSpeed);
         _animator.SetFloat(VerticalSpeedHash, verticalSpeed);
         _animator.SetBool(IsGroundHash, isGround);
         _animator.SetBool(IsTouchWallHash, isTouchWall);
         _animator.SetFloat(WallDownSpeedHash, wallDownSpeed);
-        _animator.SetBool(IsDeadHash, isDead);
     }
 
     /// <summary>
@@ -91,5 +89,19 @@ public class PlayerAnimationDriver : MonoBehaviour
     {
         _animator.ResetTrigger(HurtTriggerHash);
         _animator.SetTrigger(HurtTriggerHash);
+    }
+
+    /// <summary>
+    /// 触发死亡（Death）Trigger。
+    /// </summary>
+    public void TriggerDeath()
+    {
+        _animator.ResetTrigger(JumpTriggerHash);
+        _animator.ResetTrigger(DoubleJumpTriggerHash);
+        _animator.ResetTrigger(DashTriggerHash);
+        _animator.ResetTrigger(SlashTriggerHash);
+        _animator.ResetTrigger(HurtTriggerHash);
+        _animator.ResetTrigger(DeathTriggerHash);
+        _animator.SetTrigger(DeathTriggerHash);
     }
 }

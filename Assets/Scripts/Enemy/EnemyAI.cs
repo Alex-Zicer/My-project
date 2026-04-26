@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 /// <summary>
 /// 敌人 AI 主体。
@@ -24,6 +25,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
     private bool _hasAttackedOnce;
     private float _nextAttackReadyTime;
     private const float MinAttackRate = 0.01f;
+    private Coroutine _deathDestroyCoroutine;
 
     // EnemyBaseData 属性代理
     public float PatrolSpeed => data.patrolSpeed;
@@ -103,7 +105,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
     {
         if (StateMachine.CurrentStateType == EnemyStateType.Dead) return;
 
-        float finalDamage = Mathf.Max(0, rawDamage - data.defence);
+        float finalDamage = Mathf.Max(rawDamage, 0f);
         _health.UpdateHealth(finalDamage);
 
         if (_health.currentHealth <= 0)
@@ -115,6 +117,89 @@ public class EnemyAI : MonoBehaviour, IDamageable
             // 记录受击前状态，供 Hurt 恢复时切回
             StateMachine.GetState<HurtState>()?.SetPreviousState(StateMachine.CurrentStateType);
             StateMachine.TransitionTo(EnemyStateType.Hurt);
+        }
+    }
+
+    /// <summary>
+    /// 启动敌人死亡序列，在死亡动画完整播放后销毁对象。
+    /// </summary>
+    public void BeginDeathSequence()
+    {
+        if (_deathDestroyCoroutine != null)
+        {
+            return;
+        }
+
+        if (Rb != null)
+        {
+            Rb.velocity = Vector2.zero;
+        }
+
+        DisableTriggerColliders();
+
+        _deathDestroyCoroutine = StartCoroutine(WaitForDeathAnimationThenDestroy());
+    }
+
+    /// <summary>
+    /// 等待敌人 Animator 完整播放 Dead 状态，随后销毁对象。
+    /// </summary>
+    private IEnumerator WaitForDeathAnimationThenDestroy()
+    {
+        if (Anim == null)
+        {
+            Destroy(gameObject);
+            yield break;
+        }
+
+        const string deadStateName = "Dead";
+        int deadShortNameHash = Animator.StringToHash(deadStateName);
+        int deadFullPathHash = Animator.StringToHash("Base Layer.Dead");
+        const float enterTimeout = 0.25f;
+        const float destroyFallbackDelay = 5f;
+
+        float elapsed = 0f;
+        while (elapsed < enterTimeout)
+        {
+            AnimatorStateInfo stateInfo = Anim.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName(deadStateName) || stateInfo.shortNameHash == deadShortNameHash || stateInfo.fullPathHash == deadFullPathHash)
+            {
+                break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        elapsed = 0f;
+        while (elapsed < destroyFallbackDelay)
+        {
+            AnimatorStateInfo stateInfo = Anim.GetCurrentAnimatorStateInfo(0);
+            bool inDeadState = stateInfo.IsName(deadStateName) || stateInfo.shortNameHash == deadShortNameHash || stateInfo.fullPathHash == deadFullPathHash;
+            if (inDeadState && !Anim.IsInTransition(0) && stateInfo.normalizedTime >= 1f)
+            {
+                break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// 仅关闭 Trigger 判定，保留实体碰撞体，避免死亡动画期间穿透地面。
+    /// </summary>
+    private void DisableTriggerColliders()
+    {
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+        for (int index = 0; index < colliders.Length; index++)
+        {
+            Collider2D collider2D = colliders[index];
+            if (collider2D != null && collider2D.isTrigger)
+            {
+                collider2D.enabled = false;
+            }
         }
     }
 }

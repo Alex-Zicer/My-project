@@ -10,9 +10,7 @@ public class DeadState : EnemyState
     {
         rb.velocity = Vector2.zero;
         if (anim != null) anim.CrossFade(DeadHash, 0.1f);
-        // 关闭碰撞，防止死后仍能被攻击或阻挡角色
-        var col = enemy.GetComponent<Collider2D>();
-        if (col != null) col.enabled = false;
+        enemy.BeginDeathSequence();
     }
 
     // 死亡状态不允许任何转换

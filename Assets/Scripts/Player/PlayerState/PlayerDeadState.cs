@@ -18,7 +18,7 @@ public class PlayerDeadState : PlayerStateBase
     {
         rb.velocity = Vector2.zero;
         rb.isKinematic = true; // 脱离物理规律
-        player.enabled = false;
+        player.BeginDeathSequence();
     }
 
     /// <summary>
