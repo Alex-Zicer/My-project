@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b2c5a5a69c34a52b80d3430d31f7f77, type: 3}
-  m_Name: Knight_Death
+  m_Name: Knight_Wings
   m_EditorClassIdentifier: 
-  eventId: Knight_Death
+  eventId: Knight_Wings
   category: 1
   clipVariants:
-  - {fileID: 8300000, guid: 8afb030bc92ee8540b1e4886902f5a6a, type: 3}
+  - {fileID: 8300000, guid: 370bf4112fd0d4140ab9226fd72385c4, type: 3}
   loop: 0
   volume: 1
   randomVolumeRange: {x: 1, y: 1}

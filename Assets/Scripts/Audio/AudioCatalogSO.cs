@@ -150,10 +150,17 @@ public class AudioCatalogSO : ScriptableObject
                     this);
             }
 
-            // 重复 key 以后者为准，便于覆盖旧配置。
-            if (cacheById.ContainsKey(evt.EventId))
+            // 同一资源被重复挂入列表时直接跳过；只有不同资源撞同一个 eventId 才报警。
+            if (cacheById.TryGetValue(evt.EventId, out AudioEventSO existingEvt))
             {
-                Debug.LogWarning($"[AudioCatalogSO] 检测到重复 eventId：{evt.EventId}，将以后者覆盖前者。", this);
+                if (existingEvt == evt)
+                {
+                    continue;
+                }
+
+                Debug.LogWarning(
+                    $"[AudioCatalogSO] 检测到重复 eventId：{evt.EventId}。已有资源：{existingEvt.name}，覆盖资源：{evt.name}。",
+                    this);
             }
 
             cacheById[evt.EventId] = evt;

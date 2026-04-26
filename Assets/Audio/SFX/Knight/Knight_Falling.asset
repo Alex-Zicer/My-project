@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b2c5a5a69c34a52b80d3430d31f7f77, type: 3}
   m_Name: Knight_Falling
   m_EditorClassIdentifier: 
-  eventId: 
+  eventId: Knight_Falling
   category: 1
-  clipVariants: []
-  loop: 0
+  clipVariants:
+  - {fileID: 8300000, guid: aae2959d8467eb847a015b35e4e25704, type: 3}
+  loop: 1
   volume: 1
   randomVolumeRange: {x: 1, y: 1}
   randomPitchRange: {x: 1, y: 1}

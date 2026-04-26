@@ -12,11 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7de898f7f7664e3a91f7ccb3574fbe95, type: 3}
   m_Name: AudioCatalog
   m_EditorClassIdentifier: 
-  events:
+  uiEvents:
   - {fileID: 11400000, guid: a86408c21c676da40a3c80384c324b05, type: 2}
   - {fileID: 11400000, guid: 2b3ba67ec7dac6e4db2e7b0d727ffa46, type: 2}
-  - {fileID: 11400000, guid: f702d5df8165f8a4db42864507acbb05, type: 2}
-  - {fileID: 11400000, guid: f0280a4762b819247b0d52d7bd1b7a1b, type: 2}
-  - {fileID: 11400000, guid: 9d1d1b33c282ec64d8f643d36d529b66, type: 2}
+  sfxEvents:
+  - {fileID: 11400000, guid: a9238fa15c706fc4e91edaea8b0db34a, type: 2}
+  - {fileID: 11400000, guid: bbf71abd62f6c3f49b036b87fb97437e, type: 2}
+  - {fileID: 11400000, guid: ab398632acbbffc4695569d4530fcb93, type: 2}
+  - {fileID: 11400000, guid: 365455adf1770c2488db32cb3af2fc0c, type: 2}
+  - {fileID: 11400000, guid: feda16ab95c2b8f4585ad46339b60da5, type: 2}
+  - {fileID: 11400000, guid: 72adaba296f56854bbb83d55a8d9da93, type: 2}
+  - {fileID: 11400000, guid: b6dc151021d123f41a69b5482dc903fc, type: 2}
+  - {fileID: 11400000, guid: 7693e5c84a85a8141a840db5d38f6818, type: 2}
+  - {fileID: 11400000, guid: fcc8689b2cfb29343ad89357a5e7eaf3, type: 2}
+  - {fileID: 11400000, guid: b6920a1bde8909c419c6631eda1f29fd, type: 2}
+  bgmEvents:
   - {fileID: 11400000, guid: 342c1f85a802aa74c99d40c5a3fa3a98, type: 2}
   - {fileID: 11400000, guid: 1efbad5e83264d84aa105480bb921f36, type: 2}
+  legacyEvents: []

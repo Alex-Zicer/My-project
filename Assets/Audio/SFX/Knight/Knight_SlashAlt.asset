@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b2c5a5a69c34a52b80d3430d31f7f77, type: 3}
   m_Name: Knight_SlashAlt
   m_EditorClassIdentifier: 
-  eventId: 
+  eventId: Knight_SlashAlt
   category: 1
-  clipVariants: []
+  clipVariants:
+  - {fileID: 8300000, guid: cb9a0373076322047b17fb10ca4b981d, type: 3}
   loop: 0
   volume: 1
   randomVolumeRange: {x: 1, y: 1}

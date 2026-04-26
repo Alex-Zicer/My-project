@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b2c5a5a69c34a52b80d3430d31f7f77, type: 3}
   m_Name: Knight_Dash
   m_EditorClassIdentifier: 
-  eventId: 
+  eventId: Knight_Dash
   category: 1
-  clipVariants: []
+  clipVariants:
+  - {fileID: 8300000, guid: 76408c54c64f0974d87d05104c0e3d58, type: 3}
   loop: 0
   volume: 1
   randomVolumeRange: {x: 1, y: 1}

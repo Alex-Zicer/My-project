@@ -128,7 +128,7 @@ AnimationClip:
   m_HasMotionFloatCurves: 0
   m_Events:
   - time: 0.36842105
-    functionName: PlayActionSfx
+    functionName: PlaySfx
     data: SwordmanAttack
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
