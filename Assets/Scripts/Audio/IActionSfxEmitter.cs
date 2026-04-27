@@ -26,7 +26,7 @@ public interface IActionSfxEmitter
     /// 尝试开始播放循环音效。
     /// </summary>
     /// <param name="eventId">音效事件 ID。</param>
-    /// <returns>播放成功返回 true。</returns>
+    /// <returns>开始请求成功返回 true。</returns>
     bool TryPlayLoopSfx(string eventId);
 
     /// <summary>

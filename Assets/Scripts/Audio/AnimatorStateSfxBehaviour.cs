@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Animator 状态音效模式。
@@ -11,7 +11,6 @@ public enum AnimatorStateSfxMode
 
 /// <summary>
 /// 通用 Animator 状态音效行为。
-/// 可用于在进入状态时播放一次性音效，或在进入/退出状态时管理循环音效。
 /// </summary>
 public class AnimatorStateSfxBehaviour : StateMachineBehaviour
 {
@@ -29,13 +28,14 @@ public class AnimatorStateSfxBehaviour : StateMachineBehaviour
             return;
         }
 
+        // 根据状态配置决定是播一次，还是开始循环播放。
         switch (playbackMode)
         {
-            case AnimatorStateSfxMode.PlayOnceOnEnter:
-                emitter.PlaySfx(eventId);
-                break;
             case AnimatorStateSfxMode.PlayLoopOnEnterStopOnExit:
                 emitter.PlayLoopSfx(eventId);
+                break;
+            default:
+                emitter.PlaySfx(eventId);
                 break;
         }
     }

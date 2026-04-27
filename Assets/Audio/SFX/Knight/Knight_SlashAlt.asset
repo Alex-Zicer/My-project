@@ -14,10 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: Knight_SlashAlt
   category: 1
-  clipVariants:
-  - {fileID: 8300000, guid: cb9a0373076322047b17fb10ca4b981d, type: 3}
-  loop: 0
-  volume: 1
-  randomVolumeRange: {x: 1, y: 1}
-  randomPitchRange: {x: 1, y: 1}
-  cooldownSeconds: 0
+  addressableClip:
+    m_AssetGUID: cb9a0373076322047b17fb10ca4b981d
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

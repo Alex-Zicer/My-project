@@ -14,10 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: Switch
   category: 0
-  clipVariants:
-  - {fileID: 8300000, guid: 7d348af823dd6924db2e849a234e8915, type: 3}
-  loop: 0
-  volume: 1
-  randomVolumeRange: {x: 1, y: 1}
-  randomPitchRange: {x: 1, y: 1}
-  cooldownSeconds: 0
+  addressableClip:
+    m_AssetGUID: 7d348af823dd6924db2e849a234e8915
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

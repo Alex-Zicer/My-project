@@ -26,6 +26,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7693e5c84a85a8141a840db5d38f6818, type: 2}
   - {fileID: 11400000, guid: fcc8689b2cfb29343ad89357a5e7eaf3, type: 2}
   - {fileID: 11400000, guid: b6920a1bde8909c419c6631eda1f29fd, type: 2}
+  - {fileID: 11400000, guid: 9d1d1b33c282ec64d8f643d36d529b66, type: 2}
   bgmEvents:
   - {fileID: 11400000, guid: 342c1f85a802aa74c99d40c5a3fa3a98, type: 2}
   - {fileID: 11400000, guid: 1efbad5e83264d84aa105480bb921f36, type: 2}

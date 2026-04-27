@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 5946adab4b08d68438780a26813f08a4
   m_currentHash:
     serializedVersion: 2
-    Hash: 8ef06775607c3c5aed31759a942e79f3
+    Hash: 0ff63f8540ffa2cbf886c90cb5695034
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_BundleLocalCatalog: 0
@@ -44,9 +44,11 @@ MonoBehaviour:
   m_BuildAddressablesWithPlayerBuild: 0
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
+  - {fileID: 11400000, guid: 5d7bbe42f807d324ea08805c83e2c512, type: 2}
   - {fileID: 11400000, guid: c018d9d59b70fe041a608a96ec369c79, type: 2}
   - {fileID: 11400000, guid: f3f625301aa7e3940afd9b9b85f38097, type: 2}
   - {fileID: 11400000, guid: aec3607e85e46e14a89f284ba274c611, type: 2}
+  - {fileID: 11400000, guid: 7adf3f8fa07f38644b644b56dc335b49, type: 2}
   m_BuildSettings:
     m_CompileScriptsInVirtualMode: 0
     m_CleanupStreamingAssetsAfterBuilds: 1
@@ -88,6 +90,10 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
+    - UI
+    - HUD
+    - Player
+    - Audio
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 21dc809d12aa244459e6bd5bba70d2d2, type: 2}

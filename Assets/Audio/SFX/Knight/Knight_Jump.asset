@@ -14,10 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: Knight_Jump
   category: 1
-  clipVariants:
-  - {fileID: 8300000, guid: 61b6317bcb319e24b95442e61f4da823, type: 3}
-  loop: 0
-  volume: 1
-  randomVolumeRange: {x: 1, y: 1}
-  randomPitchRange: {x: 1, y: 1}
-  cooldownSeconds: 0
+  addressableClip:
+    m_AssetGUID: 61b6317bcb319e24b95442e61f4da823
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

@@ -13,7 +13,4 @@ MonoBehaviour:
   m_Name: SceneWarmupProfile
   m_EditorClassIdentifier: 
   defaultTasks: []
-  sceneEntries:
-  - sceneName: GamePlay
-    tasks:
-    - {fileID: 11400000, guid: 6902c91d234749b28888f6a2af77b745, type: 2}
+  sceneEntries: []

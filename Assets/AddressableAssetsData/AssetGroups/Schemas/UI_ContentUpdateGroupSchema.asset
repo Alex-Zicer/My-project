@@ -9,13 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b2c5a5a69c34a52b80d3430d31f7f77, type: 3}
-  m_Name: Knight_Death
+  m_Script: {fileID: 11500000, guid: 5834b5087d578d24c926ce20cd31e6d6, type: 3}
+  m_Name: UI_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
-  eventId: Knight_Death
-  category: 1
-  addressableClip:
-    m_AssetGUID: 8afb030bc92ee8540b1e4886902f5a6a
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
+  m_Group: {fileID: 11400000, guid: c018d9d59b70fe041a608a96ec369c79, type: 2}
+  m_StaticContent: 0

@@ -30,6 +30,7 @@ public class PlayerLandState : PlayerStateBase
     {
         if (!player.IsGround)
         {
+            player.StateMachine.GetState<PlayerJumpState>()?.ConsumeLedgeFallJump();
             player.StateMachine.TransitionTo(PlayerStateType.Fall);
             return;
         }

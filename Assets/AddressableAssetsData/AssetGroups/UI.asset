@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: UI
+  m_EditorClassIdentifier: 
+  m_GroupName: UI
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 4574a3fe6a66c13478797986d4d6f7d4
+  m_SerializeEntries:
+  - m_GUID: 014bf80921b04a94282bc69e3959a803
+    m_Address: Assets/Sprite Altas/MainMenu Sprite Atlas
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - UI
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3f7de16d12dc8aa49a6823b2a777fea4
+    m_Address: Assets/Sprite Altas/HUD Sprite Atlas
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - HUD
+    - UI
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: e5ea82a19ae29f3418a9c03b97adbdb0, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 4ba73d4f329daff4ba5dbef8148f0643, type: 2}
+    - {fileID: 11400000, guid: 75a2cf535ff32ed48a20d5a19702986d, type: 2}

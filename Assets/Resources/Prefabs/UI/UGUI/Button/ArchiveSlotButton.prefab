@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 92386754118866148}
   - component: {fileID: 1637083524095172456}
   - component: {fileID: 7595005318865103548}
+  - component: {fileID: 3738071128436977902}
   m_Layer: 5
   m_Name: ArchiveSlotButton
   m_TagString: Untagged
@@ -162,6 +163,25 @@ MonoBehaviour:
     _animator: {fileID: 5225755063470631090}
   _hoveredBoolName: IsHovered
   _selectedTriggerName: Selected
+--- !u!114 &3738071128436977902
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1874990343616580202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3425d1da858cb61478b7803ff03ae818, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  role: 0
+  clickOverride: {fileID: 0}
+  hoverOverride: {fileID: 0}
+  muteThisControl: 0
+  enableClickSound: 1
+  enableHoverSound: 1
+  requireToggleOnForClick: 1
 --- !u!1 &2376096609006726779
 GameObject:
   m_ObjectHideFlags: 0

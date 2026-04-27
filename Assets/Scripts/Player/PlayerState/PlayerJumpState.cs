@@ -67,6 +67,20 @@ public class PlayerJumpState : PlayerStateBase
     }
 
     /// <summary>
+    /// 从地面直接离开进入空中时，视为已经消耗了一次起跳机会。
+    /// 这样悬崖跌落后的首次空中跳跃会直接进入二段跳。
+    /// </summary>
+    public void ConsumeLedgeFallJump()
+    {
+        if (_remainingJumps < MaxJumpCount)
+        {
+            return;
+        }
+
+        _remainingJumps = MaxJumpCount - 1;
+    }
+
+    /// <summary>
     /// 根据挂起的 JumpKind 一次性施加起跳速度。
     /// 墙跳会额外修正朝向与水平速度。
     /// </summary>

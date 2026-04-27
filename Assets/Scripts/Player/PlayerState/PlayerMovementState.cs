@@ -26,6 +26,7 @@ public class PlayerMovementState : PlayerStateBase
     {
         if (!player.IsGround)
         {
+            player.StateMachine.GetState<PlayerJumpState>()?.ConsumeLedgeFallJump();
             player.StateMachine.TransitionTo(player.CanWallSlide ? PlayerStateType.WallSlide : PlayerStateType.Fall);
             return;
         }

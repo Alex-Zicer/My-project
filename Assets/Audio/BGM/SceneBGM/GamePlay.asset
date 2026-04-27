@@ -14,10 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: GamePlayBGM
   category: 2
-  clipVariants:
-  - {fileID: 8300000, guid: bbecc9718a8113d44bab374f850aacc5, type: 3}
-  loop: 1
-  volume: 1
-  randomVolumeRange: {x: 1, y: 1}
-  randomPitchRange: {x: 1, y: 1}
-  cooldownSeconds: 0
+  addressableClip:
+    m_AssetGUID: bc3e2676d29a01b47bbf4bdf17470341
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 /// <summary>
 /// 通用音效发射器（Catalog-only）：
@@ -15,8 +16,11 @@ public class ActionSfxEmitter : MonoBehaviour, IActionSfxEmitter
     // 未找到 eventId 时是否打印警告。
     [SerializeField] private bool logWarningWhenMissingKey = true;
 
-    private AudioSource _loopSource;
-    private string _currentLoopEventId;
+    // 当前循环音效源。
+    private AudioSource loopSource;
+
+    // 当前循环音效事件 ID。
+    private string currentLoopEventId;
 
     /// <summary>
     /// 组件禁用时停止循环音效，避免残留播放。
@@ -64,7 +68,7 @@ public class ActionSfxEmitter : MonoBehaviour, IActionSfxEmitter
     /// 尝试开始播放循环音效。
     /// </summary>
     /// <param name="eventId">音效事件 ID。</param>
-    /// <returns>播放成功返回 true。</returns>
+    /// <returns>开始请求成功返回 true。</returns>
     public bool TryPlayLoopSfx(string eventId)
     {
         if (!TryResolveSfxEvent(eventId, out AudioEventSO evt))
@@ -72,38 +76,36 @@ public class ActionSfxEmitter : MonoBehaviour, IActionSfxEmitter
             return false;
         }
 
-        if (!evt.Loop)
+        if (loopSource == null)
         {
-            if (logWarningWhenMissingKey)
+            loopSource = CreateLoopSource();
+        }
+
+        // 先记录目标循环事件，异步加载回调会据此确认当前请求是否仍然有效。
+        currentLoopEventId = evt.EventId;
+
+        AudioService.Instance.RequestAudioClip(evt, clip =>
+        {
+            if (clip == null || loopSource == null)
             {
-                Debug.LogWarning($"[ActionSfxEmitter] 事件 '{evt.EventId}' 未启用 loop，无法作为循环状态音效播放。", this);
+                return;
             }
-            return false;
-        }
 
-        if (_loopSource == null)
-        {
-            _loopSource = CreateLoopSource();
-        }
+            // 如果异步返回时当前循环请求已经被取消或切换，则忽略过期结果。
+            if (!string.Equals(currentLoopEventId, evt.EventId, StringComparison.Ordinal))
+            {
+                return;
+            }
 
-        if (_loopSource.isPlaying && string.Equals(_currentLoopEventId, evt.EventId, System.StringComparison.Ordinal))
-        {
-            return true;
-        }
+            loopSource.Stop();
+            loopSource.clip = clip;
+            loopSource.loop = true;
+            loopSource.pitch = 1f;
+            loopSource.volume = 1f;
+            loopSource.outputAudioMixerGroup = AudioService.Instance.SfxMixerGroup;
+            loopSource.Play();
+        });
 
-        if (!evt.TryPickClip(out AudioClip clip) || clip == null)
-        {
-            return false;
-        }
-
-        _loopSource.Stop();
-        _loopSource.clip = clip;
-        _loopSource.loop = true;
-        _loopSource.pitch = evt.GetRuntimePitch();
-        _loopSource.volume = evt.GetRuntimeVolume();
-        _loopSource.outputAudioMixerGroup = AudioService.Instance.SfxMixerGroup;
-        _loopSource.Play();
-        _currentLoopEventId = evt.EventId;
         return true;
     }
 
@@ -113,20 +115,22 @@ public class ActionSfxEmitter : MonoBehaviour, IActionSfxEmitter
     /// <param name="eventId">要停止的循环音效 ID。</param>
     public void StopLoopSfx(string eventId)
     {
-        if (_loopSource == null || !_loopSource.isPlaying)
-        {
-            _currentLoopEventId = null;
-            return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(eventId) && !string.Equals(_currentLoopEventId, eventId, System.StringComparison.Ordinal))
+        if (!string.IsNullOrWhiteSpace(eventId) &&
+            !string.Equals(currentLoopEventId, eventId, StringComparison.Ordinal))
         {
             return;
         }
 
-        _loopSource.Stop();
-        _loopSource.clip = null;
-        _currentLoopEventId = null;
+        // 先清掉当前循环 ID，避免异步加载完成后又把已取消的循环重新播出来。
+        currentLoopEventId = null;
+
+        if (loopSource == null)
+        {
+            return;
+        }
+
+        loopSource.Stop();
+        loopSource.clip = null;
     }
 
     /// <summary>
@@ -148,6 +152,7 @@ public class ActionSfxEmitter : MonoBehaviour, IActionSfxEmitter
             {
                 Debug.LogWarning($"[ActionSfxEmitter] 未找到动作音效事件：{eventId}", this);
             }
+
             return false;
         }
 
@@ -186,6 +191,7 @@ public class ActionSfxEmitter : MonoBehaviour, IActionSfxEmitter
             source = loopSourceObject.AddComponent<AudioSource>();
         }
 
+        // 循环音效走独立 AudioSource，避免和一次性动作音效互相打断。
         source.playOnAwake = false;
         source.loop = true;
         source.spatialBlend = 0f;

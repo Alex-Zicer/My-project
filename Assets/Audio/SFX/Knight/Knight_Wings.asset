@@ -14,10 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: Knight_Wings
   category: 1
-  clipVariants:
-  - {fileID: 8300000, guid: 370bf4112fd0d4140ab9226fd72385c4, type: 3}
-  loop: 0
-  volume: 1
-  randomVolumeRange: {x: 1, y: 1}
-  randomPitchRange: {x: 1, y: 1}
-  cooldownSeconds: 0
+  addressableClip:
+    m_AssetGUID: 370bf4112fd0d4140ab9226fd72385c4
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

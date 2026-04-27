@@ -1,31 +1,32 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// 场景默认 BGM 控制器：仅负责“场景加载时播放对应默认 BGM”。
+/// 场景默认 BGM 控制器：负责在场景激活后请求并播放对应 BGM。
 /// </summary>
 public class SceneDefaultBgmController : MonoBehaviour
 {
     // 控制器单例。
     private static SceneDefaultBgmController instance;
 
-    // 场景与 BGM 映射配置。
+    // 场景与 BGM 的映射配置。
     [Header("Config")]
     [SerializeField] private SceneBgmProfileSO sceneBgmProfile;
 
     // 场景切换时的 BGM 淡入淡出时长。
     [SerializeField, Min(0f)] private float fadeSeconds = 0.8f;
 
-    // 场景未配置 BGM 时是否停止当前 BGM。
+    // 场景未配置 BGM 时，是否停止当前 BGM。
     [SerializeField] private bool stopBgmWhenSceneNotMapped = true;
 
-    // 场景未配置 BGM 时是否打印日志。
+    // 场景未配置 BGM 时，是否打印提示日志。
     [SerializeField] private bool logWhenSceneNotMapped = true;
 
-    // 是否已提示过“未找到 SceneBgmProfile”。
+    // 是否已经提示过“未找到 SceneBgmProfile”。
     private bool hasWarnedMissingProfile;
-    // 延迟播放协程：用于等待 SceneLoader 完成黑屏预热流程后再播 BGM。
+
+    // 延迟播放协程：等待 SceneLoader 黑屏阶段结束后再处理 BGM。
     private Coroutine deferredPlayCoroutine;
 
     /// <summary>
@@ -62,8 +63,6 @@ public class SceneDefaultBgmController : MonoBehaviour
         }
 
         instance = this;
-
-        // 子对象挂在已常驻根节点下时无需再次调用，避免 Unity 警告。
         if (transform.parent == null)
         {
             DontDestroyOnLoad(gameObject);
@@ -95,7 +94,7 @@ public class SceneDefaultBgmController : MonoBehaviour
     }
 
     /// <summary>
-    /// 手动刷新当前场景默认 BGM（可供调试按钮调用）。
+    /// 手动刷新当前场景默认 BGM。
     /// </summary>
     public void RefreshCurrentSceneBgm()
     {
@@ -105,17 +104,14 @@ public class SceneDefaultBgmController : MonoBehaviour
     /// <summary>
     /// 场景加载回调：应用该场景的默认 BGM。
     /// </summary>
-    /// <param name="scene">已加载场景。</param>
-    /// <param name="mode">加载模式。</param>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         ScheduleApplySceneDefaultBgm(scene.name);
     }
 
     /// <summary>
-    /// 根据场景加载器状态决定立即播放或延后播放默认 BGM。
+    /// 根据 SceneLoader 状态决定立即处理，或延后到黑屏流程结束后处理。
     /// </summary>
-    /// <param name="sceneName">场景名。</param>
     private void ScheduleApplySceneDefaultBgm(string sceneName)
     {
         SceneLoader loader = FindFirstObjectByType<SceneLoader>();
@@ -136,9 +132,6 @@ public class SceneDefaultBgmController : MonoBehaviour
     /// <summary>
     /// 等待 SceneLoader 完成后，再应用目标场景默认 BGM。
     /// </summary>
-    /// <param name="loader">场景加载器。</param>
-    /// <param name="sceneName">目标场景名。</param>
-    /// <returns></returns>
     private IEnumerator WaitLoaderAndApplyBgm(SceneLoader loader, string sceneName)
     {
         while (loader != null && loader.IsLoading)
@@ -151,14 +144,12 @@ public class SceneDefaultBgmController : MonoBehaviour
     }
 
     /// <summary>
-    /// 根据场景名播放默认 BGM。
+    /// 根据场景名请求并播放默认 BGM。
     /// </summary>
-    /// <param name="sceneName">场景名。</param>
     private void ApplySceneDefaultBgm(string sceneName)
     {
         if (sceneBgmProfile == null)
         {
-            // 仅提示一次，避免每次切场景刷屏。
             if (!hasWarnedMissingProfile)
             {
                 Debug.LogWarning(
@@ -193,12 +184,32 @@ public class SceneDefaultBgmController : MonoBehaviour
             return;
         }
 
-        // 目标与当前相同则不重复触发，避免无意义重播。
         if (AudioService.Instance.CurrentBgm == evt)
         {
             return;
         }
 
-        AudioService.Instance.CrossFadeBgm(evt, fadeSeconds);
+        // 先把场景 BGM 请求进缓存，再真正播放，尽量把首次加载开销前移。
+        AudioService.Instance.RequestAudioClip(evt, clip =>
+        {
+            if (clip == null)
+            {
+                return;
+            }
+
+            // 回调返回时若当前场景已切走，则丢弃过期结果。
+            if (!string.Equals(SceneManager.GetActiveScene().name, sceneName, System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            // 回调返回时若当前目标已变化，则丢弃过期结果。
+            if (AudioService.Instance.CurrentBgm == evt)
+            {
+                return;
+            }
+
+            AudioService.Instance.CrossFadeBgm(evt, fadeSeconds);
+        });
     }
 }

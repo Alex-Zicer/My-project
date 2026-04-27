@@ -10,16 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: UGUI
+  m_Name: AudioClip
   m_EditorClassIdentifier: 
-  m_GroupName: UGUI
+  m_GroupName: AudioClip
   m_Data:
     m_SerializedData: []
-  m_GUID: 4574a3fe6a66c13478797986d4d6f7d4
-  m_SerializeEntries: []
+  m_GUID: f32a9599bb63b434bad8288d4db3c710
+  m_SerializeEntries:
+  - m_GUID: d1bd6964e37179c40b61940384f8994f
+    m_Address: Assets/ImportAssets/Audio
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Audio
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: e5ea82a19ae29f3418a9c03b97adbdb0, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 4ba73d4f329daff4ba5dbef8148f0643, type: 2}
-    - {fileID: 11400000, guid: 75a2cf535ff32ed48a20d5a19702986d, type: 2}
+    - {fileID: 11400000, guid: b0177924f1365cb48849443b94e1fe3d, type: 2}
+    - {fileID: 11400000, guid: 99804e244a5d44c47929d0ae861b3ac7, type: 2}

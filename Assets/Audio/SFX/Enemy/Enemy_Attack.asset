@@ -14,10 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: SwordmanAttack
   category: 1
-  clipVariants:
-  - {fileID: 8300000, guid: 106899252fe49b646abc832d84d60bc2, type: 3}
-  loop: 0
-  volume: 1
-  randomVolumeRange: {x: 1, y: 1}
-  randomPitchRange: {x: 1, y: 1}
-  cooldownSeconds: 0
+  addressableClip:
+    m_AssetGUID: 106899252fe49b646abc832d84d60bc2
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

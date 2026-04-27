@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5d17a21594effb4e9591490b009e7aa, type: 3}
-  m_Name: UGUI_BundledAssetGroupSchema
+  m_Name: Knight_BundledAssetGroupSchema
   m_EditorClassIdentifier: 
-  m_Group: {fileID: 11400000, guid: c018d9d59b70fe041a608a96ec369c79, type: 2}
+  m_Group: {fileID: 11400000, guid: 5d7bbe42f807d324ea08805c83e2c512, type: 2}
   m_InternalBundleIdMode: 1
   m_Compression: 1
   m_IncludeAddressInCatalog: 1
