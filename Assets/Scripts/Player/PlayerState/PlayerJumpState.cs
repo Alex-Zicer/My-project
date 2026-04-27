@@ -80,6 +80,11 @@ public class PlayerJumpState : PlayerStateBase
 
         _airtimeTimer = 0f;
 
+        if (_currentJumpKind == PlayerJumpKind.Double && player.EffectSpawner != null)
+        {
+            player.EffectSpawner.PlayDoubleJumpEffect();
+        }
+
         if (_currentJumpKind == PlayerJumpKind.Wall)
         {
             float wallJumpDirection = -player.FacingDirectionX;

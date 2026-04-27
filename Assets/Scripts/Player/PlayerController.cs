@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
 /// 玩家控制器主体。
-/// 负责输入采样、地面与墙体检测、逻辑状态机驱动，以及通过动画事件生成攻击特效。
+/// 负责输入采样、地面与墙体检测、逻辑状态机驱动，并向其他组件暴露玩家领域状态。
 /// </summary>
 [RequireComponent(typeof(PlayerAnimationDriver))]
+[RequireComponent(typeof(PlayerEffectSpawner))]
 public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 {
     private const float InitialHealthValue = 5f; // 分段血条初始生命值（1 格 = 1 血）
@@ -19,12 +19,9 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
 
     [Header("组件引用")]
     [SerializeField] private Health health;
-    [Tooltip("攻击特效的生成参考点；为空时默认使用玩家自身 Transform")]
-    [SerializeField] private Transform attackEffectSpawnPoint;
     private PlayerControls inputActions;         // Unity 新输入系统
     private PlayerAnimationDriver _animDriver;   // 动画驱动层（唯一写入 Animator 参数的模块）
-    // Resources 预制体缓存，避免每次攻击都重复加载磁盘资源。
-    private readonly Dictionary<string, GameObject> _attackEffectCache = new Dictionary<string, GameObject>();
+    private PlayerEffectSpawner _effectSpawner;
     private PlayerJumpKind _pendingJumpKind;
     private PlayerActionKind _pendingActionKind;
     private float _nextDashReadyTime;
@@ -69,6 +66,7 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     public Animator animator { get; private set; }
     public float DefaultGravityScale { get; private set; }
     public bool EnableStateDebugLogs => enableStateDebugLogs;
+    public PlayerEffectSpawner EffectSpawner => _effectSpawner;
 
     #endregion
 
@@ -91,6 +89,11 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
         Rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         _animDriver = GetComponent<PlayerAnimationDriver>();
+        _effectSpawner = GetComponent<PlayerEffectSpawner>();
+        if (_effectSpawner == null)
+        {
+            _effectSpawner = gameObject.AddComponent<PlayerEffectSpawner>();
+        }
         inputActions = new PlayerControls();
         Rb.freezeRotation = true;
         DefaultGravityScale = Rb.gravityScale;
@@ -423,48 +426,6 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
     }
 
     /// <summary>
-    /// 供角色攻击动画的 Animation Event 调用，按 PlayerEffects 文件夹下的资源名生成攻击特效。
-    /// 例如在 Slash 动画的命中帧上传入 "SlashEffect"。
-    /// </summary>
-    /// <param name="effectName">Assets/Resources/PlayerEffects/ 下的预制体名称，不带扩展名。</param>
-    public void SpawnAttackEffect(string effectName)
-    {
-        if (string.IsNullOrWhiteSpace(effectName))
-        {
-            Debug.LogWarning("[PlayerController] 攻击特效名称为空，无法生成特效。", this);
-            return;
-        }
-
-        effectName = ResolveAttackEffectName(effectName);
-
-        // 统一拼接 PlayerEffects 子目录前缀，Animation Event 只需填文件名。
-        string effectResourcePath = $"PlayerEffects/{effectName}";
-        GameObject effectPrefab = LoadAttackEffectPrefab(effectResourcePath);
-        if (effectPrefab == null)
-        {
-            Debug.LogWarning(
-                $"[PlayerController] 未找到攻击特效预制体：Assets/Resources/{effectResourcePath}。请将预制体放到该目录下。",
-                this);
-            return;
-        }
-
-        Transform effectOrigin = attackEffectSpawnPoint != null ? attackEffectSpawnPoint : transform;
-        GameObject effectInstance = Instantiate(effectPrefab, effectOrigin.position, effectOrigin.rotation);
-
-        if (effectInstance.TryGetComponent<PlayerAttackEffect>(out PlayerAttackEffect attackEffect))
-        {
-            // 由特效脚本自行决定偏移、命中窗口和销毁时机，控制器只负责生成与归属绑定。
-            attackEffect.Initialize(this, effectOrigin);
-        }
-        else
-        {
-            Debug.LogWarning(
-                $"[PlayerController] 特效 {effectPrefab.name} 缺少 PlayerAttackEffect 脚本，无法执行伤害判定。",
-                effectInstance);
-        }
-    }
-
-    /// <summary>
     /// 外部（如暂停系统）开关玩家输入。仅控制 InputActionMap，不影响组件启用状态。
     /// </summary>
     public void SetInputEnabled(bool enabled)
@@ -482,47 +443,6 @@ public class PlayerController : MonoBehaviour, IDamageable, ICharacterController
             if (inputActions.Player.enabled) inputActions.Player.Disable();
             MoveInput = Vector2.zero;
         }
-    }
-
-    /// <summary>
-    /// 按路径读取并缓存攻击特效预制体，避免每次攻击都重复 Resources.Load。
-    /// </summary>
-    /// <param name="effectResourcePath">Resources 下完整相对路径（已含 PlayerEffects/ 前缀）。</param>
-    /// <returns>找到则返回预制体，否则返回 null。</returns>
-    private GameObject LoadAttackEffectPrefab(string effectResourcePath)
-    {
-        if (_attackEffectCache.TryGetValue(effectResourcePath, out GameObject cachedPrefab))
-        {
-            return cachedPrefab;
-        }
-
-        GameObject effectPrefab = Resources.Load<GameObject>(effectResourcePath);
-        if (effectPrefab != null)
-        {
-            _attackEffectCache[effectResourcePath] = effectPrefab;
-        }
-
-        return effectPrefab;
-    }
-
-    /// <summary>
-    /// 根据当前动作种类决定动画事件应生成的攻击特效。
-    /// 第二段攻击暂时复用 Slash 动画事件，但改用 SlashAltEffect。
-    /// </summary>
-    private string ResolveAttackEffectName(string defaultEffectName)
-    {
-        if (StateMachine == null || StateMachine.CurrentStateType != PlayerStateType.Action)
-        {
-            return defaultEffectName;
-        }
-
-        PlayerActionState actionState = StateMachine.GetState<PlayerActionState>();
-        if (actionState == null)
-        {
-            return defaultEffectName;
-        }
-
-        return actionState.CurrentActionKind == PlayerActionKind.SlashAlt ? "SlashAltEffect" : defaultEffectName;
     }
 
     /// <summary>

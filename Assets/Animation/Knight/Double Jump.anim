@@ -93,7 +93,7 @@ AnimationClip:
   m_Events:
   - time: 0
     functionName: PlaySfx
-    data: Knight_Jump
+    data: Knight_Wings
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
